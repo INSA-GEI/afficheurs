@@ -55,11 +55,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# Altium
-__Previews/
-History/
-Project Logs for*/
-
 # kicad
 *.bak
 *.kicad_pcb-bak
@@ -94,5 +89,6 @@ OldVersions/
 # DS_Store osx files
 *.DS_Store
 
-
-/pcb/Carte_telecommande_voilier/PDF
+# Python
+*.pyc
+__pycache__
