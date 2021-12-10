@@ -1,0 +1,257 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Insa:XBee U1
+U 1 1 61B2A685
+P 3200 3450
+F 0 "U1" H 3225 4615 50  0000 C CNN
+F 1 "XBee" H 3225 4524 50  0000 C CNN
+F 2 "Insa:Xbee3" H 3200 3250 50  0001 C CNN
+F 3 "" H 3200 3250 50  0001 C CNN
+	1    3200 3450
+	1    0    0    -1  
+$EndComp
+$Comp
+L Insa:XB8-DMUS-002 U2
+U 1 1 61B2AE8D
+P 5650 3550
+F 0 "U2" H 5700 4965 50  0000 C CNN
+F 1 "XB8-DMUS-002" H 5700 4874 50  0000 C CNN
+F 2 "Insa:XB8-DMUS-002" H 5650 2650 50  0001 C CNN
+F 3 "" H 5650 2650 50  0001 C CNN
+	1    5650 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 61B2C579
+P 2500 3550
+F 0 "#PWR?" H 2500 3300 50  0001 C CNN
+F 1 "GND" H 2505 3377 50  0000 C CNN
+F 2 "" H 2500 3550 50  0001 C CNN
+F 3 "" H 2500 3550 50  0001 C CNN
+	1    2500 3550
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR?
+U 1 1 61B2D522
+P 2500 2450
+F 0 "#PWR?" H 2500 2300 50  0001 C CNN
+F 1 "VCC" H 2515 2623 50  0000 C CNN
+F 2 "" H 2500 2450 50  0001 C CNN
+F 3 "" H 2500 2450 50  0001 C CNN
+	1    2500 2450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2650 3450 2500 3450
+Wire Wire Line
+	2500 3450 2500 3550
+Wire Wire Line
+	2650 2550 2500 2550
+Wire Wire Line
+	2500 2550 2500 2450
+Wire Wire Line
+	2650 2650 2150 2650
+Wire Wire Line
+	2650 2750 2150 2750
+Wire Wire Line
+	2650 2850 2150 2850
+Wire Wire Line
+	2650 2950 2150 2950
+Wire Wire Line
+	2650 3050 2150 3050
+Wire Wire Line
+	2650 3150 2150 3150
+Wire Wire Line
+	2650 3350 2150 3350
+Wire Wire Line
+	3800 3450 4250 3450
+Wire Wire Line
+	3800 3350 4250 3350
+Wire Wire Line
+	3800 3250 4250 3250
+Wire Wire Line
+	3800 3050 4250 3050
+Wire Wire Line
+	3800 2950 4250 2950
+Wire Wire Line
+	3800 2850 4250 2850
+Wire Wire Line
+	3800 2750 4250 2750
+Wire Wire Line
+	3800 2650 4250 2650
+Wire Wire Line
+	3800 2550 4250 2550
+Wire Wire Line
+	5200 2550 4700 2550
+Wire Wire Line
+	5200 2650 4700 2650
+Wire Wire Line
+	4700 2750 5200 2750
+Wire Wire Line
+	5200 2850 4700 2850
+Wire Wire Line
+	5200 3150 4700 3150
+Wire Wire Line
+	5200 3250 4700 3250
+Wire Wire Line
+	5200 3350 4700 3350
+Wire Wire Line
+	5200 3550 4700 3550
+Wire Wire Line
+	5200 3650 4700 3650
+Wire Wire Line
+	5200 4150 4700 4150
+Wire Wire Line
+	5200 4250 4700 4250
+Wire Wire Line
+	6200 2400 6700 2400
+Wire Wire Line
+	6200 2500 6700 2500
+Wire Wire Line
+	6200 2600 6700 2600
+Wire Wire Line
+	6200 2700 6700 2700
+Text Label 2150 2650 0    50   ~ 0
+DOUT
+Text Label 2150 2750 0    50   ~ 0
+DIN
+Text Label 4250 3450 2    50   ~ 0
+SPI_MOSI
+Text Label 2150 2850 0    50   ~ 0
+SPI_MISO
+Text Label 2150 2950 0    50   ~ 0
+~RESET
+Text Label 2150 3050 0    50   ~ 0
+RSSI_PWM
+Text Label 4250 2550 2    50   ~ 0
+AD0
+Text Label 4250 2650 2    50   ~ 0
+AD1
+Text Label 4250 2750 2    50   ~ 0
+AD2
+Text Label 4250 2850 2    50   ~ 0
+AD3
+Text Label 4250 2950 2    50   ~ 0
+~RTS
+Text Label 4250 3050 2    50   ~ 0
+ASSOCIATE
+Text Label 4250 3250 2    50   ~ 0
+~SLEEP
+Text Label 4250 3350 2    50   ~ 0
+~CTS
+Text Label 4700 2550 0    50   ~ 0
+DOUT
+Text Label 4700 2650 0    50   ~ 0
+DIN
+Text Label 4700 2750 0    50   ~ 0
+~RTS
+Text Label 4700 2850 0    50   ~ 0
+~CTS
+Text Label 4700 3150 0    50   ~ 0
+~RESET
+Text Label 4700 3350 0    50   ~ 0
+~SLEEP
+Text Label 4700 3550 0    50   ~ 0
+RSSI_PWM
+Text Label 4700 3650 0    50   ~ 0
+ASSOCIATE
+Text Label 4700 4250 0    50   ~ 0
+SPI_MISO
+Text Label 4700 4150 0    50   ~ 0
+SPI_MOSI
+Text Label 6700 2400 2    50   ~ 0
+AD0
+Text Label 6700 2500 2    50   ~ 0
+AD1
+Text Label 6700 2600 2    50   ~ 0
+AD2
+Text Label 6700 2700 2    50   ~ 0
+AD3
+$Comp
+L power:GND #PWR?
+U 1 1 61B3B012
+P 6300 4350
+F 0 "#PWR?" H 6300 4100 50  0001 C CNN
+F 1 "GND" H 6305 4177 50  0000 C CNN
+F 2 "" H 6300 4350 50  0001 C CNN
+F 3 "" H 6300 4350 50  0001 C CNN
+	1    6300 4350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR?
+U 1 1 61B3BFA7
+P 5100 2300
+F 0 "#PWR?" H 5100 2150 50  0001 C CNN
+F 1 "VCC" H 5115 2473 50  0000 C CNN
+F 2 "" H 5100 2300 50  0001 C CNN
+F 3 "" H 5100 2300 50  0001 C CNN
+	1    5100 2300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 2300 5100 2400
+Wire Wire Line
+	5100 2400 5200 2400
+Wire Wire Line
+	6200 3850 6300 3850
+Wire Wire Line
+	6300 3850 6300 3950
+Wire Wire Line
+	6200 4250 6300 4250
+Connection ~ 6300 4250
+Wire Wire Line
+	6300 4250 6300 4350
+Wire Wire Line
+	6200 4150 6300 4150
+Connection ~ 6300 4150
+Wire Wire Line
+	6300 4150 6300 4250
+Wire Wire Line
+	6200 4050 6300 4050
+Connection ~ 6300 4050
+Wire Wire Line
+	6300 4050 6300 4150
+Wire Wire Line
+	6200 3950 6300 3950
+Connection ~ 6300 3950
+Wire Wire Line
+	6300 3950 6300 4050
+Wire Wire Line
+	6200 2800 6300 2800
+Wire Wire Line
+	6300 2800 6300 3850
+Connection ~ 6300 3850
+NoConn ~ 6200 3500
+NoConn ~ 6200 3300
+NoConn ~ 6200 3050
+Text Label 2150 3350 0    50   ~ 0
+~SLEEP_REQ
+Text Label 4700 3250 0    50   ~ 0
+~SLEEP_REQ
+Wire Wire Line
+	6200 3400 6700 3400
+Text Label 6700 3400 2    50   ~ 0
+PWM1
+Text Label 2150 3150 0    50   ~ 0
+PWM1
+NoConn ~ 5200 3850
+NoConn ~ 5200 3950
+NoConn ~ 5200 4050
+$EndSCHEMATC
