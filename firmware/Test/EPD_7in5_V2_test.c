@@ -29,7 +29,6 @@
  ******************************************************************************/
 #include "EPD_Test.h"
 #include "EPD_7in5_V2.h"
-#include "pikachu.h"
 
 int EPD_7in5_V2_test(void)
 {
@@ -69,22 +68,84 @@ int EPD_7in5_V2_test(void)
 	Paint_Clear(WHITE);
 
 	// 2.Drawing on the image
-	printf("Drawing new fonts\r\n");
+
+	// Draw room number
 	char *text ="GEI 109";
 	lv_font_box_t stringBox = Paint_GetStringBox(text, &montserrat_li_150);
-	Paint_DrawString(EPD_7IN5_V2_WIDTH-stringBox.width-20, 15, text, &montserrat_li_150, BLACK, WHITE);
+	Paint_DrawString(EPD_7IN5_V2_WIDTH-stringBox.width-20, 10, text, &montserrat_li_150, BLACK, WHITE);
 
-	Paint_DrawRectangle(20, 150+5+30, EPD_7IN5_V2_WIDTH-20, 150+5+30+5, BLACK, DOT_PIXEL_1X1, DRAW_FILL_FULL);
+	// Draw room type
+	text = "Informatique";
+	stringBox = Paint_GetStringBox(text, &play_r_60);
+	Paint_DrawString(EPD_7IN5_V2_WIDTH-stringBox.width-20,150,
+					text, &play_r_60, BLACK, WHITE);
 
-	text = "TD Polissage d'interface 2/4";
+	// Draw current reservation with two lines
+	Paint_DrawLine(420, 150+80, EPD_7IN5_V2_WIDTH-20, 150+80, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(320, 150+81, EPD_7IN5_V2_WIDTH-20, 150+81, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(220, 150+82, EPD_7IN5_V2_WIDTH-20, 150+82, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(120, 150+83, EPD_7IN5_V2_WIDTH-20, 150+83, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(20, 150+84, EPD_7IN5_V2_WIDTH-20, 150+84, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+	text = "TP Conception d'interface 2/4";
 	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
-	Paint_DrawString(250+((EPD_7IN5_V2_WIDTH-250)-stringBox.width)/2,150+5+30+30+30,
-					         text, &montserrat_m_40, BLACK, WHITE);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH-stringBox.width)/2,150+85+15,
+					 text, &montserrat_m_40, BLACK, WHITE);
+
+	Paint_DrawLine(20, 150+155, EPD_7IN5_V2_WIDTH-20, 150+155, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(20, 150+156, EPD_7IN5_V2_WIDTH-120, 150+156, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(20, 150+157, EPD_7IN5_V2_WIDTH-220, 150+157, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(20, 150+158, EPD_7IN5_V2_WIDTH-320, 150+158, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	Paint_DrawLine(20, 150+159, EPD_7IN5_V2_WIDTH-420, 150+159, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+
+	// Draw INSA Logo
+	Paint_DrawImage(20,(150+80-logoINSA_110.header.h)/2,(lv_img_dsc_t *) &logoINSA_110, DRAW_IMAGE_NORMAL);
+
+	// Draw information about reservation
+	uint16_t ypos_top = (150+160) + (((EPD_7IN5_V2_HEIGHT-30)-(150+160)) - 110)/2;
+	uint16_t ypos_bottom = (EPD_7IN5_V2_HEIGHT-30) - 48 - (((EPD_7IN5_V2_HEIGHT-30)-(150+160)) - 110)/2;
+
+	Paint_DrawImage(40, ypos_top, (lv_img_dsc_t *) &clock_start_48, DRAW_IMAGE_NORMAL);
+	Paint_DrawImage(40, ypos_bottom, (lv_img_dsc_t *) &clock_end_48, DRAW_IMAGE_NORMAL);
+
+	text = "10:00";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
+	Paint_DrawString(40 + clock_start_48.header.w +20, ypos_top+11, text, &montserrat_m_26, BLACK, WHITE);
+
+	text = "12:45";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
+	Paint_DrawString(40 + clock_end_48.header.w +20, ypos_bottom+11, text, &montserrat_m_26, BLACK, WHITE);
+
+	Paint_DrawImage(300, ypos_top, (lv_img_dsc_t *) &attendees_48, DRAW_IMAGE_NORMAL);
+	Paint_DrawImage(300, ypos_bottom, (lv_img_dsc_t *) &teacher_48, DRAW_IMAGE_NORMAL);
+
+	text = "4AE-SE";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
+	Paint_DrawString(300 + attendees_48.header.w +20, ypos_top+11, text, &montserrat_m_26, BLACK, WHITE);
 
 	text = "S. DI MERCURIO";
-	stringBox = Paint_GetStringBox(text, &montserrat_li_26);
-	Paint_DrawString(250+((EPD_7IN5_V2_WIDTH-250)-stringBox.width)/2,150+5+30+30+40+30+30+50,
-			         text, &montserrat_li_26, BLACK, WHITE);
+	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
+	Paint_DrawString(300 + attendees_48.header.w +20, ypos_bottom+11, text, &montserrat_m_26, BLACK, WHITE);
+
+	// Draw footer with next reservation, connection status and battery state
+	Paint_DrawRectangle(0, EPD_7IN5_V2_HEIGHT-30, EPD_7IN5_V2_WIDTH, EPD_7IN5_V2_HEIGHT, BLACK, DOT_PIXEL_1X1, DRAW_FILL_FULL);
+	text = "Relaxation neuronale (13:00 - 13:45)";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH-stringBox.width)/2,EPD_7IN5_V2_HEIGHT-30+(30-26)/2,
+				     text, &montserrat_m_26, WHITE, BLACK);
+
+	Paint_DrawImage((EPD_7IN5_V2_WIDTH-stringBox.width)/2 - clock_next_24.header.w - 8,
+			        (EPD_7IN5_V2_HEIGHT-30 + (30-clock_next_24.header.h)/2),
+				    (lv_img_dsc_t *) &clock_next_24, DRAW_IMAGE_INVERTED);
+
+	Paint_DrawImage(10,(EPD_7IN5_V2_HEIGHT-30 + (30-connection_mid_24.header.h)/2),
+			        (lv_img_dsc_t *) &connection_mid_24, DRAW_IMAGE_INVERTED);
+
+	Paint_DrawImage(10+connection_mid_24.header.w+4,(EPD_7IN5_V2_HEIGHT-30 + (30-on_line_24.header.h)/2),
+			        (lv_img_dsc_t *) &on_line_24, DRAW_IMAGE_INVERTED);
+
+	Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_high_24.header.h)/2),
+			        (lv_img_dsc_t *) &battery_high_24, DRAW_IMAGE_INVERTED);
 
 	Paint_SendToDisplay();
 

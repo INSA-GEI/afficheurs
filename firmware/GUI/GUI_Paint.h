@@ -72,6 +72,7 @@
 #include "GUI_Images.h"
 
 #include "fonts_list.h"
+#include "images_list.h"
 
 typedef void (*sendToDisplayCbk)(const uint8_t *buffer, uint32_t length);
 typedef void (*setDrawingWindowCbk)(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend);
@@ -172,6 +173,14 @@ typedef enum {
 } DRAW_FILL;
 
 /**
+ * Whether image is drawn normally or inverted
+**/
+typedef enum {
+    DRAW_IMAGE_NORMAL = 0,
+    DRAW_IMAGE_INVERTED,
+} DRAW_IMAGE;
+
+/**
  * Custom structure of a time attribute
 **/
 typedef struct {
@@ -211,6 +220,7 @@ lv_font_box_t Paint_GetStringBox(const char *pString, lv_font_t* Font);
 
 //pic
 void Paint_DrawBitMap(const uint8_t* image_buffer);
+void Paint_DrawImage(uint16_t x, uint16_t y, lv_img_dsc_t *img, DRAW_IMAGE inverted);
 //void Paint_DrawBitMap_Half(const unsigned char* image_buffer, UBYTE Region);
 //void Paint_DrawBitMap_OneQuarter(const unsigned char* image_buffer, UBYTE Region);
 //void Paint_DrawBitMap_OneEighth(const unsigned char* image_buffer, UBYTE Region);

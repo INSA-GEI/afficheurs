@@ -325,12 +325,7 @@ parameter:
 void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color,
 		DOT_PIXEL Dot_Pixel, DOT_STYLE Dot_Style)
 {
-	if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-		Debug("Paint_DrawPoint Input exceeds the normal display range\r\n");
-		printf("Xpoint = %d , Paint.Width = %d  \r\n ",Xpoint,Paint.Width);
-		printf("Ypoint = %d , Paint.Height = %d  \r\n ",Ypoint,Paint.Height);
-		return;
-	}
+	if (Xpoint > Paint.Width || Ypoint > Paint.Height) return;
 
 	int16_t XDir_Num , YDir_Num;
 	if (Dot_Style == DOT_FILL_AROUND) {
@@ -723,6 +718,43 @@ void Paint_DrawBitMap(const uint8_t* image_buffer)
 		for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
 			Addr = x + y * Paint.WidthByte;
 			Paint.Image[Addr] = (unsigned char)image_buffer[Addr];
+		}
+	}
+}
+
+/******************************************************************************
+function:	Display monochrome bitmap
+parameter:
+    image_buffer ：A picture data converted to a bitmap
+info:
+    Use a computer to convert the image into a corresponding array,
+    and then embed the array directly into Imagedata.cpp as a .c file.
+ ******************************************************************************/
+void Paint_DrawImage(uint16_t x, uint16_t y, lv_img_dsc_t *img, DRAW_IMAGE inverted)
+{
+	uint8_t tmp=0;
+	uint8_t *ptr;
+	uint16_t color=BLACK;
+
+	if (x > Paint.Width || y > Paint.Height) {
+		Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
+		return;
+	}
+
+	if (inverted == DRAW_IMAGE_INVERTED) color = WHITE;
+
+	ptr = (uint8_t *) img->data;
+	for (int j = 0; j < img->header.h; j++) {
+		for (int i = 0; i < img->header.w; i++) {//8 pixel =  1 byte
+			if (i % 8 == 0) {
+				tmp = *ptr;
+				ptr++;
+			}
+
+			if (tmp & 0x80)
+				Paint_DrawPoint(x+i, y+j, color, 1, DOT_STYLE_DFT);
+
+			tmp = tmp <<1;
 		}
 	}
 }

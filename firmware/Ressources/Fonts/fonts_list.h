@@ -47,20 +47,39 @@
 #include "GUI_Paint.h"
 
 /* LVGL Fonts */
+//liberation_sans family
 extern lv_font_t liberation_sans_b_24;
 extern lv_font_t liberation_sans_b_36;
 extern lv_font_t liberation_sans_r_26;
+
+// montserrat light italic family
 extern lv_font_t montserrat_li_150;
 extern lv_font_t montserrat_li_26;
 extern lv_font_t montserrat_li_34;
 extern lv_font_t montserrat_li_40;
+
+// montserrat medium family
 extern lv_font_t montserrat_m_26;
 extern lv_font_t montserrat_m_34;
 extern lv_font_t montserrat_m_40;
+
+// montserrat medium italic family
 extern lv_font_t montserrat_mi_150;
+
+// montserrat regular family
 extern lv_font_t montserrat_r_26;
 extern lv_font_t montserrat_r_34;
 extern lv_font_t montserrat_r_40;
+
+// orbitron medium family
+extern lv_font_t orbitron_m_60;
+extern lv_font_t orbitron_m_30;
+
+// play regular family
+extern lv_font_t play_r_60;
+extern lv_font_t play_r_30;
+
+// ubuntu regular italic family
 extern lv_font_t ubuntu_ri_150;
 
 #ifdef __cplusplus
