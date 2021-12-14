@@ -8,7 +8,7 @@
 #ifndef GUI_FONTS_H_
 #define GUI_FONTS_H_
 
-#define FONT_INTERCHAR_SPACE 1
+#define FONT_INTERCHAR_SPACE 2
 
 /* Font support */
 /** Describes the properties of a glyph. */
