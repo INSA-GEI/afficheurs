@@ -44,12 +44,12 @@ int EPD_7in5_V2_test(void)
 	printf("Paint_Init\r\n");
 	Paint_Init(EPD_7IN5_V2_GetFramebuffer(),EPD_7IN5_V2_WIDTH, EPD_7IN5_V2_HEIGHT, ROTATE_0);
 	Paint_SetSendToDisplayFunction(EPD_7IN5_V2_WritePicture);
-	Paint_Clear(WHITE);
+	//Paint_Clear(WHITE);
 
 	//EPD_7IN5_V2_Clear();
-	printf("Clear Display\r\n");
-	Paint_SendToDisplay();
-	DEV_Delay_ms(500);
+	//printf("Clear Display\r\n");
+	//Paint_SendToDisplay();
+	//DEV_Delay_ms(500);
 
 #if 0   // show image for array
 	printf("show image for array\r\n");
@@ -63,7 +63,36 @@ int EPD_7in5_V2_test(void)
 	DEV_Delay_ms(10000);
 #endif
 
-#if 1   // Drawing on the image
+#if 1   // Test du support des nouvelles fonts
+	//1.Select Image
+	printf("Clear framebuffer\r\n");
+	Paint_Clear(WHITE);
+
+	// 2.Drawing on the image
+	printf("Drawing new fonts\r\n");
+	char *text ="GEI 109";
+	lv_font_box_t stringBox = Paint_GetStringBox(text, &montserrat_li_150);
+	Paint_DrawString(EPD_7IN5_V2_WIDTH-stringBox.width-20, 15, text, &montserrat_li_150, BLACK, WHITE);
+
+	Paint_DrawRectangle(20, 150+5+30, EPD_7IN5_V2_WIDTH-20, 150+5+30+5, BLACK, DOT_PIXEL_1X1, DRAW_FILL_FULL);
+
+	text = "TD Polissage d'interface 2/4";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString(250+((EPD_7IN5_V2_WIDTH-250)-stringBox.width)/2,150+5+30+30+30,
+					         text, &montserrat_m_40, BLACK, WHITE);
+
+	text = "S. DI MERCURIO";
+	stringBox = Paint_GetStringBox(text, &montserrat_li_26);
+	Paint_DrawString(250+((EPD_7IN5_V2_WIDTH-250)-stringBox.width)/2,150+5+30+30+40+30+30+50,
+			         text, &montserrat_li_26, BLACK, WHITE);
+
+	Paint_SendToDisplay();
+
+	printf("EPD_Display\r\n");
+	DEV_Delay_ms(10000);
+#endif
+
+#if 0   // Drawing on the image
 	//1.Select Image
 	printf("Clear framebuffer\r\n");
 	Paint_Clear(WHITE);
@@ -95,6 +124,7 @@ int EPD_7in5_V2_test(void)
 	DEV_Delay_ms(10000);
 #endif
 
+#if 0
 	printf("Clear...\r\n");
 	//EPD_7IN5_V2_Clear();
 	Paint_Clear(WHITE);
@@ -104,6 +134,8 @@ int EPD_7in5_V2_test(void)
 	EPD_7IN5_V2_Sleep();
 	//free(framebuffer);
 	//framebuffer = NULL;
+
+#endif
 
 	// close 5V
 	printf("close 5V, Module enters 0 power consumption ...\r\n");

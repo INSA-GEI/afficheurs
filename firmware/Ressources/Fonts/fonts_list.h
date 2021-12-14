@@ -36,41 +36,38 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __FONTS_H
-#define __FONTS_H
-
-/*(32x41) */
-#define MAX_HEIGHT_FONT         41
-#define MAX_WIDTH_FONT          32
-#define OFFSET_BITMAP           
+#ifndef __FONTS_LIST_H
+#define __FONTS_LIST_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdint.h>
+#include "GUI_Paint.h"
 
-//ASCII
-typedef struct _tFont
-{    
-  const uint8_t *table;
-  uint16_t Width;
-  uint16_t Height;
-  
-} sFONT;
-
-extern sFONT Font24;
-extern sFONT Font20;
-extern sFONT Font16;
-extern sFONT Font12;
-extern sFONT Font8;
+/* LVGL Fonts */
+extern lv_font_t liberation_sans_b_24;
+extern lv_font_t liberation_sans_b_36;
+extern lv_font_t liberation_sans_r_26;
+extern lv_font_t montserrat_li_150;
+extern lv_font_t montserrat_li_26;
+extern lv_font_t montserrat_li_34;
+extern lv_font_t montserrat_li_40;
+extern lv_font_t montserrat_m_26;
+extern lv_font_t montserrat_m_34;
+extern lv_font_t montserrat_m_40;
+extern lv_font_t montserrat_mi_150;
+extern lv_font_t montserrat_r_26;
+extern lv_font_t montserrat_r_34;
+extern lv_font_t montserrat_r_40;
+extern lv_font_t ubuntu_ri_150;
 
 #ifdef __cplusplus
 }
 #endif
   
-#endif /* __FONTS_H */
+#endif /* __FONTS_LIST_H */
  
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -65,8 +65,13 @@
 #ifndef __GUI_PAINT_H
 #define __GUI_PAINT_H
 
-#include "DEV_Config.h"
-#include "../Fonts/fonts.h"
+#include "stm32l4xx.h"
+
+#include <GUI_Fonts_old.h>
+#include "GUI_Fonts.h"
+#include "GUI_Images.h"
+
+#include "fonts_list.h"
 
 typedef void (*sendToDisplayCbk)(const uint8_t *buffer, uint32_t length);
 typedef void (*setDrawingWindowCbk)(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend);
@@ -179,6 +184,7 @@ typedef struct {
 } PAINT_TIME;
 //extern PAINT_TIME sPaint_time;
 
+
 //init and Clear
 void Paint_Init(uint8_t *framebuffer, uint16_t width, uint16_t height, uint16_t Rotate);
 //void Paint_SelectImage(uint8_t *image);
@@ -199,10 +205,9 @@ void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16
 void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill);
 
 //Display string
-void Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const char Acsii_Char, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * pString, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawTime(uint16_t Xstart, uint16_t Ystart, PAINT_TIME *pTime, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
+uint16_t Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const uint16_t Unicode_char, lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
+void Paint_DrawString(uint16_t Xstart, uint16_t Ystart, const char *pString, lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
+lv_font_box_t Paint_GetStringBox(const char *pString, lv_font_t* Font);
 
 //pic
 void Paint_DrawBitMap(const uint8_t* image_buffer);
