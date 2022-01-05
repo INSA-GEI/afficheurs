@@ -454,23 +454,25 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, RST_Pin|DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, RST_Pin|DC_Pin|XBEE_RESET_Pin|XBEE_SLEEP_RQ_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : RST_Pin DC_Pin SPI_CS_Pin */
-  GPIO_InitStruct.Pin = RST_Pin|DC_Pin|SPI_CS_Pin;
+  /*Configure GPIO pins : RST_Pin DC_Pin SPI_CS_Pin XBEE_RESET_Pin
+                           XBEE_SLEEP_RQ_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|DC_Pin|SPI_CS_Pin|XBEE_RESET_Pin
+                          |XBEE_SLEEP_RQ_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BUSY_Pin */
-  GPIO_InitStruct.Pin = BUSY_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pins : BUTTON_Pin BUSY_Pin XBEE_SLEEP_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin|BUSY_Pin|XBEE_SLEEP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

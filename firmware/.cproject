@@ -79,11 +79,11 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Ressources"/>
+						<entry excluding="old_src|ImageData.c|EPD_7in5_HD_test.c|EPD_7in5_test.c|EPD_7in5b_V2_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Test"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry excluding="BSP/WFT0583CZ61_7.5_EPD/old_drv|BSP/WFT0583CZ61_7.5_EPD/EPD_7in5_HD.c|BSP/WFT0583CZ61_7.5_EPD/EPD_7in5b_HD.c|BSP/WFT0583CZ61_7.5_EPD/EPD_7in5.c|BSP/WFT0583CZ61_7.5_EPD/EPD_7in5bc.c|BSP/WFT0583CZ61_7.5_EPD/EPD_7in5b_V2.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="GUI"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Ressources"/>
-						<entry excluding="old_src|ImageData.c|EPD_7in5_HD_test.c|EPD_7in5_test.c|EPD_7in5b_V2_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Test"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
