@@ -4,10 +4,10 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title ""
-Date ""
-Rev ""
-Comp ""
+Title "EVAL-E.Ink"
+Date "2022-01-06"
+Rev "1.0"
+Comp "INSA - GEI"
 Comment1 ""
 Comment2 ""
 Comment3 ""
@@ -1189,7 +1189,7 @@ U 1 1 61E782BE
 P 2600 5050
 F 0 "U3" H 2667 5615 50  0000 C CNN
 F 1 "MAX17220ELT" H 2667 5524 50  0000 C CNN
-F 2 "Package_DFN_QFN:DFN-6-1EP_2x2mm_P0.5mm_EP0.61x1.42mm" H 2600 5550 50  0001 C CNN
+F 2 "Insa:uDFN-6-1EP_2x2mm_P0.65mm_EP1x1.6mm" H 2600 5550 50  0001 C CNN
 F 3 "" H 2600 5550 50  0001 C CNN
 	1    2600 5050
 	1    0    0    -1  
