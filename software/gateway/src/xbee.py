@@ -439,6 +439,7 @@ class XBEE():
                 self.sendFrame(frame)
             except Exception as e:
                 print ("Uncaught exception in RX thread:\n" + str(e))
+                #print ("Received frame: " + str(received_frame))
                 frame=Transmit_Request(1,decode_frame.sender, 0x02, "ERR|81")
                 self.sendFrame(frame)
     

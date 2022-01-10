@@ -32,6 +32,7 @@ DEFAULT_CONFIG_FILE = "/home/dimercur/Travail/git/afficheurs/software/gateway/sr
 
 log = logging.getLogger("gateway")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+GPIO.setwarnings(False)
 
 try:
     GPIO_LED_ERROR = (29, GPIO.OUT)
@@ -99,11 +100,13 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
             rssi_device[frame.sender]=[frame.rssi]
             
         if msg.type == "REPORT":
+            #print("Report: " + str(msg))
+
             ack=False
             #Rajoute les infos de la gateway concernant cet ecran
             msg.data.append(str(hex(max(rssi_device[frame.sender]))[2:].upper()))
             msg.data.append(str(hex(min(rssi_device[frame.sender]))[2:].upper()))
-            msg.data.append(str(hex(statistics.mean(rssi_device[frame.sender]))[2:].upper()))
+            msg.data.append(str(hex(int(statistics.mean(rssi_device[frame.sender])))[2:].upper()))
         else:
             ack=True
             
@@ -267,13 +270,17 @@ def main():
     try:
         serialDevice = "/dev/serial0"
         monXbee = xbee.XBEE(receiveCallback=RxCallback, com=serialDevice, baudrate=9600)
-    except:
+    except Exception as e:
+        log.warning("Unable to open serial port "+ serialDevice + " for Xbee ("+ str(e) + ")")
+        log.warning("Try /dev/ttyUSB0")
+
         try:
             serialDevice = "/dev/ttyUSB0"
             monXbee = xbee.XBEE(receiveCallback=RxCallback, com=serialDevice, baudrate=9600)
         except Exception as e:
             log.error("Unable to open serial port "+ serialDevice + " for Xbee ("+ str(e) + ")")
-            
+            exit(6)
+
     log.info("Opened serial device {} at {} bauds for Xbee".format(serialDevice, str(9600)))
     log.info("Reconf of xbee with new panID/ChanID")
 
