@@ -1,4 +1,4 @@
-19490274466356861
+19487072482826389
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -42860,20 +42860,6 @@ connector Samtec HLE top entry
 0
 100
 100
-Connector_Samtec_HLE_SMD-ML
-Samtec_HLE-120-02-xxx-DV-BE-A_2x20_RPi_Bottom
-Samtec HLE .100" Tiger Beam Cost-effective Single Beam Socket Strip, HLE-140-02-xxx-DV-BE-A, 20 Pins per row (http://suddendocs.samtec.com/prints/hle-1xx-02-xxx-dv-xx-xx-xx-mkt.pdf, http://suddendocs.samtec.com/prints/hle-dv-footprint.pdf), generated with kicad-footprint-generator
-connector Samtec  top entry
-0
-40
-40
-Connector_Samtec_HLE_SMD-ML
-Samtec_HLE-120-02-xxx-DV-BE-A_2x20_RPi_Top
-Samtec HLE .100" Tiger Beam Cost-effective Single Beam Socket Strip, HLE-140-02-xxx-DV-BE-A, 20 Pins per row (http://suddendocs.samtec.com/prints/hle-1xx-02-xxx-dv-xx-xx-xx-mkt.pdf, http://suddendocs.samtec.com/prints/hle-dv-footprint.pdf), generated with kicad-footprint-generator
-connector Samtec  top entry
-0
-40
-40
 Connector_Samtec_HLE_THT
 Samtec_HLE-104-02-xx-DV-PE-LC_2x04_P2.54mm_Horizontal
 Samtec HLE .100" Tiger Beam Cost-effective Single Beam Socket Strip, HLE-104-02-xx-DV-PE-LC, 4 Pins per row (http://suddendocs.samtec.com/prints/hle-1xx-02-xx-dv-xe-xx-mkt.pdf, http://suddendocs.samtec.com/prints/hle-thru.pdf), generated with kicad-footprint-generator
