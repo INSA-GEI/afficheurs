@@ -59,4 +59,9 @@ rooms:
     id : 
       - "10CE34ADFA268A2E"
 
- 
+gateways:
+  - name : "GW-01"
+    address : "localhost"
+
+  - name : "GW-Unknown"
+    address : "gw-unknown"

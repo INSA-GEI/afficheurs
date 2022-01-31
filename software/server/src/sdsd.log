@@ -1,9 +1,78 @@
 
 ---------------------------------------------------------
 sdsd ver 1.0
-Start: 2022-01-24 16:55:15.439846
+Start: 2022-01-31 16:52:04.717426
 
 Connect to ADE: OK
-Get ressources list: OK
-Warning: room GEI 115 has no ressource ID in ADE
-Get rooms calendar: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 10s
+Connected to gateway GW-01
+
+---------------------------------------------------------
+sdsd ver 1.0
+Start: 2022-01-31 16:52:57.062006
+
+Connect to ADE: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Connected to gateway GW-01
+Gateway GW-Unknown unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 20s
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 40s
+Connected to gateway GW-01
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-01 unreachable, try again in 20s
+Gateway GW-Unknown unreachable, try again in 80s
+Connected to gateway GW-01
+
+---------------------------------------------------------
+sdsd ver 1.0
+Start: 2022-01-31 16:55:04.337111
+
+Connect to ADE: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 10s
+Gateway GW-01 unreachable, try again in 20s
+Gateway GW-Unknown unreachable, try again in 20s
+
+---------------------------------------------------------
+sdsd ver 1.0
+Start: 2022-01-31 16:56:44.987517
+
+Connect to ADE: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 10s
+Connected to gateway GW-01
+Gateway GW-Unknown unreachable, try again in 20s
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-01 unreachable, try again in 20s
+
+---------------------------------------------------------
+sdsd ver 1.0
+Start: 2022-01-31 16:59:59.424192
+
+Connect to ADE: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Connected to gateway GW-01
+Gateway GW-Unknown unreachable, try again in 10s
+Gateway GW-01 unreachable, try again in 5s
+Connected to gateway GW-01
+Gateway GW-Unknown unreachable, try again in 20s
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-01 unreachable, try again in 20s
+Gateway GW-Unknown unreachable, try again in 40s
+Connected to gateway GW-01
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
