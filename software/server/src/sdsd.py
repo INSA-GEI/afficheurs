@@ -11,103 +11,71 @@
 import sys
 from config import Configuration
 from ade import Ade
-from common import Datetool,Room
 from network import Gateway,GatewayEvents
-import threading
-import yaml
+from state_machine import StateMachineMessage,StateMachine
+from common import Log
 
+# Creer la machine a etat qui va gerer les differents messages et changement d'etat
+mae = StateMachine()
+
+# configuration object
+config = None
+
+# rooms and displays list
+rooms= []
+
+# gateways list
+gateways= []
+
+# Callback appelé lors de la reception de donnée envoyé par une gateway
 def receiveCallback(id:int, data: str) -> None:
     print ("Data received from gateway " + Configuration.gateways[id].name +
            ": " + data)
-    
+  
+# Callback appelé lors d'un evenement reçu ou produit par une gateway  
 def eventCallback(id:int, event: int) -> None:
     if event == GatewayEvents.EVENT_CONNECTED:
-        print ("EVENT_CONNECTED received from gateway " + Configuration.gateways[id].name)
-        Configuration.gateways[id].write("Calendar data")
+        mae.sendMessage(StateMachineMessage.GATEWAY_CONNECTED, 
+                                 (gateways[id], "no calendar"))
+        
     elif event == GatewayEvents.EVENT_CONNECTION_LOST:
-        print ("EVENT_CONNECTION_LOST received from gateway " + Configuration.gateways[id].name)
+        mae.sendMessage(StateMachineMessage.GATEWAY_DISCONNECTED, 
+                                 (gateways[id], ))
     else:
-        print ("UNKNOWN_EVENT received from gateway " + Configuration.gateways[id].name)
-
-def parseConfigurationFile():
-    # parse config file
-    try:
-        with open(Configuration.configFileName) as f:
-            configuration = yaml.load(f, Loader=yaml.FullLoader)       
-        
-    except:
-        print ("Unable to open configuration file %s" % (Configuration.configFileName))
-        exit (-2) 
-    
-    try:
-        Configuration.serverAddr = str(configuration["server"])
-    except:
-        print ("Error : missing 'server' entry in configuration file")
-        exit(-2)
-
-    try:
-        Configuration.serverLogin = str(configuration["login"])
-    except:
-        print ("Error : missing 'login' entry in configuration file")
-        exit(-2)
-    
-    try:
-        Configuration.serverPassword = str(configuration["password"])
-    except:
-        print ("Warning : missing 'password' entry in configuration file, set to '' ")
-        Configuration.serverPassword = ""
-    
-    if Configuration.verboseFlag:      
-        print ("Server = ", Configuration.serverAddr)
-        print ("Login = ", Configuration.serverLogin)
-        print ("Password = ", Configuration.serverPassword)
-        
-    # Recuperation la liste des ecrans
-    Configuration.rooms = []
-    
-    for room in configuration["rooms"]:
-        Configuration.rooms.append(Room(room['name'], room['ade pattern'], [], room['id']))
-    
-    # Recuperation de la liste des gateways
-    Configuration.gateways= []
-     
-    i=0   
-    for gw in configuration["gateways"]:
-        Configuration.gateways.append(Gateway(i, gw['name'], gw['address'], None))
-        i=i+1        
-               
+        mae.sendMessage(StateMachineMessage.UNKNOWN_EVENT, ())
+           
 # Programme principal   
 if __name__ == "__main__":
    
+    config = Configuration()
+    
     try:
-        Configuration.parseCommandLine(sys.argv[1:])
+        config.parseCommandLine(sys.argv[1:])
     except:
         print ("Error: Parsing of command line parameters failed")
         exit(-1)
     
     try:
-        parseConfigurationFile()
+        (rooms, gateways) = config.parseConfigurationFile()
     except:
-        print ("error: Parsing of " + Configuration.configFileName + " failed")
+        print ("error: Parsing of " + config.configFileName + " failed")
         exit(-2)
     
-    Configuration.openLogFile()
+    Log.openLogFile(config)
     ade=Ade()
     
-    ade.connect(Configuration.serverAddr,Configuration.serverLogin,Configuration.serverPassword)
+    ade.connect(config.serverAddr,config.serverLogin,config.serverPassword)
     print ("Connect to ADE: OK")
-    Configuration.writeLogFile("Connect to ADE: OK")
-    Configuration.writeVerbose("SessionId = %s" % ade.sessionId)
+    Log.writeLogFile("Connect to ADE: OK")
+    Log.writeVerbose("SessionId = %s" % ade.sessionId)
         
-    for gw in Configuration.gateways:
+    for gw in gateways:
         gw.receiveCallback= receiveCallback
         gw.eventCallback = eventCallback
-        gw.threadId = threading.Thread(target=gw.ReceptionThread, args=())
-        gw.threadId.daemon=True
-        gw.threadId.start()
+        gw.startReceptionThread()
       
     try:  
-        Configuration.gateways[0].threadId.join()
+        gateways[0].threadId.join()
     except KeyboardInterrupt:
         pass
     

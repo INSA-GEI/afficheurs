@@ -2,7 +2,7 @@
 #
 #
 
-from common import Ressources, Calendar
+from common import Ressources, Calendar,Log
 import requests
 import xml.etree.ElementTree as ET
 from config import Configuration
@@ -24,10 +24,10 @@ class Ade:
         cmd = self.baseUrl+'function=connect&login='+login+'&password='+password
         r = requests.get(cmd)
         
-        if Configuration.verboseFlag == True:
-            Configuration.writeLogFile(cmd)
-            Configuration.writeLogFile(r)
-            Configuration.writeLogFile(r.text)
+        if Log.verboseFlag == True:
+            Log.writeLogFile(cmd)
+            Log.writeLogFile(r)
+            Log.writeLogFile(r.text)
 
         root = ET.fromstring(r.text)
         self.sessionId = root.attrib['id']
@@ -40,10 +40,10 @@ class Ade:
         cmd = self.baseUrl+'sessionId='+self.sessionId+'&function=getProjects&detail=4'
         r = requests.get(cmd)
             
-        if Configuration.verboseFlag == True:
-            Configuration.writeLogFile(cmd)
-            Configuration.writeLogFile(r)
-            Configuration.writeLogFile(r.text)
+        if Log.verboseFlag == True:
+            Log.writeLogFile(cmd)
+            Log.writeLogFile(r)
+            Log.writeLogFile(r.text)
 
         # a priori, seul le projet 1 existe
         projectsList = []
@@ -65,10 +65,10 @@ class Ade:
         cmd = self.baseUrl+'sessionId='+self.sessionId+'&function=setProject&projectId='+self.projectId
         r = requests.get(cmd)
         
-        if Configuration.verboseFlag == True:
-            Configuration.writeLogFile(cmd)
-            Configuration.writeLogFile(r)
-            Configuration.writeLogFile(r.text)
+        if Log.verboseFlag == True:
+            Log.writeLogFile(cmd)
+            Log.writeLogFile(r)
+            Log.writeLogFile(r.text)
             
     def getRessourcesList(self):  
         if self.sessionId == "":
@@ -81,10 +81,10 @@ class Ade:
         cmd = self.baseUrl+'sessionId='+self.sessionId+'&function=getResources&tree=false&detail=3'
         r = requests.get(cmd)
         
-        if Configuration.verboseFlag == True:
-            Configuration.writeLogFile(cmd)
-            Configuration.writeLogFile(r)
-            Configuration.writeLogFile(r.text)
+        if Log.verboseFlag == True:
+            Log.writeLogFile(cmd)
+            Log.writeLogFile(r)
+            Log.writeLogFile(r.text)
 
         root = ET.fromstring(r.text)
 
@@ -103,10 +103,10 @@ class Ade:
         r = requests.get(cmd,)
         r.encoding='utf-8'
 
-        if Configuration.verboseFlag == True:
-            Configuration.writeLogFile(cmd)
-            Configuration.writeLogFile(r)
-            Configuration.writeLogFile(r.text)
+        if Log.verboseFlag == True:
+            Log.writeLogFile(cmd)
+            Log.writeLogFile(r)
+            Log.writeLogFile(r.text)
         
         root = ET.fromstring(r.text)
 

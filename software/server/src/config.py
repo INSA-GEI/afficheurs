@@ -3,6 +3,9 @@
 #
 
 from datetime import date, datetime, time
+import yaml
+from common import Room
+from network import Gateway
 
 class Configuration():
     MAJOR_VERSION = 1
@@ -14,72 +17,89 @@ class Configuration():
     logFile = ""
     verboseFlag = False
     
-    rooms = []
-    gateways = []
+    #rooms = []
+    #gateways = []
     
-    @staticmethod
-    def parseCommandLine(cmdline: str) -> None:
+    def parseCommandLine(self, cmdline: str) -> None:
         status = False
     
-        Configuration.startupPrompt()
+        self.startupPrompt()
         
         for arg in cmdline:
             print ("arg = %s" % (arg))
         
             if arg == '-v':
-                Configuration.verboseFlag = True
+                self.verboseFlag = True
             elif arg == '-h' or arg == '--help':
                 status =True    
             else:
                 status = True
             
         if status == True:
-            Configuration.helpPrompt()
+            self.helpPrompt()
         
         if status == True :
             raise Exception("Command Line Error","Help requested or invalid parameter")
+     
+    def parseConfigurationFile(self):
+        # parse config file
+        try:
+            with open(self.configFileName) as f:
+                config = yaml.load(f, Loader=yaml.FullLoader)       
+            
+        except:
+            print ("Unable to open configuration file %s" % (self.configFileName))
+            exit (-2) 
         
-    @staticmethod    
-    def startupPrompt():
-        print ("sdsd ver %d.%d" % (Configuration.MAJOR_VERSION, Configuration.MINOR_VERSION))
+        try:
+            self.serverAddr = str(config["server"])
+        except:
+            print ("Error : missing 'server' entry in configuration file")
+            exit(-2)
+
+        try:
+            self.serverLogin = str(config["login"])
+        except:
+            print ("Error : missing 'login' entry in configuration file")
+            exit(-2)
+        
+        try:
+            self.serverPassword = str(config["password"])
+        except:
+            print ("Warning : missing 'password' entry in configuration file, set to '' ")
+            self.serverPassword = ""
+        
+        if self.verboseFlag:      
+            print ("Server = ", self.serverAddr)
+            print ("Login = ", self.serverLogin)
+            print ("Password = ", self.serverPassword)
+            
+        # Recuperation la liste des ecrans
+        rooms = []
+        
+        for room in config["rooms"]:
+            rooms.append(Room(room['name'], room['ade pattern'], [], room['id']))
+        
+        # Recuperation de la liste des gateways
+        gateways= []
+        
+        i=0   
+        for gw in config["gateways"]:
+            gateways.append(Gateway(i, gw['name'], gw['address'], None))
+            i=i+1        
+              
+        return  (rooms, gateways)
+    
+    def startupPrompt(self):
+        print ("sdsd ver %d.%d" % (self.MAJOR_VERSION, self.MINOR_VERSION))
         print ()
    
-    @staticmethod
-    def helpPrompt():
+    def helpPrompt(self):
         print ("Command line options:")
         print ("\t-h/--help: this help message")
         print ("\t-v: verbose output")
         print ("\t-c <file>: use <file> as configuration file")
         print ("\t-l <file>: use <file> as log file")
-     
-    @staticmethod   
-    def openLogFile():
-        try:
-            Configuration.logFile = open(Configuration.logFileName, "a")
-            Configuration.logFile.write("\n---------------------------------------------------------")
-            Configuration.logFile.write("\nsdsd ver %d.%d" % (Configuration.MAJOR_VERSION, Configuration.MINOR_VERSION))
-            Configuration.logFile.write("\nStart: " + str(datetime.now()))
-            Configuration.logFile.write("\n\n")
-            
-            Configuration.isLogOpen=True
-        except:
-            print ("Warning: Unable to open log " + Configuration.logFile)
-            Configuration.isLogOpen=False
-    
-    @staticmethod   
-    def writeLogFile(s):
-        if Configuration.isLogOpen:
-            Configuration.logFile.write(s+"\n")
-            Configuration.logFile.flush()
-    
-    @staticmethod   
-    def closeLogFile():
-        if Configuration.isLogOpen:
-            Configuration.logFile.close()
-    
-    @staticmethod   
-    def writeVerbose(s):
-        if Configuration.verboseFlag:
-            print (s)
+      
         
         

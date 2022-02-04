@@ -4,6 +4,41 @@
 
 from datetime import datetime, date, timedelta
 
+class Log:
+    logFile = ""
+    verboseFlag = False
+    isLogOpen= False
+    
+    @staticmethod
+    def openLogFile(conf) -> None:
+        try:
+            Log.logFile = open(conf.logFileName, "a")
+            Log.logFile.write("\n---------------------------------------------------------")
+            Log.logFile.write("\nsdsd ver %d.%d" % (conf.MAJOR_VERSION, conf.MINOR_VERSION))
+            Log.logFile.write("\nStart: " + str(datetime.now()))
+            Log.logFile.write("\n\n")
+            
+            Log.isLogOpen=True
+        except:
+            print ("Warning: Unable to open log " + conf.logFileName)
+            Log.isLogOpen=False
+     
+    @staticmethod
+    def writeLogFile(s):
+        if Log.isLogOpen:
+            Log.logFile.write(s+"\n")
+            Log.logFile.flush()
+            
+    @staticmethod
+    def closeLogFile():
+        if Log.isLogOpen:
+            Log.logFile.close()
+            
+    @staticmethod
+    def writeVerbose( s):
+        if Log.verboseFlag:
+            print (s)
+            
 class Datetool:
     @staticmethod
     def getCurrentDay():
