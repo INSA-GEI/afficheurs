@@ -4,6 +4,10 @@
 
 from datetime import datetime, date, timedelta
 
+Room = tuple[str, int]
+Rooms = list[Room]
+
+# Class used for logging information in log file or on screen
 class Log:
     logFile = ""
     verboseFlag = False
@@ -38,7 +42,8 @@ class Log:
     def writeVerbose( s):
         if Log.verboseFlag:
             print (s)
-            
+ 
+# Class used for date and time manipulation           
 class Datetool:
     @staticmethod
     def getCurrentDay():
@@ -92,14 +97,14 @@ class Datetool:
         seconds_since_midnight = (date_obj - date_obj.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
         return int(seconds_since_midnight/60)
     
-        
+# Class used for storing ressources information        
 class Ressources():
     def __init__(self, id, name, screenId):
         self.id = id
         self.name = name
         self.screenId = screenId
 
-
+# Class used for storing room reservation
 class Calendar():
     firstHour=0
     lastHour=0
@@ -135,52 +140,54 @@ class Calendar():
         
         s= s + "]"
         return s
-        
-class Room():
-    name =""
-    adePattern = ""
-    ressourcesId = []
-    displayId = []
-    calendars = []
+
+# # Class used for storing room information  
+# class Room():
+#     name =""
+#     adePattern = ""
+#     ressourcesId = []
+#     displayId = []
+#     calendars = []
     
-    def __init__(self, name, adePattern, ressourcesId, displayId):
-        self.name = name
-        self.adePattern = adePattern.upper()
-        self.ressourcesId = ressourcesId
-        self.displayId = displayId
+#     def __init__(self, name, adePattern, ressourcesId, displayId):
+#         self.name = name
+#         self.adePattern = adePattern.upper()
+#         self.ressourcesId = ressourcesId
+#         self.displayId = displayId
     
-    def __str__ (self):
-        s = self.name + " [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
+#     def __str__ (self):
+#         s = self.name + " [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
         
-        for r in self.ressourcesId:
-            s = s + r + ", "
+#         for r in self.ressourcesId:
+#             s = s + r + ", "
         
-        s = s + "]\n\tDisplays: ["
+#         s = s + "]\n\tDisplays: ["
         
-        for d in self.displayId:
-            s =s + d + ", "
+#         for d in self.displayId:
+#             s =s + d + ", "
             
-        s= s + "]"
-        return s
+#         s= s + "]"
+#         return s
     
-    def getCalendar(self, ade):    
-        firstDay = Datetool.getFirstDayofWeek()
-        lastDay = Datetool.getLastDayofWeek()
+#     def getCalendar(self, ade):    
+#         firstDay = Datetool.getFirstDayofWeek()
+#         lastDay = Datetool.getLastDayofWeek()
         
-        calendar = []
+#         calendar = []
         
-        if len(self.ressourcesId) !=0:
-            for res in self.ressourcesId:
-                rawCalendar = ade.getRessourceCalendar(res)
+#         if len(self.ressourcesId) !=0:
+#             for res in self.ressourcesId:
+#                 rawCalendar = ade.getRessourceCalendar(res)
     
-                for cal in rawCalendar:
-                    calDay = Datetool.toDate(cal.day)
+#                 for cal in rawCalendar:
+#                     calDay = Datetool.toDate(cal.day)
                 
-                    if calDay>=firstDay and calDay<=lastDay:
-                        calendar.append(cal)
+#                     if calDay>=firstDay and calDay<=lastDay:
+#                         calendar.append(cal)
         
-            self.calendars=calendar
+#             self.calendars=calendar
     
-    def updateCalendar(self, ade, week):
-        if len(self.ressourcesId) !=0:
-            pass
+#     def updateCalendar(self, ade, week):
+#         if len(self.ressourcesId) !=0:
+#             pass
+

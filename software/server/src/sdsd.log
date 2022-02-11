@@ -524,3 +524,13 @@ Gateway GW-01 unreachable, try again in 5s
 Gateway GW-01 unreachable, try again in 10s
 Gateway GW-Unknown unreachable, try again in 80s
 Gateway GW-01 unreachable, try again in 20s
+
+---------------------------------------------------------
+sdsd ver 1.0
+Start: 2022-02-07 14:48:03.032817
+
+Connect to ADE: OK
+Gateway GW-01 unreachable, try again in 5s
+Gateway GW-Unknown unreachable, try again in 5s
+Gateway GW-01 unreachable, try again in 10s
+Gateway GW-Unknown unreachable, try again in 10s

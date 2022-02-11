@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<data>
+  <loop>false</loop>
+  <repeat_times>1</repeat_times>
+  <repeat_period>500</repeat_period>
+  <frames_list>
+    <frame name="Join">
+      <payload>7E00121001000000000000FFFFFFFE00004A4F494EC3</payload>
+    </frame>
+    <frame name="Get Calendar">
+      <payload>7E001610010013A20041C16E2BFFFE000043414C3A37302C35CF</payload>
+    </frame>
+    <frame name="Update Calendar">
+      <payload>7E001610010013A20041C16E2BFFFE00005550443A34352C34B5</payload>
+    </frame>
+    <frame name="Setup">
+      <payload>7E001810010013A20041C16E2BFFFE000053455455503A34352C340D</payload>
+    </frame>
+    <frame name="Get RSSI">
+      <payload>7E00040801444270</payload>
+    </frame>
+  </frames_list>
+</data>
