@@ -6,7 +6,7 @@
   <repeat_period>500</repeat_period>
   <frames_list>
     <frame name="Join">
-      <payload>7E00121001000000000000FFFFFFFE00004A4F494EC3</payload>
+      <payload>7E00121001000000000000FFFFFFFE00024A4F494EC1</payload>
     </frame>
     <frame name="Get Calendar">
       <payload>7E001610010013A20041C16E2BFFFE000043414C3A37302C35CF</payload>
