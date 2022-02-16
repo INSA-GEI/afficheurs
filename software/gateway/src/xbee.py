@@ -41,7 +41,7 @@ class API_Frame():
         self.type = raw_frame[3]
     
     def encode_frame(self):
-        self.add_checksum()
+        pass
     
     def verify_checksum(self):
         checksum = 0
@@ -57,20 +57,20 @@ class API_Frame():
         else:
             return True
     
-    def add_checksum (self):
+    def compute_checksum (self, raw_frame):
         checksum =0
-        length = self.raw_frame[1]*256 + self.raw_frame[2]
+        length = raw_frame[1]*256 + raw_frame[2]
         
         # compute checksum
-        for b in self.raw_frame[3:3+length]:
+        for b in raw_frame[3:3+length]:
             checksum += b
         
         checksum = 0xFF-(checksum%256)
-        self.raw_frame.append(checksum)
+        return checksum
     
     def __str__(self) -> str:
         switcher = {
-            self.TRANSMIT_REQUEST: "Transmit Packet",
+            self.TRANSMIT_REQUEST: "Transmit Request",
             self.EXPLICIT_ADDRESSING_COMMAND_REQUEST: "Explicit Addressing Command Request",
             self.TRANSMIT_STATUS: "Transmit Status",
             self.EXTENDED_TRANSMIT_STATUS: "Extended Transmit Status",
@@ -192,9 +192,84 @@ class Transmit_Status(API_Frame):
         else:
             self.id = raw_frame[4]
             self.status = raw_frame[5]
+            
+class Extended_Transmit_Status(API_Frame):
+    id: int=0
+    status: int =0
+    tx_retry:int=0
+    discovery_status:int=0
+    
+    def __str__(self) -> str:
+        s = API_Frame.__str__(self)
+        s+="\nFrame Id: "+hex(self.id)
+        s+="\nStatus: "+hex(self.status)
+        s+="\nTx retries: "+hex(self.tx_retry)
+        s+="\nDiscovery: "+hex(self.discovery_status)
+        
+        return s
+    
+    def decode_frame(self, raw_frame):
+        # Appel la methode du parent (ici pour verifier le checksum et decoder le type)
+        API_Frame.decode_frame(self,raw_frame)
+
+        if self.type != self.EXTENDED_TRANSMIT_STATUS:
+            raise ValueError("Wrong frame type")
+        else:
+            self.id = raw_frame[4]
+            self.tx_retry = raw_frame[7]
+            self.status = raw_frame[8]
+            self.discovery_status = raw_frame[9]
+            
+class Transmit_Request(API_Frame):
+    id: int=0
+    options: int =0
+    data: str=""
+    dest: int =0
+    
+    def __init__(self, id, dest, options, data):
+        self.type = API_Frame.TRANSMIT_REQUEST
+        
+        self.id=id
+        self.options=options
+        self.dest = dest
+        self.data = data
+            
+    def __str__(self) -> str:
+        s = API_Frame.__str__(self)
+        s+="\nFrame Id: "+hex(self.id)
+        s+="\nDest address: "+hex(self.dest)
+        s+="\nOptions: "+hex(self.options)
+        s+="\nData: "
+        
+        for d in self.data:
+            s+=d
+        
+        return s
+    
+    def encode_frame(self):
+        #raw_frame = bytes(len(self.data)+18)
+        raw_frame = bytearray()
+        
+        if self.type != self.TRANSMIT_REQUEST:
+            raise ValueError("Wrong frame type")
+        
+        raw_frame+=bytearray(b'~')
+        raw_frame+=bytearray(int.to_bytes(len(self.data)+18-4,length=2, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.type,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.id,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.dest,length=8,byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(0xFFFE,length=2,byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(0,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.options,length=1, byteorder='big'))
+        raw_frame+=bytearray(str.encode(self.data))
+        raw_frame+=bytearray(int.to_bytes(API_Frame.compute_checksum(self, bytes(raw_frame)),
+                                          length=1, 
+                                          byteorder='big'))
+        
+        self.raw_frame=bytes(raw_frame)
+        return self.raw_frame
         
 class XBEE():
-    
     waitforAnswer=False
     lock:Lock=None
     rxThreadId:Thread=None
@@ -258,14 +333,19 @@ class XBEE():
             except Exception as e:
                 print ("Uncaught exception in RX thread:\n" + str(e))
     
+    def sendFrame(self, frame: API_Frame) -> None:
+        raw_frame = frame.encode_frame()
+        
+        self.uart.write(raw_frame)
+        
     def __decodeFrame(self, frame) -> API_Frame:
         frame_type=API_Frame.get_raw_frame_type(frame)
         
         switcher ={
-            API_Frame.TRANSMIT_REQUEST: API_Frame,
+            API_Frame.TRANSMIT_REQUEST: Transmit_Request,
             API_Frame.EXPLICIT_ADDRESSING_COMMAND_REQUEST: Explicit_Receive_Indicator,
             API_Frame.TRANSMIT_STATUS: Transmit_Status,
-            API_Frame.EXTENDED_TRANSMIT_STATUS: API_Frame,
+            API_Frame.EXTENDED_TRANSMIT_STATUS: Extended_Transmit_Status,
             API_Frame.RECEIVE_PACKET: Receive_Packet_Frame,
             API_Frame.EXPLICIT_RECEIVE_INDICATOR: API_Frame,
             API_Frame.LOCAL_AT_COMMAND_REQUEST: API_Frame,
