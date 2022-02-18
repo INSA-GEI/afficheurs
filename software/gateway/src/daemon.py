@@ -9,8 +9,11 @@ import time
 from threading import Thread
 from queue import Queue
 
-import serial
 import xbee
+from networkmgr import NetworkMgr
+import messages
+
+import tests
 
 try:
     GPIO_LED_ERROR = (29, GPIO.OUT)
@@ -114,9 +117,12 @@ def main():
     except:
         monXbee = xbee.XBEE(receiveCallback=RxCallback, com="/dev/ttyUSB0", baudrate=9600)
 
-    tx_frame=xbee.Transmit_Request(1,0x0013a20041c02be8,0,"Salut les gars")
-    print ("\nTX Frame: " + str(tx_frame))
-    monXbee.sendFrame(tx_frame)
+    #tx_frame=xbee.Transmit_Request(1,0x0013a20041c02be8,0,"Salut les gars")
+    #print ("\nTX Frame: " + str(tx_frame))
+    #monXbee.sendFrame(tx_frame)
+    
+    netman = NetworkMgr('localhost', 5166)
+    print ("Server tests: " + str(tests.tests_srv(netman)))
     
     try:
         comServerThreadId.join()
