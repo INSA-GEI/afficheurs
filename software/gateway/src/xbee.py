@@ -1,7 +1,7 @@
 # un truc a mettre ici
 
 import serial
-from threading import Thread, Lock
+from threading import Thread, Lock, Event
 import time
 
 class API_Frame():
@@ -288,11 +288,74 @@ class Transmit_Request(API_Frame):
                 frame_id+=1
         return frames_list
         
+class Local_AT_Command_Request(API_Frame):
+    id: int=0
+    parameters: str=""
+    atcmd: str=""
+    
+    def __init__(self, id, atcmd, parameters):
+        self.type = API_Frame.LOCAL_AT_COMMAND_REQUEST
+        
+        self.id=id
+        self.parameters=parameters
+        self.atcmd = atcmd
+            
+    def __str__(self) -> str:
+        s = API_Frame.__str__(self)
+        s+="\nFrame Id: "+hex(self.id)
+        s+="\nAT Cmd: "+self.atcmd
+        s+="\nParameters: "+self.parameters
+        return s
+    
+    def encode_frame(self):
+        #raw_frame = bytes(len(self.data)+18)
+        raw_frame = bytearray()
+        
+        raw_frame+=bytearray(b'~')
+        raw_frame+=bytearray(int.to_bytes(len(self.parameters)+4,length=2, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.LOCAL_AT_COMMAND_REQUEST,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.id,length=1, byteorder='big'))
+        raw_frame+=bytearray(str.encode(self.atcmd, encoding="ascii"))
+        raw_frame+=bytearray(str.encode(self.parameters, encoding="ascii"))
+        raw_frame+=bytearray(int.to_bytes(API_Frame.compute_checksum(self, bytes(raw_frame)),
+                                          length=1, 
+                                          byteorder='big'))
+        
+        return bytes(raw_frame)
+    
+class Local_AT_Command_Response(API_Frame):
+    id: int=0
+    status: int =0
+    atcmd=None
+    parameters=None
+    
+    def __str__(self) -> str:
+        s = API_Frame.__str__(self)
+        s+="\nFrame Id: "+hex(self.id)
+        s+="\nStatus: "+hex(self.status)
+        s+="\nAtcmd: "+self.atcmd.decode("ascii")
+        s+="\nParameters: "+self.parameters.decode("ascii")
+        
+        return s
+    
+    def decode_frame(self, raw_frame):
+        # Appel la methode du parent (ici pour verifier le checksum et decoder le type)
+        API_Frame.decode_frame(self,raw_frame)
+
+        if self.type != self.LOCAL_AT_COMMAND_RESPONSE:
+            raise ValueError("Wrong frame type")
+        else:
+            self.id = raw_frame[4]
+            self.atcmd = raw_frame[5:7]
+            self.status = raw_frame[7]
+            self.parameters = raw_frame[8:]  
+            self.parameters = self.parameters[:-1]  
+    
 class XBEE():
     waitforAnswer=False
     lock:Lock=None
     rxThreadId:Thread=None
-
+    answerEvent:Event = None
     uart:serial.Serial=None
     receiveCallback=None
 
@@ -310,7 +373,8 @@ class XBEE():
                 
         self.waitforAnswer=False
         self.lock=Lock()
-
+        self.answerEvent=Event()
+        
         self.rxThreadId = Thread(target=self.__receiveThread, args=(), name="Xbee RX thread")
         self.rxThreadId.daemon=True
         self.rxThreadId.start()
@@ -340,7 +404,11 @@ class XBEE():
 
                                 if decode_frame != None:
                                     #print ("decoded frame:\n"+str(decode_frame))
-                                    self.receiveCallback(self, decode_frame) # send frame to caller
+                                    if decode_frame.type == API_Frame.LOCAL_AT_COMMAND_RESPONSE:
+                                        self.atcmdanswer= decode_frame
+                                        self.answerEvent.set()
+                                    else:
+                                        self.receiveCallback(self, decode_frame) # send frame to caller
 
                                 # else, frame is invalid, drop it
                         # else timeout received, drop frame and start again
@@ -363,7 +431,24 @@ class XBEE():
         
         if end:    
             self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame(np)[0])
+    
+    def sendATRequest(self,atcmd, parameters):
+        frame = Local_AT_Command_Request(0x80,atcmd, parameters)
+        raw_frames = frame.encode_frame()
         
+        print (raw_frames)
+        
+        self.uart.write(raw_frames)
+        self.answerEvent.wait(3.0)
+        if self.answerEvent.is_set():
+            answer_frame = self.atcmdanswer
+        else:
+            answer_frame = None
+        
+        self.answerEvent.clear()
+        
+        return answer_frame
+    
     def __decodeFrame(self, frame) -> API_Frame:
         frame_type=API_Frame.get_raw_frame_type(frame)
         

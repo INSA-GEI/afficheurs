@@ -9,8 +9,6 @@ import time
 from threading import Thread
 from queue import Queue
 
-from sqlalchemy import false
-
 import xbee
 from networkmgr import NetworkMgr
 from messages import Message
@@ -237,6 +235,10 @@ def main():
             log.error("Unable to open serial port "+ serialDevice + " for Xbee ("+ str(e) + ")")
             
     log.info("Opened serial device {} at {} bauds for Xbee".format(serialDevice, str(9600)))
+    
+    # get panID value
+    ans=monXbee.sendATRequest("ID","")
+    print(str(ans))
     
     try:
         comServerThreadId.join()
