@@ -1,0 +1,127 @@
+# Commande CONFIG (Uniquement envoyée par la gateway, pour obtenir sa configuration)
+Syntax:
+CONFIG|0
+
+Reponses:
+OK|<PanID>|<Channel>|<Nom de la gateway|0
+ERR|<Code Erreur>|0
+
+Exemple:
+GW                                              SERVEUR
+CONFIG|0x0  
+                                                OK|7357|10|GW-01|0
+                                                ERR|2|0
+
+--------------------------------------------------------------------------------------------------------
+# Commande JOIN (Envoyé par l'ecran pour rejoindre le reseau, envoyé en broadcast adresse et panID)
+Syntax:
+Ecran                                           SERVEUR
+JOIN                ->                          JOIN|<RSSI vu par la Gateway>|<Adresse ecran>
+
+Reponses:
+ACCEPT|<PanID>      <-                          ACCEPT|<PanID>|<Adresse ecran>
+REJECT              <-                          REJECT|<Adresse ecran>
+
+Exemples:
+Ecran                                           Serveur
+JOIN (en broadcast panID et adresse) ->         JOIN|0x2a|0x13a20041c02be8      #Demande de l'ecran 0x13a20041c02be8, recu par la gateway avec un rssi de 0x2a
+
+ACCEPT|7357                                     ACCEPT|7357|0x13a20041c02be8    #Accepte l'ecran 0x13a20041c02be8 sur le panID 0x1234
+REJECT                                          REJECT|0x13a20041c02be8         #Refuse l'ecran 0x13a20041c02be8
+
+--------------------------------------------------------------------------------------------------------
+# Command SETUP (Envoyé par l'ecran pour recuperer sa configuration)
+Syntax:
+Ecran                                           SERVEUR
+SETUP                ->                         SETUP|<Adresse ecran>
+
+Reponses:
+                     <-                         OK|<Heure actuelle>|<Jour actuel>|<Nom de salle>|<Type de salle>|<Heure de debut d'update>|<Heure de fin d'update>|<Periodicité des updates (en secondes)>|<Numero d'ordre>|<Adresse ecran>
+OK|<Heure actuelle>|<Jour actuel>|<Nom de salle>|<Type de salle>|<Heure de debut d'update>|<Heure de fin d'update>|<Periodicité des updates (en secondes)>|<Numero d'ordre>      
+ERR|<Code Erreur>    <-                         ERR|<Code Erreur>|<Adresse ecran>
+
+Exemples:
+Ecran                                           Serveur
+SETUP                ->                         SETUP|0x13a20041c02be8      #Demande de Setup par l'ecran 0x13a20041c02be8
+
+                     <-                         OK|14:37:00|2|GEI-105|Informatique|7:0:0|19:0:0|900|0|0x13a20041c02be8    
+OK|14:37:00|2|GEI-105|Informatique|7:0:0|19:0:0|900|0                       #Reponse du serveur avec 14:37:00 comme heure actuelle, 2 comme jour actuel
+                                                                            #GEI-105 pour le nom de la salle, Informatique comme type de salle 
+                                                                            #debut de mise à jour periodique de l'ecran à 7:0:0 et fin de periode à 19:0:0
+                                                                            #periodicité de la mise à jour à 900 secondes et ordre d'ecran de 0
+ERR|2                <-                         ERR|2|0x13a20041c02be8      #Erreur 2 lors du setup pour l'ecran 0x13a20041c02be8
+
+--------------------------------------------------------------------------------------------------------
+# Command CAL (Envoyé par l'ecran pour recuperer la liste des reservation depuis le jour et l'heure actuelle jusqu'à dimanche 23h59 (jour 7))
+Syntax:
+Ecran                                           SERVEUR
+CAL                  ->                         CAL|<Adresse ecran>
+
+Reponses:
+OK|<Jours de la semaine>|<Calendrier>      <-   OK|<Jours de la semaine>|<Calendrier>|<Adresse ecran>   
+ERR|<Code Erreur>    <-                         ERR|<Code Erreur>|<Adresse ecran>
+
+avec <Jours de la semaine> de la forme:
+<jour 1>;<jour 2>; ... ;<jour 7>
+<jour x> etant de la forme DD/MM/YYYY
+
+avec <Calendrier> de la forme:
+<numero du jour>;<debut de la reservation en minute depuis 0h00>;<fin de la reservation en minute depuis 0h00>;<intiulé de la reservation>;<liste des etudiants>;<liste des enseignants>#<reservation suivante (meme format que precedemment)
+
+Avec <liste des etudiants> et <liste des enseignants> de la forme:
+<groupe 1>,<groupe 2>, ...
+
+En resumé:
+;       Separateur de champ d'une reservation
+#       Separateur de reservation
+,       Separateur de champ pour un groupe d'etudiant ou d'enseignants
+
+Exemples:
+Ecran                                           Serveur
+CAL                  ->                         CAL|0x13a20041c02be8        #Demande du calendrier de la semaine (à partir de la date et heure actuelle jusqu'a dimanche 23h59) par l'ecran 0x13a20041c02be8
+
+                     <-                         OK|28/02/2022;01/03/2022;02/03/2022;03/03/2022;04/03/2022;05/03/2022;06/03/2022|2;900;1020;Algo & programmation;4AE-SE,4AE-IR;S.DI MERCURIO,R.STAR#2;1035;1250;Réseaux;4IR;V.Nicomette|0x13a20041c02be8    
+OK|28/02/2022;01/03/2022;02/03/2022;03/03/2022;04/03/2022;05/03/2022;06/03/2022|2;900;1020;Algo & programmation;4AE-SE,4AE-IR;S.DI MERCURIO,R.STAR#2;1035;1250;Réseaux;4IR;V.Nicomette                      
+                                                                            #Reponse du serveur avec une premiere reservation
+                                                                            # Mardi (jour 2), debutant à 15:0 (900 minutes apres 0:00) et finissant à 17:00 (1020 apres 0:00)
+                                                                            # Nom de la formation : Algo & programmation
+                                                                            # Liste des etudiants: 4AE-SE et 4AE-IR
+                                                                            # Liste des formateurs: S.DI MERCURIO et R.STAR
+                                                                            #Avec une deuxieme reservation
+                                                                            # Mardi (jour 2), debutant à 17:15 (1035 minutes apres 0:00) et finissant à 20:50 (1250 apres 0:00)
+                                                                            # Nom de la formation : Réseaux
+                                                                            # Liste des etudiants: 4IR
+                                                                            # Liste des formateurs: V.Nicomette  
+                                                                            #pour l'ecran 0x13a20041c02be8
+ERR|2                <-                         ERR|2|0x13a20041c02be8      #Erreur 2 lors du setup pour l'ecran 0x13a20041c02be8
+
+--------------------------------------------------------------------------------------------------------
+# Command UPDATE (Envoyé par l'ecran pour interroger le serveur sur des mises à jour d'emploi du temps)
+Syntax:
+Ecran                                           SERVEUR
+UPDATE               ->                         UPDATE|<Adresse ecran>
+
+Reponses:
+                     <-                         OK|<modification d'emploi du temps present>|<Adresse ecran>
+ERR|<Code Erreur>    <-                         ERR|<Code Erreur>|<Adresse ecran>
+
+Exemples:
+Ecran                                           Serveur
+UPDATE               ->                         UPDATE|0x13a20041c02be8     #Interrogation du besoin de mise à jour par l'ecran 0x13a20041c02be8
+
+OK|1                 <-                         OK|1|0x13a20041c02be8       #Mise a jour presente (1) pour l'ecran 0x13a20041c02be8
+OK|0                 <-                         OK|0|0x13a20041c02be8       #Aucune mise a jour presente (0) pour l'ecran 0x13a20041c02be8
+ERR|2                <-                         ERR|2|0x13a20041c02be8      #Erreur 2 lors du setup pour l'ecran 0x13a20041c02be8
+
+--------------------------------------------------------------------------------------------------------
+# Command REPORT (Envoyé par l'ecran periodiquement pour remonter des statistiques de qualité reseau au serveur)
+Syntax:
+Ecran                                           SERVEUR
+REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran>   ->                                                                     
+                                                REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran>|<Min rssi gw>|<Max rssi ecran>|<Moy rssi gw>|<Nb nack gw><Adresse ecran>
+Reponses:
+aucune
+
+Exemples:
+Ecran                                           Serveur
+REPORT|32|1F|22|0    ->                         REPORT|32|1F|22|0|2A|19|1F|0|0x13a20041c02be8

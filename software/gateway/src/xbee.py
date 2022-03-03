@@ -142,7 +142,7 @@ class Receive_Packet_Frame(API_Frame):
             self.sender = int.from_bytes(raw_frame[4:12], "big")
             self.status = raw_frame[14]
             data_part = raw_frame[15:len(raw_frame)-1]
-            self.data = data_part.decode("ascii") 
+            self.data = data_part.decode("utf-8") 
             
 class Explicit_Receive_Indicator(API_Frame):
     data: str = ""
@@ -170,7 +170,7 @@ class Explicit_Receive_Indicator(API_Frame):
             self.sender = int.from_bytes(raw_frame[4:12], "big")
             self.status = raw_frame[20]
             data_part = raw_frame[21:len(raw_frame)-1]
-            self.data = data_part.decode("ascii")   
+            self.data = data_part.decode("utf-8")   
 
 class Transmit_Status(API_Frame):
     id: int=0
@@ -261,7 +261,7 @@ class Transmit_Request(API_Frame):
         raw_frame+=bytearray(int.to_bytes(0xFFFE,length=2,byteorder='big'))
         raw_frame+=bytearray(int.to_bytes(0,length=1, byteorder='big'))
         raw_frame+=bytearray(int.to_bytes(self.options,length=1, byteorder='big'))
-        raw_frame+=bytearray(str.encode(self.data))
+        raw_frame+=bytearray(str.encode(self.data, encoding="latin_1"))
         raw_frame+=bytearray(int.to_bytes(API_Frame.compute_checksum(self, bytes(raw_frame)),
                                           length=1, 
                                           byteorder='big'))
@@ -284,20 +284,17 @@ class XBEE():
             raise RuntimeError("Receive callback not defined")
 
         if com == "":
-            raise RuntimeError("com port cannot be empty")
+            raise RuntimeError("Com port cannot be empty")
 
         #self.uart = serial.Serial (com, baudrate, timeout=0.5)    # Open port with baud rate
         self.uart = serial.Serial (com, baudrate)    # Open port with baud rate
-        print ("Opened XBEE serial device {} at {} bauds".format(com, str(baudrate)))
-        
+                
         self.waitforAnswer=False
         self.lock=Lock()
 
         self.rxThreadId = Thread(target=self.__receiveThread, args=(), name="Xbee RX thread")
         self.rxThreadId.daemon=True
         self.rxThreadId.start()
-
-        print ("Xbee RX thread started")
 
     def __receiveThread(self):
         while True:
@@ -324,7 +321,7 @@ class XBEE():
 
                                 if decode_frame != None:
                                     #print ("decoded frame:\n"+str(decode_frame))
-                                    self.receiveCallback(decode_frame) # send frame to caller
+                                    self.receiveCallback(self, decode_frame) # send frame to caller
 
                                 # else, frame is invalid, drop it
                         # else timeout received, drop frame and start again
@@ -336,7 +333,24 @@ class XBEE():
     def sendFrame(self, frame: API_Frame) -> None:
         raw_frame = frame.encode_frame()
         
-        self.uart.write(raw_frame)
+        np = 60 # A reprendre en faisant une lecture du parametre NP du XBEE, qui limite la taille d'une frame Xbee
+        remainingBytes = len(raw_frame)
+        
+        while remainingBytes:
+            if len(raw_frame)>=np:
+                local_buffer= raw_frame[0:np-1]
+            else:   
+                local_buffer= raw_frame
+                
+            self.uart.write(local_buffer)
+            
+            remainingBytes = remainingBytes-np
+            if remainingBytes < 0:
+                remainingBytes =0
+            else:
+                raw_frame = raw_frame[np:]
+                
+        self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame())
         
     def __decodeFrame(self, frame) -> API_Frame:
         frame_type=API_Frame.get_raw_frame_type(frame)

@@ -5,6 +5,7 @@ import xbee
 class Message():
     ANS_OK = "OK"
     ANS_ERR = "ERR"
+    ANS_END = "END"
     ANS_REJECT = "REJECT"
     ANS_ACCEPT = "ACCEPT"
     
@@ -53,9 +54,9 @@ class Message():
                 self.device_id = 0
                 
                 if len(self.data)>=1:
-                    print ("ERROR: No device Id in message \"{}\"".format(self.raw_msg))
+                    print ("No device Id in message \"{}\"".format(self.raw_msg))
                 else:
-                    print ("ERROR: Invalid device ID \"{}\" in message \"{}\"".format(self.data[-1],self.raw_msg ))
+                    print ("Invalid device ID \"{}\" in message \"{}\"".format(self.data[-1],self.raw_msg ))
         
         if self.type == self.ANS_OK and len(self.data) >=2: # Ok answer is at least 2 elements long
             self.data = self.data[1:]
@@ -63,14 +64,23 @@ class Message():
         elif self.type == self.ANS_ACCEPT and len(self.data) ==3: # ACCEPT answer is exactly 3 elements long
             self.data = self.data[1:]
             self.data = self.data[:-1]
-        elif self.type == self.ANS_REJECT and len(self.data) ==2: # REJECT answer is exactly 3 elements long
+        elif self.type == self.ANS_REJECT and len(self.data) ==2: # REJECT answer is exactly 2 elements long
             self.data = []
         elif self.type == self.ANS_ERR and len(self.data) ==3: # ERR answer is exactly 3 elements long
             self.data = self.data[1:]
             self.data = self.data[:-1]
+        elif self.type == self.ANS_END and len(self.data) ==2: # ERR answer is exactly 2 elements long
+            self.data = []
         else:
             self.data = []
-            raise RuntimeError("ERROR: Invalid frame length in message \"{}\"".format(self.raw_msg))
+            if self.type == self.ANS_OK \
+               or self.type == self.ANS_ACCEPT \
+               or self.type == self.ANS_REJECT \
+               or self.type == self.ANS_ERR \
+               or self.type == self.ANS_END:
+                raise RuntimeError("Invalid frame length in message \"{}\"".format(self.raw_msg))
+            else:
+                raise RuntimeError("Invalid frame type ("+ self.type +") in message \"{}\"".format(self.raw_msg))
             
     def encode_to_srv(self) -> str:
         s = self.type + '|'
@@ -102,7 +112,7 @@ class Message():
                 self.data = []
         else:
             # invalid frame
-            raise RuntimeError ("Invalid frame type")
+            raise RuntimeError ("Invalid or non decodable frame type: " + str(frame.type))
         
     def encode_to_xbee(self, frame_id: int, options: int=0) -> xbee.Transmit_Request:
         s = self.type+"|"

@@ -26,7 +26,7 @@ class NetworkMgr():
         
         # Send message to server
         try:
-            self.sock.send(m.encode("ascii"))
+            self.sock.send(m.encode("utf-8"))
         except Exception as e:
             raise RuntimeError("Unable to send data to server: " + str(e))
         
@@ -59,7 +59,7 @@ class NetworkMgr():
                 bytes_recd = bytes_recd + len(chunk)
                 last_char=chunk[-1]
             
-            return b''.join(chunks).decode("ascii")
+            return b''.join(chunks).decode("utf-8")
 
         
         

@@ -11,9 +11,21 @@ from queue import Queue
 
 import xbee
 from networkmgr import NetworkMgr
-import messages
+from messages import Message
+import logging, os
 
 import tests
+
+serialDevice = "/dev/serial0"
+serverName = 'localhost'
+serverPort = 5166
+panID = 0
+chanID =0
+gatewayName= ""
+netman:NetworkMgr=None
+
+log = logging.getLogger("gateway")
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 try:
     GPIO_LED_ERROR = (29, GPIO.OUT)
@@ -53,8 +65,8 @@ def threadServer():
     while True:
         time.sleep(10.0)
 
-def RxCallback(decoded_frame:xbee.API_Frame)->None:
-    print ("\nReceived frame: "+str(decoded_frame))
+def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
+    log.debug("Received XBEE frame: "+str(frame))
     
     try:
         GPIO_set(GPIO_LED_ACTIVITY)
@@ -62,11 +74,43 @@ def RxCallback(decoded_frame:xbee.API_Frame)->None:
         GPIO_clear(GPIO_LED_ACTIVITY)
     except:
         pass # not executing code on RPI
-
+    
+    if frame.__class__ == xbee._64Bit_Receive_Packet or \
+       frame.__class__ == xbee.Receive_Packet_Frame or \
+       frame.__class__ == xbee.Explicit_Receive_Indicator:
+        msg= Message()
+        msg.decode_from_xbee(frame)
+        
+        ans = netman.sendMessage(msg)
+        
+        if msg.type == "JOIN":
+            ans_frame = ans.encode_to_xbee(1, 0x02)
+        else:
+            ans_frame = ans.encode_to_xbee(1, 0x00)
+            
+        xb.sendFrame(ans_frame)
+    elif frame.__class__ == xbee.Transmit_Status or\
+         frame.__class__ == xbee.Extended_Transmit_Status:
+        #stuff to do here
+        id = frame.id
+        status = frame.status
+    else:
+        #unsupported frame
+        log.warning("Unsupported frame received: " + str(frame))
+        
 def main():
-
+    global netman
+    global serialDevice
+    global serverName
+    global serverPort
+    global panID
+    global chanID
+    global gatewayName
+    
+    print ("Gateway ver 1.0")
+       
     # Initialisation des differents GPIO
-    print ("Initialize I/O and Xbee")
+    print ("Initialize I/O: ", end = '')
 
     try:
         # Clear I/O config
@@ -98,36 +142,75 @@ def main():
 
         time.sleep(2.0) # Wait 2 seconds to be sure XBEE is ready
 
-        print ("System ready")
         GPIO_set(GPIO_LED_PWR)
     except:
         pass # Initialization no needed as we are not executing on RPI
     
-    # comXbeeThreadId = Thread(target=threadComXbee, args=())
-    # comXbeeThreadId.daemon=True
-    # comXbeeThreadId.start()
+    print ("OK")
+    
+    log.info("Retrieve configuration from server " + serverName +":"+str(serverPort))
 
+    serverConnect=False
+    while not serverConnect:
+        try:
+            netman = NetworkMgr(serverName, serverPort)
+            serverConnect = True
+        except Exception as e:
+            serverConnect = False
+            log.warning("Unable to connect to server (" + str(e)+ ")")
+            log.warning("Next try in 30 s")
+            time.sleep(30.0)
+            
+    log.info("Connection successful")
+    
+    msg = Message()
+    msg.type = Message.CMD_CONFIG
+    try:
+        ans = netman.sendMessage(msg)
+    except RuntimeError as e:
+        log.error("Unable to communicate with server (" + str(e)+ "): Abort")
+        exit(1)
+    
+    if "ERR" in ans.type:
+        log.error("Unable to get configuration from server (err= " + hex(int(ans.data[0], base=16))+ "): Abort")
+        exit(1)
+        
+    panID = 0
+    chanID =0
+    gatewayName= ""
+    
+    try:
+        panID = int(ans.data[0],base=16)
+        chanID =  int(ans.data[1],base=16)  
+        gatewayName = ans.data[2]
+    except Exception as e:
+        log.error("Invalid answer from server (" + str(e)+ "): Abort")
+        log.error("Offensing answer is: " + str(ans.raw_msg))
+        exit(1)
+        
     comServerThreadId = Thread(target=threadServer, args=())
     comServerThreadId.daemon=True
     comServerThreadId.start()
+    
+    log.info("PANID: " + hex(panID) + ", CHANID: " + hex(chanID) + ", Gateway name: " + gatewayName)
 
     # Start Xbee RX thread
     try:
-        monXbee = xbee.XBEE(receiveCallback=RxCallback, com="/dev/serial0", baudrate=9600)
+        serialDevice = "/dev/serial0"
+        monXbee = xbee.XBEE(receiveCallback=RxCallback, com=serialDevice, baudrate=9600)
     except:
-        monXbee = xbee.XBEE(receiveCallback=RxCallback, com="/dev/ttyUSB0", baudrate=9600)
-
-    #tx_frame=xbee.Transmit_Request(1,0x0013a20041c02be8,0,"Salut les gars")
-    #print ("\nTX Frame: " + str(tx_frame))
-    #monXbee.sendFrame(tx_frame)
-    
-    netman = NetworkMgr('localhost', 5166)
-    print ("Server tests: " + str(tests.tests_srv(netman)))
+        try:
+            serialDevice = "/dev/ttyUSB0"
+            monXbee = xbee.XBEE(receiveCallback=RxCallback, com=serialDevice, baudrate=9600)
+        except Exception as e:
+            log.error("Unable to open serial port "+ serialDevice + " for Xbee ("+ str(e) + ")")
+            
+    log.info("Opened serial device {} at {} bauds for Xbee".format(serialDevice, str(9600)))
     
     try:
         comServerThreadId.join()
     except KeyboardInterrupt:
-        print ("Server stopped by user")
+        log.info("Gateway stopped by user")
 
     # Clear I/O config
     try:
