@@ -86,12 +86,12 @@ class Message():
         s = self.type + '|'
         
         if self.type == "JOIN":
-            s+=hex(self.rssi) + '|'
+            s+=hex(self.rssi)[2:].upper() + '|'
             
         for d in self.data:
             s+=d+'|'
             
-        return s+hex(self.device_id)+"\n"
+        return s+hex(self.device_id)[2:].upper()+"\n"
     
     def decode_from_xbee(self, frame: xbee.API_Frame):
         if (frame.__class__ == xbee._64Bit_Receive_Packet) or \

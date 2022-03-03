@@ -12,7 +12,7 @@ class NetworkMgr():
         self.server_name = server
         self.server_port = port
         
-    def sendMessage(self, msg:messages.Message) -> messages.Message:
+    def sendMessage(self, msg:messages.Message, ack=True) -> messages.Message:
         # Connect to server
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
@@ -31,18 +31,22 @@ class NetworkMgr():
             raise RuntimeError("Unable to send data to server: " + str(e))
         
         # wait for answer
-        try:
-            ans = self.__get_answer()
-        except Exception as e:
-            raise RuntimeError("Connection broken while receiving answer: " + str(e))
+        if ack:
+            try:
+                ans = self.__get_answer()
+            except Exception as e:
+                raise RuntimeError("Connection broken while receiving answer: " + str(e))
         
         try:
             self.sock.close()
         except Exception as e:
             raise RuntimeError("Unable to close socket: " + str(e))
         
-        m = messages.Message()
-        m.decode_from_srv(ans)
+        if ack:
+            m = messages.Message()
+            m.decode_from_srv(ans)
+        else:
+            m=None
         return m
         
     def __get_answer(self) -> str:

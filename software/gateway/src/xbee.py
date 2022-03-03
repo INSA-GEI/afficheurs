@@ -246,28 +246,47 @@ class Transmit_Request(API_Frame):
         
         return s
     
-    def encode_frame(self):
+    def __encode_payload(self, payload, id, dest, options):
         #raw_frame = bytes(len(self.data)+18)
         raw_frame = bytearray()
         
-        if self.type != self.TRANSMIT_REQUEST:
-            raise ValueError("Wrong frame type")
-        
         raw_frame+=bytearray(b'~')
-        raw_frame+=bytearray(int.to_bytes(len(self.data)+18-4,length=2, byteorder='big'))
-        raw_frame+=bytearray(int.to_bytes(self.type,length=1, byteorder='big'))
-        raw_frame+=bytearray(int.to_bytes(self.id,length=1, byteorder='big'))
-        raw_frame+=bytearray(int.to_bytes(self.dest,length=8,byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(len(payload)+18-4,length=2, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(self.TRANSMIT_REQUEST,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(id,length=1, byteorder='big'))
+        raw_frame+=bytearray(int.to_bytes(dest,length=8,byteorder='big'))
         raw_frame+=bytearray(int.to_bytes(0xFFFE,length=2,byteorder='big'))
         raw_frame+=bytearray(int.to_bytes(0,length=1, byteorder='big'))
-        raw_frame+=bytearray(int.to_bytes(self.options,length=1, byteorder='big'))
-        raw_frame+=bytearray(str.encode(self.data, encoding="latin_1"))
+        raw_frame+=bytearray(int.to_bytes(options,length=1, byteorder='big'))
+        raw_frame+=bytearray(str.encode(payload, encoding="latin_1"))
         raw_frame+=bytearray(int.to_bytes(API_Frame.compute_checksum(self, bytes(raw_frame)),
                                           length=1, 
                                           byteorder='big'))
         
-        self.raw_frame=bytes(raw_frame)
-        return self.raw_frame
+        return bytes(raw_frame)
+    
+    def encode_frame(self, np):
+        frame_id=1
+        frames_list=[]
+        payload = self.data
+        remainingBytes = len(payload)
+        header_size = 17
+        
+        while remainingBytes:
+            if len(payload)>=(np-header_size):   # header + checksum is 17 bytes for a transmit request
+                local_buffer= payload[0:np-header_size-1]
+            else:   
+                local_buffer= payload
+                
+            frames_list.append(self.__encode_payload(local_buffer,frame_id, self.dest, self.options))
+            
+            remainingBytes = remainingBytes-(np-header_size)
+            if remainingBytes < 0:
+                remainingBytes =0
+            else:
+                payload = payload[np-header_size-1:]
+                frame_id+=1
+        return frames_list
         
 class XBEE():
     waitforAnswer=False
@@ -327,30 +346,23 @@ class XBEE():
                         # else timeout received, drop frame and start again
                     # else, invalid frame start delimiter, skip it
                 # timeout while reading, try again
+            except RuntimeError as e:
+                frame=Transmit_Request(1,decode_frame.sender, 0x02, "ERR|80")
+                self.sendFrame(frame)
             except Exception as e:
                 print ("Uncaught exception in RX thread:\n" + str(e))
+                frame=Transmit_Request(1,decode_frame.sender, 0x02, "ERR|81")
+                self.sendFrame(frame)
     
-    def sendFrame(self, frame: API_Frame) -> None:
-        raw_frame = frame.encode_frame()
-        
+    def sendFrame(self, frame: API_Frame, end=False) -> None:
         np = 60 # A reprendre en faisant une lecture du parametre NP du XBEE, qui limite la taille d'une frame Xbee
-        remainingBytes = len(raw_frame)
+        raw_frames = frame.encode_frame(np)
         
-        while remainingBytes:
-            if len(raw_frame)>=np:
-                local_buffer= raw_frame[0:np-1]
-            else:   
-                local_buffer= raw_frame
-                
-            self.uart.write(local_buffer)
-            
-            remainingBytes = remainingBytes-np
-            if remainingBytes < 0:
-                remainingBytes =0
-            else:
-                raw_frame = raw_frame[np:]
-                
-        self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame())
+        for f in raw_frames:
+            self.uart.write(f)
+        
+        if end:    
+            self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame(np)[0])
         
     def __decodeFrame(self, frame) -> API_Frame:
         frame_type=API_Frame.get_raw_frame_type(frame)

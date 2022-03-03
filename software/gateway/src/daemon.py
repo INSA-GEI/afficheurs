@@ -9,11 +9,13 @@ import time
 from threading import Thread
 from queue import Queue
 
+from sqlalchemy import false
+
 import xbee
 from networkmgr import NetworkMgr
 from messages import Message
 import logging, os
-
+import statistics
 import tests
 
 serialDevice = "/dev/serial0"
@@ -23,6 +25,8 @@ panID = 0
 chanID =0
 gatewayName= ""
 netman:NetworkMgr=None
+
+rssi_device = {}
 
 log = logging.getLogger("gateway")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -66,7 +70,7 @@ def threadServer():
         time.sleep(10.0)
 
 def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
-    log.debug("Received XBEE frame: "+str(frame))
+    # log.debug("Received XBEE frame: "+str(frame))
     
     try:
         GPIO_set(GPIO_LED_ACTIVITY)
@@ -80,15 +84,41 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
        frame.__class__ == xbee.Explicit_Receive_Indicator:
         msg= Message()
         msg.decode_from_xbee(frame)
+        end = False
         
-        ans = netman.sendMessage(msg)
-        
-        if msg.type == "JOIN":
-            ans_frame = ans.encode_to_xbee(1, 0x02)
+        if frame.sender in rssi_device:
+            rssi = rssi_device[frame.sender]
+            try:
+                rssi.append(frame.rssi)
+            except:
+                rssi.append(0)
+            rssi_device[frame.sender]=rssi
         else:
-            ans_frame = ans.encode_to_xbee(1, 0x00)
+            rssi_device[frame.sender]=[frame.rssi]
             
-        xb.sendFrame(ans_frame)
+        if msg.type == "REPORT":
+            ack=False
+            #Rajoute les infos de la gateway concernant cet ecran
+            msg.data.append(str(hex(max(rssi_device[frame.sender]))[2:].upper()))
+            msg.data.append(str(hex(min(rssi_device[frame.sender]))[2:].upper()))
+            msg.data.append(str(hex(statistics.mean(rssi_device[frame.sender]))[2:].upper()))
+        else:
+            ack=True
+            
+        ans = netman.sendMessage(msg,ack)
+        
+        if ack:
+            if msg.type == "JOIN":
+                ans_frame = ans.encode_to_xbee(1, 0x02)
+            else:
+                ans_frame = ans.encode_to_xbee(1, 0x00)
+          
+            if msg.type == "CAL" or \
+                msg.type == "SETUP":
+                end = True
+          
+            xb.sendFrame(ans_frame, end)
+            
     elif frame.__class__ == xbee.Transmit_Status or\
          frame.__class__ == xbee.Extended_Transmit_Status:
         #stuff to do here
@@ -106,6 +136,7 @@ def main():
     global panID
     global chanID
     global gatewayName
+    global rssi_device
     
     print ("Gateway ver 1.0")
        
