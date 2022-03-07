@@ -15,6 +15,7 @@ class API_Frame():
     TRANSMIT_REQUEST = 0x10
     EXPLICIT_ADDRESSING_COMMAND_REQUEST= 0x11
     _64BIT_RECEIVE_PACKET = 0x80
+    MODEM_STATUS = 0x8A
     UNKNOWN_FRAME =0xFF
     
     type: int=UNKNOWN_FRAME
@@ -80,6 +81,7 @@ class API_Frame():
             self.LOCAL_AT_COMMAND_RESPONSE: "Local AT Command Response",
             self._64BIT_TRANSMIT_REQUEST: "64 Bit Transmit Request",
             self._64BIT_RECEIVE_PACKET: "64 Bit Receive Packet",
+            self.MODEM_STATUS: "Modem Status",
             self.UNKNOWN_FRAME: "Unknown Frame",
             }
         
@@ -289,11 +291,10 @@ class Transmit_Request(API_Frame):
         return frames_list
         
 class Local_AT_Command_Request(API_Frame):
-    id: int=0
-    parameters: str=""
+    id: int=0 
     atcmd: str=""
     
-    def __init__(self, id, atcmd, parameters):
+    def __init__(self, id: int, atcmd: str, parameters: bytes):
         self.type = API_Frame.LOCAL_AT_COMMAND_REQUEST
         
         self.id=id
@@ -304,7 +305,7 @@ class Local_AT_Command_Request(API_Frame):
         s = API_Frame.__str__(self)
         s+="\nFrame Id: "+hex(self.id)
         s+="\nAT Cmd: "+self.atcmd
-        s+="\nParameters: "+self.parameters
+        s+="\nParameters: "+str(self.parameters)
         return s
     
     def encode_frame(self):
@@ -316,7 +317,8 @@ class Local_AT_Command_Request(API_Frame):
         raw_frame+=bytearray(int.to_bytes(self.LOCAL_AT_COMMAND_REQUEST,length=1, byteorder='big'))
         raw_frame+=bytearray(int.to_bytes(self.id,length=1, byteorder='big'))
         raw_frame+=bytearray(str.encode(self.atcmd, encoding="ascii"))
-        raw_frame+=bytearray(str.encode(self.parameters, encoding="ascii"))
+        #raw_frame+=bytearray(str.encode(self.parameters, encoding="ascii"))
+        raw_frame+=bytearray(self.parameters)
         raw_frame+=bytearray(int.to_bytes(API_Frame.compute_checksum(self, bytes(raw_frame)),
                                           length=1, 
                                           byteorder='big'))
@@ -334,23 +336,41 @@ class Local_AT_Command_Response(API_Frame):
         s+="\nFrame Id: "+hex(self.id)
         s+="\nStatus: "+hex(self.status)
         s+="\nAtcmd: "+self.atcmd.decode("ascii")
-        s+="\nParameters: "+self.parameters.decode("ascii")
+        s+="\nParameters: "+hex(self.parameters)
         
         return s
     
     def decode_frame(self, raw_frame):
         # Appel la methode du parent (ici pour verifier le checksum et decoder le type)
         API_Frame.decode_frame(self,raw_frame)
-
+        
         if self.type != self.LOCAL_AT_COMMAND_RESPONSE:
             raise ValueError("Wrong frame type")
         else:
             self.id = raw_frame[4]
             self.atcmd = raw_frame[5:7]
             self.status = raw_frame[7]
-            self.parameters = raw_frame[8:]  
-            self.parameters = self.parameters[:-1]  
+            params = raw_frame[8:]  
+            self.parameters = int.from_bytes(params[:-1],byteorder='big')
+  
+class Modem_Status(API_Frame):
+    status: int =0
     
+    def __str__(self) -> str:
+        s = API_Frame.__str__(self)
+        s+="\nStatus: "+hex(self.status)
+        
+        return s
+    
+    def decode_frame(self, raw_frame):
+        # Appel la methode du parent (ici pour verifier le checksum et decoder le type)
+        API_Frame.decode_frame(self,raw_frame)
+        
+        if self.type != self.MODEM_STATUS:
+            raise ValueError("Wrong frame type")
+        else:
+            self.status = raw_frame[4]
+              
 class XBEE():
     waitforAnswer=False
     lock:Lock=None
@@ -432,7 +452,7 @@ class XBEE():
         if end:    
             self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame(np)[0])
     
-    def sendATRequest(self,atcmd, parameters):
+    def sendATRequest(self,atcmd:str, parameters:bytes):
         frame = Local_AT_Command_Request(0x80,atcmd, parameters)
         raw_frames = frame.encode_frame()
         
@@ -442,6 +462,7 @@ class XBEE():
         self.answerEvent.wait(3.0)
         if self.answerEvent.is_set():
             answer_frame = self.atcmdanswer
+            #self.__decodeFrame(answer_frame)
         else:
             answer_frame = None
         
@@ -459,10 +480,11 @@ class XBEE():
             API_Frame.EXTENDED_TRANSMIT_STATUS: Extended_Transmit_Status,
             API_Frame.RECEIVE_PACKET: Receive_Packet_Frame,
             API_Frame.EXPLICIT_RECEIVE_INDICATOR: API_Frame,
-            API_Frame.LOCAL_AT_COMMAND_REQUEST: API_Frame,
-            API_Frame.LOCAL_AT_COMMAND_RESPONSE: API_Frame,
+            API_Frame.LOCAL_AT_COMMAND_REQUEST: Local_AT_Command_Request,
+            API_Frame.LOCAL_AT_COMMAND_RESPONSE: Local_AT_Command_Response,
             API_Frame._64BIT_TRANSMIT_REQUEST: API_Frame,
             API_Frame._64BIT_RECEIVE_PACKET: _64Bit_Receive_Packet,
+            API_Frame.MODEM_STATUS: Modem_Status,
         }
         
         return switcher.get(frame_type, API_Frame)(frame)

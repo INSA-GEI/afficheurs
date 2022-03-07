@@ -122,6 +122,8 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
         #stuff to do here
         id = frame.id
         status = frame.status
+    elif frame.__class__ == xbee.Modem_Status:
+        print ("Modem Status received: " + hex(frame.status))
     else:
         #unsupported frame
         log.warning("Unsupported frame received: " + str(frame))
@@ -237,7 +239,15 @@ def main():
     log.info("Opened serial device {} at {} bauds for Xbee".format(serialDevice, str(9600)))
     
     # get panID value
-    ans=monXbee.sendATRequest("ID","")
+    ans=monXbee.sendATRequest("ID",bytes([]))
+    print(str(ans))
+    
+    # change PanID
+    ans=monXbee.sendATRequest("ID",bytes([0x12, 0x34]))
+    print(str(ans))
+    
+    # read back pan ID
+    ans=monXbee.sendATRequest("ID",bytes([]))
     print(str(ans))
     
     try:
