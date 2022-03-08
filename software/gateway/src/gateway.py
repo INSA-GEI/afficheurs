@@ -16,15 +16,19 @@ import logging, os
 import statistics
 import tests
 
+import argparse
+import configparser
+
 serialDevice = "/dev/serial0"
-serverName = 'localhost'
-serverPort = 5166
-panID = 0
-chanID =0
+serverName = ""
+serverPort = -1
+panID = -1
+chanID = -1
 gatewayName= ""
 netman:NetworkMgr=None
 
 rssi_device = {}
+DEFAULT_CONFIG_FILE = "/home/dimercur/Travail/git/afficheurs/software/gateway/src/default.conf"
 
 log = logging.getLogger("gateway")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -68,7 +72,7 @@ def threadServer():
         time.sleep(10.0)
 
 def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
-    # log.debug("Received XBEE frame: "+str(frame))
+    global rssi_device
     
     try:
         GPIO_set(GPIO_LED_ACTIVITY)
@@ -123,11 +127,45 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
         id = frame.id
         status = frame.status
     elif frame.__class__ == xbee.Modem_Status:
-        print ("Modem Status received: " + hex(frame.status))
+        log.info ("Modem Status received: " + hex(frame.status))
     else:
         #unsupported frame
         log.warning("Unsupported frame received: " + str(frame))
-        
+
+def parseCommandLine() -> str:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', metavar='configfile', help='Configuration file')
+    
+    args = parser.parse_args()
+    if args.c == None:
+        args.c = DEFAULT_CONFIG_FILE
+
+    log.info('Use configuration file "' + args.c+'"')
+    return args.c
+    
+def getConfiguration(confFile: str)->bool:
+    global serverName
+    global serverPort
+    
+    config = configparser.ConfigParser()
+    if config.read(confFile) == []:
+        log.error('Unable to open configuration file "' + confFile + '"')
+        return False
+    
+    # print (config.sections())
+    if not 'gateway' in config:
+        log.error('No "gateway" section in configuration file')
+        return False
+    
+    try:
+        serverName = config['gateway']['server']
+        serverPort = int(config['gateway']['port'])
+    except Exception as e:
+        log.error('Misformatted configuration file (' + str(e) + ')')
+        return False
+    
+    return True
+
 def main():
     global netman
     global serialDevice
@@ -138,10 +176,12 @@ def main():
     global gatewayName
     global rssi_device
     
-    print ("Gateway ver 1.0")
-       
+    print ("\nSmartRoom gateway v. 1.0\n")
+    if not getConfiguration(parseCommandLine()):
+        exit(-1)
+    
     # Initialisation des differents GPIO
-    print ("Initialize I/O: ", end = '')
+    log.info ("Initialize I/O")
 
     try:
         # Clear I/O config
@@ -177,8 +217,6 @@ def main():
     except:
         pass # Initialization no needed as we are not executing on RPI
     
-    print ("OK")
-    
     log.info("Retrieve configuration from server " + serverName +":"+str(serverPort))
 
     serverConnect=False
@@ -192,7 +230,7 @@ def main():
             log.warning("Next try in 30 s")
             time.sleep(30.0)
             
-    log.info("Connection successful")
+    #log.info("Connection successful")
     
     msg = Message()
     msg.type = Message.CMD_CONFIG
@@ -218,7 +256,7 @@ def main():
         log.error("Invalid answer from server (" + str(e)+ "): Abort")
         log.error("Offensing answer is: " + str(ans.raw_msg))
         exit(1)
-        
+    
     comServerThreadId = Thread(target=threadServer, args=())
     comServerThreadId.daemon=True
     comServerThreadId.start()
@@ -237,18 +275,21 @@ def main():
             log.error("Unable to open serial port "+ serialDevice + " for Xbee ("+ str(e) + ")")
             
     log.info("Opened serial device {} at {} bauds for Xbee".format(serialDevice, str(9600)))
-    
-    # get panID value
-    ans=monXbee.sendATRequest("ID",bytes([]))
-    print(str(ans))
+    log.info("Reconf of xbee with new panID/ChanID")
+
+    # change ChanID
+    ans=monXbee.sendATRequest("CH",chanID.to_bytes(length=2, byteorder='big'))
+    if ans.status != 0:
+        log.error("Unable to configure Xbee channel to " + hex(chanID))
+        log.error("Answer frame is: " + str(ans))
+        exit(5)
     
     # change PanID
-    ans=monXbee.sendATRequest("ID",bytes([0x12, 0x34]))
-    print(str(ans))
-    
-    # read back pan ID
-    ans=monXbee.sendATRequest("ID",bytes([]))
-    print(str(ans))
+    ans=monXbee.sendATRequest("ID",panID.to_bytes(length=2, byteorder='big'))
+    if ans.status != 0:
+        log.error("Unable to configure Xbee panID to " + hex(panID))
+        log.error("Answer frame is: " + str(ans))
+        exit(5)
     
     try:
         comServerThreadId.join()

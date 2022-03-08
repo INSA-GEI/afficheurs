@@ -456,7 +456,7 @@ class XBEE():
         frame = Local_AT_Command_Request(0x80,atcmd, parameters)
         raw_frames = frame.encode_frame()
         
-        print (raw_frames)
+        #print (raw_frames)
         
         self.uart.write(raw_frames)
         self.answerEvent.wait(3.0)
