@@ -15,12 +15,13 @@ CONFIG|0x0
 --------------------------------------------------------------------------------------------------------
 # Commande JOIN (Envoyé par l'ecran pour rejoindre le reseau, envoyé en broadcast adresse et panID)
 Syntax:
-Ecran                                           SERVEUR
-JOIN                ->                          JOIN|<RSSI vu par la Gateway>|<Adresse ecran>
+Ecran                Gateway                           SERVEUR
+JOIN         ->                       ->               JOIN|<RSSI vu par la Gateway>|<Adresse ecran>
 
 Reponses:
-ACCEPT|<PanID>      <-                          ACCEPT|<PanID>|<Adresse ecran>
-REJECT              <-                          REJECT|<Adresse ecran>
+ACCEPT|<PanID>  <-                    <-               ACCEPT|<PanID>|<Adresse ecran>
+REJECT          <-                    <-               REJECT|<Adresse ecran>
+                        X             <-               DROP|<Adresse ecran>
 
 Exemples:
 Ecran                                           Serveur
@@ -28,6 +29,7 @@ JOIN (en broadcast panID et adresse) ->         JOIN|0x2a|0x13a20041c02be8      
 
 ACCEPT|7357                                     ACCEPT|7357|0x13a20041c02be8    #Accepte l'ecran 0x13a20041c02be8 sur le panID 0x1234
 REJECT                                          REJECT|0x13a20041c02be8         #Refuse l'ecran 0x13a20041c02be8
+                                                DROP|0x13a20041c02be8           #Indique à la gateway d'arreter la transaction
 
 --------------------------------------------------------------------------------------------------------
 # Command SETUP (Envoyé par l'ecran pour recuperer sa configuration)

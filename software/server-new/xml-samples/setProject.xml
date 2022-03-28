@@ -1,0 +1,6 @@
+<!--
+    https://edt.insa-toulouse.fr/jsp/webapi?sessionId=17fd0aa87c8&function=setProject&projectId=5
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<setProject sessionId="17fd0aa87c8" projectId="5"/>

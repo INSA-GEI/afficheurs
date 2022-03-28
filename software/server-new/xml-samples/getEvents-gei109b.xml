@@ -1,0 +1,34 @@
+<!--
+    https://edt.insa-toulouse.fr/jsp/webapi?sessionId=17fd0aa87c8&function=getEvents&resources=146&startDate=03/28/2022&endDate=04/03/2022&detail=8
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<events>
+	<event id="48783" activityId="44330" session="0" repetition="0" name="TP Temps r??el I4AEIL11 4/5" endHour="10:45" startHour="08:00" date="31/03/2022" absoluteSlot="14702" slot="1" day="3" week="34" additionalResources="0" duration="11" info="" note="" color="255,255,204" isLockPosition="true" lastUpdate="01/27/2022 14:28" creation="12/20/2021 04:53" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="259801" nodeOrId="-1" quantity="1" category="trainee" name="4_AE_TP SE2" id="1738"/>
+			<resource fromWorkflow="false" nodeId="1224" nodeOrId="-1" quantity="1" category="instructor" name="HERAIL Philippe" id="2229"/>
+			<resource fromWorkflow="false" nodeId="270847" nodeOrId="270846" quantity="1" category="classroom" name="GEI 109 B - R??serv??e info expert" id="146"/>
+		</resources>
+		<additional/>
+	</event>
+	<event id="45301" activityId="56277" session="0" repetition="0" name="BE I3MAAU12 CLSC" endHour="18:15" startHour="15:30" date="01/04/2022" absoluteSlot="14793" slot="31" day="4" week="34" additionalResources="0" duration="11" info="Audine SUBIAS &lt;subias@laas.fr&gt;" note="" color="255,153,255" isLockPosition="false" lastUpdate="03/02/2022 11:11" creation="01/06/2022 14:25" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="236948" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_C1" id="1176"/>
+			<resource fromWorkflow="false" nodeId="236949" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_C2" id="1177"/>
+			<resource fromWorkflow="false" nodeId="251319" nodeOrId="-1" quantity="1" category="instructor" name="TURI J??r??my" id="2232"/>
+			<resource fromWorkflow="false" nodeId="251324" nodeOrId="-1" quantity="1" category="instructor" name="DOR?? Manon" id="1211"/>
+			<resource fromWorkflow="true" nodeId="54144" nodeOrId="54143" quantity="1" category="classroom" name="GEI 109 A - R??serv??e info expert" id="229"/>
+			<resource fromWorkflow="true" nodeId="54145" nodeOrId="54143" quantity="1" category="classroom" name="GEI 109 B - R??serv??e info expert" id="146"/>
+		</resources>
+		<additional/>
+	</event>
+	<event id="42304" activityId="49555" session="0" repetition="0" name="B.E Programmation orient??e Objet I4AEIL11 1/5" endHour="18:15" startHour="15:30" date="30/03/2022" absoluteSlot="14671" slot="31" day="2" week="34" additionalResources="0" duration="11" info="" note="" color="255,153,51" isLockPosition="true" lastUpdate="02/25/2022 11:57" creation="12/20/2021 04:53" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="146420" nodeOrId="-1" quantity="1" category="trainee" name="4_AE_TP SE2" id="1738"/>
+			<resource fromWorkflow="false" nodeId="285396" nodeOrId="-1" quantity="1" category="instructor" name="GAUCHARD David" id="2250"/>
+			<resource fromWorkflow="false" nodeId="251371" nodeOrId="251370" quantity="1" category="classroom" name="GEI 109 B - R??serv??e info expert" id="146"/>
+		</resources>
+		<additional/>
+	</event>
+</events>

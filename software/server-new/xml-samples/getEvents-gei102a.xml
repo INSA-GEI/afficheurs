@@ -1,0 +1,48 @@
+<!--
+    https://edt.insa-toulouse.fr/jsp/webapi?sessionId=17fd0aa87c8&function=getEvents&resources=2335&startDate=05/23/2022&endDate=05/29/2022&detail=8
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<events>
+	<event id="45440" activityId="56432" session="0" repetition="0" name="TP I3MAIF11 Archi ARM/x86" endHour="18:15" startHour="15:30" date="25/05/2022" absoluteSlot="18087" slot="31" day="2" week="42" additionalResources="0" duration="11" info="" note="" color="255,255,0" isLockPosition="false" lastUpdate="02/02/2022 08:21" creation="01/06/2022 15:28" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="238640" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_D1" id="1179"/>
+			<resource fromWorkflow="false" nodeId="238643" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_D2" id="1180"/>
+			<resource fromWorkflow="false" nodeId="251187" nodeOrId="-1" quantity="1" category="instructor" name="LUBAT Eric" id="735"/>
+			<resource fromWorkflow="false" nodeId="276101" nodeOrId="-1" quantity="1" category="instructor" name="MIGLIORE Vincent" id="721"/>
+			<resource fromWorkflow="true" nodeId="238626" nodeOrId="238624" quantity="1" category="classroom" name="GEI 102 B Informatique (VP-TB-F) 9 postes" id="606"/>
+			<resource fromWorkflow="true" nodeId="238625" nodeOrId="238624" quantity="1" category="classroom" name="GEI 102 A Informatique (VP-TB-F) 9 postes" id="2335"/>
+		</resources>
+		<additional/>
+	</event>
+	<event id="48865" activityId="10261" session="0" repetition="0" name="TP Projet syst??me info 10/11 - IA1" endHour="15:15" startHour="12:30" date="23/05/2022" absoluteSlot="17953" slot="19" day="0" week="42" additionalResources="0" duration="11" info="" note="" color="102,255,255" isLockPosition="false" lastUpdate="01/21/2022 12:59" creation="01/19/2022 04:53" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="49204" nodeOrId="-1" quantity="1" category="trainee" name="4IR_I_A1" id="1720"/>
+			<resource fromWorkflow="false" nodeId="147498" nodeOrId="-1" quantity="1" category="instructor" name="ALATA Eric" id="492"/>
+			<resource fromWorkflow="false" nodeId="274347" nodeOrId="-1" quantity="1" category="classroom" name="GEI 102 A Informatique (VP-TB-F) 9 postes" id="2335"/>
+		</resources>
+		<additional/>
+	</event>
+	<event id="45407" activityId="56388" session="0" repetition="0" name="TP I3MAIF22  Langage d&apos;Assemblage" endHour="16:45" startHour="14:00" date="24/05/2022" absoluteSlot="18020" slot="25" day="1" week="42" additionalResources="0" duration="11" info="" note="" color="255,204,51" isLockPosition="false" lastUpdate="02/15/2022 15:26" creation="01/06/2022 15:07" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="238236" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_C1" id="1176"/>
+			<resource fromWorkflow="false" nodeId="238237" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_C2" id="1177"/>
+			<resource fromWorkflow="false" nodeId="241389" nodeOrId="-1" quantity="1" category="instructor" name="MAHOUT Vincent" id="175"/>
+			<resource fromWorkflow="false" nodeId="283657" nodeOrId="-1" quantity="1" category="instructor" name="ESCOUTELOUP Mathieu" id="1930"/>
+			<resource fromWorkflow="true" nodeId="238242" nodeOrId="238238" quantity="1" category="classroom" name="GEI 102 B Informatique (VP-TB-F) 9 postes" id="606"/>
+			<resource fromWorkflow="true" nodeId="238241" nodeOrId="238238" quantity="1" category="classroom" name="GEI 102 A Informatique (VP-TB-F) 9 postes" id="2335"/>
+		</resources>
+		<additional/>
+	</event>
+	<event id="45426" activityId="56396" session="0" repetition="0" name="TP I3MAIF22  Langage d&apos;Assemblage" endHour="10:45" startHour="08:00" date="23/05/2022" absoluteSlot="17935" slot="1" day="0" week="42" additionalResources="0" duration="11" info="" note="" color="255,204,51" isLockPosition="false" lastUpdate="02/15/2022 15:28" creation="01/06/2022 15:07" isLockResources="false" isSoftKeepResources="false">
+		<resources>
+			<resource fromWorkflow="false" nodeId="238382" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_D1" id="1179"/>
+			<resource fromWorkflow="false" nodeId="238383" nodeOrId="-1" quantity="1" category="trainee" name="3_IMACS_D2" id="1180"/>
+			<resource fromWorkflow="false" nodeId="262576" nodeOrId="-1" quantity="1" category="instructor" name="MAHOUT Vincent" id="175"/>
+			<resource fromWorkflow="false" nodeId="283659" nodeOrId="-1" quantity="1" category="instructor" name="ESCOUTELOUP Mathieu" id="1930"/>
+			<resource fromWorkflow="true" nodeId="238347" nodeOrId="238345" quantity="1" category="classroom" name="GEI 102 B Informatique (VP-TB-F) 9 postes" id="606"/>
+			<resource fromWorkflow="true" nodeId="238346" nodeOrId="238345" quantity="1" category="classroom" name="GEI 102 A Informatique (VP-TB-F) 9 postes" id="2335"/>
+		</resources>
+		<additional/>
+	</event>
+</events>

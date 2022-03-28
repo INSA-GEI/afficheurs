@@ -1,0 +1,8 @@
+<!--
+    https://edt.insa-toulouse.fr/jsp/webapi?sessionId=17fd0aa87c8&function=getProjects&detail=4
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<projects>
+	<project id="5" name="INSA2122" uid="1620032877926" version="600" loaded="true"/>
+</projects>
