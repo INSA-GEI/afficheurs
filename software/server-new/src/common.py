@@ -3,6 +3,7 @@
 #
 
 from datetime import datetime, date, timedelta
+from functools import total_ordering
 
 # Class used for date and time manipulation           
 class Datetool:
@@ -59,6 +60,7 @@ class Datetool:
         return int(seconds_since_midnight/60)
 
 # Class used for storing room reservation
+#@total_ordering
 class Calendar():
     firstHour=0
     lastHour=0
@@ -94,6 +96,111 @@ class Calendar():
         
         s= s + "]"
         return s
+        
+    def __eq__(self, other):
+        if not isinstance(other, Calendar):
+            return NotImplemented
+        
+        try :
+            val=True
+            
+            if ((self.firstHour != other.firstHour) or 
+                (self.lastHour != other.lastHour) or 
+                (self.day != other.day) or 
+                (self.title != other.title)):
+                val =False
+            else:
+                self.trainees.sort()
+                other.trainees.sort()
+                
+                if (self.trainees != other.trainees):
+                    val =False
+                else:
+                    self.instructors.sort()
+                    other.instructors.sort()
+                    
+                    if (self.instructors != other.instructors):
+                        val =False
+                
+            return val
+        except:
+            return False
+        
+    def __lt__(self, other):
+        if not isinstance(other, Calendar):
+            return NotImplemented
+        
+        try :
+            val=False
+            
+            if Datetool.toDate(self.day) < Datetool.toDate(other.day):
+                val=True
+            elif (self.day == other.day) and (self.firstHour < other.firstHour):
+                val=True
+            elif ((self.day == other.day) and (self.firstHour == other.firstHour) and (self.lastHour < other.lastHour)):
+                val=True
+                
+            return val
+        except:
+            return False
+        
+    def dif(a, b):
+        return [i for i in range(len(a)) if a[i] != b[i]]
+
+    @staticmethod 
+    def cleanup(calendars):
+        simplified_calendar = list()
+        
+        if len(calendars)>1:
+            #remove duplicate entries
+            unique_calendars = list()
+            for c in calendars:
+                if c not in unique_calendars:
+                    unique_calendars.append(c)
+                        
+            #organise calendar entries from earliest to latest
+            unique_calendars.sort()
+            
+            #now, factorize similar entries into a single one
+            simplified_calendar.append(unique_calendars[0])
+            
+            for uc in unique_calendars[1:]:
+                sc = simplified_calendar[-1]
+                
+                if ((uc.day == sc.day) and
+                    (uc.firstHour == sc.firstHour) and
+                    (uc.lastHour == sc.lastHour)):
+                    #Calendar events are at the same moment: look likes we may factorize them
+                    if (uc.title != sc.title):
+                        #if title are not rigorously identical, get the common part
+                        if len(uc.title) < len(sc.title):
+                            length = len(sc.title)
+                        else:
+                            length = len(uc.title)
+
+                        for l in range(length):
+                            if uc.title[l] != sc.title[l]:
+                                break
+                        sc.title=sc.title[:l-1]
+                          
+                    # Get trainees and instructors from factorized event                  
+                    for t in uc.trainees:
+                        sc.trainees.append(t)
+                        
+                    for instructor in uc.instructors:
+                        sc.instructors.append(instructor)
+                        
+                    sc.trainees.sort()
+                    sc.instructors.sort()
+                else:
+                    uc.trainees.sort()
+                    uc.instructors.sort()
+                    simplified_calendar.append(uc)
+        else:
+            calendars[-1].trainees.sort()
+            calendars[-1].instructors.sort()
+            simplified_calendar = calendars          
+        return simplified_calendar
     
 # Class used for storing ressources information        
 class Ressource():

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from calendar import calendar
 import time
 from threading import Thread
 from queue import Queue
@@ -86,6 +87,8 @@ def getConfiguration(confFile: str)->bool:
                 #print (config[key]['displays'])
                 #print()
                 room = Room(key, config[key]['ade_pattern'],[],[])
+                room.calendars=[]
+                room.ressourcesId=[]
                 
                 #print (json.loads(config[key]['displays']))
                 displays = json.loads(config[key]['displays'])
@@ -107,24 +110,12 @@ def getConfiguration(confFile: str)->bool:
     log.info("Configuration read from " + str(confFile)+ ": Ok")
     return True
 
-def main():
-    # Get command line information
-    configFile = parseCommandLine()
+def updateCalendars():
+    global roomsList
+    global adeServer
+    global adeLogin
+    global adePassword
     
-    # read configuration file
-    configOk=False
-    if configFile != None:
-        if getConfiguration(configFile):
-            configOk=True
-    else:
-        for f in DEFAULT_CONFIG_FILE:
-            if getConfiguration(f):
-                configOk=True
-                break
-    
-    if not configOk:
-        exit(1)
-      
     #Retrieve ressources, room information and calendars from ade
     adeSession=Ade()
     adeSession.connect(adeServer, adeLogin, adePassword)
@@ -149,9 +140,37 @@ def main():
                                                         Datetool.getLastDayofWeek())
             
             for c in cal:
-                room.calendars.append(c)
+                #if not c in room.calendars:
+                    room.calendars.append(c)
+               
+        #room.calendars.sort()
+        room.calendars = Calendar.cleanup(room.calendars)
+        
+def main():
+    global roomsList
+    
+    # Get command line information
+    configFile = parseCommandLine()
+    
+    # read configuration file
+    configOk=False
+    if configFile != None:
+        if getConfiguration(configFile):
+            configOk=True
+    else:
+        for f in DEFAULT_CONFIG_FILE:
+            if getConfiguration(f):
+                configOk=True
+                break
+    
+    if not configOk:
+        exit(1)
+      
+    # Initialize calendar information
+    updateCalendars()
                      
     for room in roomsList:
+        print()
         print (str(room))
         for cal in room.calendars:
             print(str(cal))
