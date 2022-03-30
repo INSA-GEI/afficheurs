@@ -15,6 +15,8 @@ import json
 from common import Datetool, Calendar, Room
 from ade import Ade
 
+from messages import *
+
 MAJOR_VER = 0
 MINOR_VER = 1
 
@@ -34,6 +36,8 @@ reportLog = ""
 errorLog = ""
 dictionnaryFile = ""
 wordDictionnary = [{}]
+
+messagesManager: MessageMgr = None
 
 DEFAULT_CONFIG_FILE = ["./server.conf",
                        "/home/dimercur/Travail/git/afficheurs/software/server-new/src/server.conf",
@@ -171,6 +175,7 @@ def updateCalendars():
 def main():
     global roomsList
     global wordDictionnary
+    global messagesManager
     
     # Get command line information
     configFile = parseCommandLine()
@@ -197,18 +202,24 @@ def main():
             if wordDictionnary!=None:
                 break
             
-    # Initialize calendar information
-    updateCalendars()
+    # # Initialize calendar information
+    # updateCalendars()
                      
-    for room in roomsList:
-        print()
-        print (str(room))
-        for cal in room.calendars:
-            print(str(cal))
+    # for room in roomsList:
+    #     print()
+    #     print (str(room))
+    #     for cal in room.calendars:
+    #         print(str(cal))
+    
+    messagesManager = MessageMgr('localhost',serverPort,30)
+    messagesManager.start()
 
 if __name__ == '__main__':
     print ("SmartDoors server ver " + str(MAJOR_VER)+"." + str(MINOR_VER))
     
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        messagesManager.stop()
     
     log.info("Server stopped")
