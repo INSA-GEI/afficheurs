@@ -171,7 +171,18 @@ def updateCalendars():
                 room.calendars.append(c)
                
         room.calendars = Calendar.cleanup(room.calendars, wordDictionnary)
-        
+
+def actionHandler(msg: Message, gateway:str) -> Message:
+    msg_ans=Message()
+    print ("Received message in action handler from " + gateway)
+    print (str(msg))
+    
+    msg_ans.type = Message.ANS_ERR
+    msg_ans.data = [str(10)] # no action from server
+    msg_ans.device_id=msg.device_id
+    
+    return msg_ans
+    
 def main():
     global roomsList
     global wordDictionnary
@@ -211,7 +222,13 @@ def main():
     #     for cal in room.calendars:
     #         print(str(cal))
     
-    messagesManager = MessageMgr('localhost',serverPort,30)
+    try:
+        messagesManager = MessageMgr('localhost',serverPort,30)
+    except Exception as e:
+        log.error (str(e))
+        exit (2)
+    
+    messagesManager.actionHandler = actionHandler
     messagesManager.start()
 
 if __name__ == '__main__':

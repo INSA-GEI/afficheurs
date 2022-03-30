@@ -119,11 +119,11 @@ ERR|2                <-                         ERR|2|0x13a20041c02be8      #Err
 # Command REPORT (Envoyé par l'ecran periodiquement pour remonter des statistiques de qualité reseau au serveur)
 Syntax:
 Ecran                                           SERVEUR
-REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran>   ->                                                                     
-                                                REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran>|<Min rssi gw>|<Max rssi ecran>|<Moy rssi gw>|<Nb nack gw><Adresse ecran>
+REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran><niveau batterie>   ->                                                                     
+                                                REPORT|<Min rssi ecran>|<Max rssi ecran>|<Moy rssi ecran>|<Nb nack ecran>|<niveau batterie>|<Min rssi gw>|<Max rssi ecran>|<Moy rssi gw>|<Nb nack gw>|<Adresse ecran>
 Reponses:
 aucune
 
 Exemples:
 Ecran                                           Serveur
-REPORT|32|1F|22|0    ->                         REPORT|32|1F|22|0|2A|19|1F|0|0x13a20041c02be8
+REPORT|32|1F|22|0|FA    ->                      REPORT|32|1F|22|0|FA|2A|19|1F|0|0x13a20041c02be8
