@@ -30,9 +30,18 @@ authorizedGateways=[]        # list of authorized gateways, given in config file
 roomsList:Room = []          # list of rooms, given in config file
 authentifiedDisplays = [{}]  # list (dictionnary) of accepted display, with corresponding room
 
+reportLog = ""
+errorLog = ""
+dictionnaryFile = ""
+wordDictionnary = [{}]
+
 DEFAULT_CONFIG_FILE = ["./server.conf",
                        "/home/dimercur/Travail/git/afficheurs/software/server-new/src/server.conf",
                        "/etc/smartdisplay/server.conf"]
+
+DEFAULT_DICTIONNARY_FILE = ["./dict.conf",
+                       "/home/dimercur/Travail/git/afficheurs/software/server-new/src/dict.conf",
+                       "/etc/smartdisplay/dict.conf"]
 
 log = logging.getLogger("server")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -52,13 +61,13 @@ def getConfiguration(confFile: str)->bool:
     global refreshTime
     global authorizedGateways
     global roomsList
-    
+    global reportLog, errorLog, dictionnaryFile
+
     config = configparser.ConfigParser()
     if config.read(confFile) == []:
-        log.error('Unable to open configuration file "' + confFile + '"')
+        log.info('Unable to open configuration file "' + confFile + '"')
         return False
     
-    #print (config.sections())
     if not 'server' in config:
         log.error('No "server" section in configuration file')
         return False
@@ -69,6 +78,9 @@ def getConfiguration(confFile: str)->bool:
         adeLogin = config['server']['adelogin']
         adePassword = config['server']['adepassword']
         refreshTime = int(config['server']['refreshtime'])*60
+        reportLog = config['server']['reportlog'] 
+        errorLog = config['server']['errorlog'] 
+        dictionnaryFile = config['server']['dictionnary'] 
     except Exception as e:
         log.error('Misformatted configuration file for "server" section(' + str(e) + ')')
         return False
@@ -82,15 +94,10 @@ def getConfiguration(confFile: str)->bool:
     try:
         for key in config:
             if key != "server" and key != "authorized gateways" and key != "DEFAULT":
-                #print (key)
-                #print (config[key]['ade_pattern'])
-                #print (config[key]['displays'])
-                #print()
                 room = Room(key, config[key]['ade_pattern'],[],[])
                 room.calendars=[]
                 room.ressourcesId=[]
                 
-                #print (json.loads(config[key]['displays']))
                 displays = json.loads(config[key]['displays'])
                 if type(displays)==list:
                     for d in displays:
@@ -98,18 +105,35 @@ def getConfiguration(confFile: str)->bool:
                 else:
                     room.displayId.append(int(displays, 16))
                     
-                #print (room)
                 roomsList.append(room)
     except Exception as e:
         log.error('Misformatted configuration file for rooms sections (' + str(e) + ')')
         return False
-    
-    #for r in roomsList:
-    #    print (r)
         
     log.info("Configuration read from " + str(confFile)+ ": Ok")
     return True
 
+def getDictionnary(file):
+    dictConfig = configparser.ConfigParser()
+    dictionnary= [{}]
+    
+    if dictConfig.read(file) == []:
+        log.info('Unable to open dictionnary file "' + file + '"')
+        return None
+    
+    if not 'dictionnary' in dictConfig:
+        log.error('No "dictionnary" section in dictionnary file')
+        return None
+    
+    try:
+        dictionnary= dict(dictConfig.items('dictionnary'))
+    except Exception as e:
+        log.error('Misformatted dictionnary file for "dictionnary" section(' + str(e) + ')')
+        return None
+    
+    log.info("Configuration read from " + str(file)+ ": Ok")
+    return dictionnary
+    
 def updateCalendars():
     global roomsList
     global adeServer
@@ -140,14 +164,13 @@ def updateCalendars():
                                                         Datetool.getLastDayofWeek())
             
             for c in cal:
-                #if not c in room.calendars:
-                    room.calendars.append(c)
+                room.calendars.append(c)
                
-        #room.calendars.sort()
-        room.calendars = Calendar.cleanup(room.calendars)
+        room.calendars = Calendar.cleanup(room.calendars, wordDictionnary)
         
 def main():
     global roomsList
+    global wordDictionnary
     
     # Get command line information
     configFile = parseCommandLine()
@@ -166,6 +189,14 @@ def main():
     if not configOk:
         exit(1)
       
+    if dictionnaryFile != None and dictionnaryFile != "":
+        wordDictionnary=getDictionnary(dictionnaryFile)
+    else:
+        for f in DEFAULT_DICTIONNARY_FILE:
+            wordDictionnary=getDictionnary(f)
+            if wordDictionnary!=None:
+                break
+            
     # Initialize calendar information
     updateCalendars()
                      

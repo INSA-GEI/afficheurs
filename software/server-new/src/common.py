@@ -148,7 +148,7 @@ class Calendar():
         return [i for i in range(len(a)) if a[i] != b[i]]
 
     @staticmethod 
-    def cleanup(calendars):
+    def cleanup(calendars, dictionnary):
         simplified_calendar = list()
         
         if len(calendars)>1:
@@ -199,7 +199,38 @@ class Calendar():
         else:
             calendars[-1].trainees.sort()
             calendars[-1].instructors.sort()
-            simplified_calendar = calendars          
+            simplified_calendar = calendars      
+            
+        if dictionnary != None and dictionnary != [{}]:
+            # search for ?? in title and instructors and look into dictionnary for correct word
+            for sc in simplified_calendar:
+                if '??' in sc.title:
+                    for key in dictionnary:
+                        sc.title=sc.title.replace(key, dictionnary[key])
+                
+                # if there is still ?? in title, replace with ' '
+                if '??' in sc.title:
+                    sc.title=sc.title.replace('??', ' ')
+                    
+                # do the same for instructors
+                for i in range(len(sc.instructors)):
+                    if '??' in sc.instructors[i]:
+                        for key in dictionnary:
+                            sc.instructors[i]=sc.instructors[i].replace(key, dictionnary[key])
+                    # if there is still ?? in instructor name, replace with ' '
+                    if '??' in sc.instructors[i]:
+                        sc.instructors[i]=sc.instructors[i].replace('??', ' ')
+        else: # no dictionanry -> replace all ?? with ' '
+            for sc in simplified_calendar:
+                # if there is ?? in title, replace with ' '
+                if '??' in sc.title:
+                    sc.title=sc.title.replace('??', ' ')
+                    
+                # do the same for instructors
+                for i in range(len(sc.instructors)):
+                    # if there is ?? in instructor name, replace with ' '
+                    if '??' in sc.instructors[i]:
+                        sc.instructors[i]=sc.instructors[i].replace('??', ' ')
         return simplified_calendar
     
 # Class used for storing ressources information        
