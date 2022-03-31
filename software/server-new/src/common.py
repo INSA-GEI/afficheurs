@@ -40,6 +40,19 @@ class Datetool:
         return end_of_week
     
     @staticmethod
+    def getDaysofWeek():
+        s=""
+        s+=datetime.strptime(str(Datetool.getFirstDayofWeek()), '%Y-%m-%d').strftime('%d/%m/%Y')  # Monday
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=1)), '%Y-%m-%d').strftime('%d/%m/%Y')  
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=2)), '%Y-%m-%d').strftime('%d/%m/%Y') #Wednesday
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=3)), '%Y-%m-%d').strftime('%d/%m/%Y') 
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=4)), '%Y-%m-%d').strftime('%d/%m/%Y') #Friday
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=5)), '%Y-%m-%d').strftime('%d/%m/%Y') #Saturday
+        s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=6)), '%Y-%m-%d').strftime('%d/%m/%Y') #Sunday
+    
+        return s
+
+    @staticmethod
     def getDayNumber(date_obj: date):
         return date_obj.isocalendar()[2] # 1 = Lundi, 7 = Dimanche
     
@@ -55,9 +68,10 @@ class Datetool:
     
     @staticmethod
     def minutsFromMidnight(ade_time: str):
-        date_obj = Datetool.toTime(ade_time)
-        seconds_since_midnight = (date_obj - date_obj.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-        return int(seconds_since_midnight/60)
+        date_obj = datetime.strptime(ade_time, '%H:%M').time()
+        minuts_since_midnight = date_obj.hour*60 + date_obj.minute
+
+        return int(minuts_since_midnight)
 
 # Class used for storing room reservation
 #@total_ordering
@@ -245,20 +259,22 @@ class Ressource():
         
 # Class used for storing room information  
 class Room():
-    name =""
+    name = ""
     adePattern = ""
+    type = ""
     ressourcesId = []
     displayId = []
     calendars = []
     
-    def __init__(self, name, adePattern, ressourcesId, displayId):
+    def __init__(self, name, type, adePattern, ressourcesId, displayId):
         self.name = name
+        self.type = type
         self.adePattern = adePattern.upper() # est-ce necessaire ?
         self.ressourcesId = ressourcesId
         self.displayId = displayId
     
     def __str__ (self):
-        s = self.name + " [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
+        s = self.name + "[" + self.type +"] [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
         
         for r in self.ressourcesId:
             s = s + r + ", "
@@ -276,6 +292,8 @@ class Room():
         lastDay = Datetool.getLastDayofWeek()
         
         calendar = []
+        
+        # a revoir
         
         if len(self.ressourcesId) !=0:
             for res in self.ressourcesId:
@@ -297,6 +315,15 @@ class Room():
 class Display():
     id: int = 0
     room: Room = None
-    
+    gw: str = ""
+    calendarUpdate: bool = False
+    displayMinRSSI: int = 0
+    displayMaxRSSI: int =0
+    displayMoyRSSI: int =0
+    gwMinRSSI: int = 0
+    gwMaxRSSI: int =0
+    gwMoyRSSI: int =0
+    batterylevel: int =0
+    joinSignalStrength={}
     
     

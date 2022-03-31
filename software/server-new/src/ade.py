@@ -99,41 +99,6 @@ class Ade:
         
         return ressources
     
-    def getRessourceCalendar(self,ressource):
-        cmd = self.baseUrl+'sessionId='+self.sessionId + \
-            '&function=getActivities&tree=false&resources='+ressource+'&detail=17'
-        r = requests.get(cmd,)
-        r.encoding='utf-8'
-
-        if self.debugFlag == True:
-            print(cmd)
-            print(r)
-            print (r.text)
-        
-        root = ET.fromstring(r.text)
-
-        calendar = []
-        
-        for activity in root.findall('activity'):
-            for events in activity.findall('events'):
-                for event in events.findall('event'):
-                    cal = Calendar(day=event.attrib['date'],
-                                   title=event.attrib['name'],
-                                   firstHour=event.attrib['startHour'],
-                                   lastHour=event.attrib['endHour'])
-                    
-                    for eventParticipants in event.findall('eventParticipants'):
-                        for eventParticipant in eventParticipants.findall('eventParticipant'):
-                            participant = eventParticipant.attrib['name']
-                            if eventParticipant.attrib['category'] == "trainee":
-                                cal.addTrainee(participant)
-                            elif eventParticipant.attrib['category'] == "instructor":
-                                cal.addInstructor(participant)
-                                
-                    calendar.append(cal)
-                    
-        return calendar
-    
     #Warning: firstDate and lastDate in yyyy-mm-dd
     def getRessourceCalendarByDate(self,ressource,firstDate, lastDate):
         

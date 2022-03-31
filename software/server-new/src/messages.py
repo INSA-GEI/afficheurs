@@ -18,7 +18,6 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 class Message():
     ANS_OK = "OK"
     ANS_ERR = "ERR"
-    ANS_END = "END"
     ANS_REJECT = "REJECT"
     ANS_ACCEPT = "ACCEPT"
     ANS_DROP = "DROP"
@@ -30,6 +29,12 @@ class Message():
     CMD_GET_CALENDAR="CAL"
     CMD_GET_UPDATE="UPDATE"
     CMD_REPORT="REPORT"
+    
+    ERR_NO_ACTION = 1
+    ERR_INVALID_FRAME = 2
+    ERR_ERROR_DECODING_FRAME = 3
+    ERR_GW_REFUSED =10
+    ERR_DISPLAY_REFUSED =11
     
     type: str=CMD_UNKNOWN
     raw_msg: str=""
@@ -107,6 +112,46 @@ class Message():
             
         return s+hex(self.device_id)[2:].upper()+"\n"
 
+    @staticmethod
+    def createACCEPT(device_id: int, panid: int):
+        msg=Message()
+        msg.type = Message.ANS_ACCEPT
+        msg.device_id = device_id
+        msg.data = [hex(panid)[2:].upper()]
+        return msg
+    
+    @staticmethod
+    def createREJECT(device_id: int):
+        msg=Message()
+        msg.type = Message.ANS_REJECT
+        msg.device_id = device_id
+        msg.data = []
+        return msg
+    
+    @staticmethod
+    def createDROP(device_id: int):
+        msg=Message()
+        msg.type = Message.ANS_DROP
+        msg.device_id = device_id
+        msg.data = []
+        return msg
+    
+    @staticmethod
+    def createERR(device_id: int, errorcode: int):
+        msg=Message()
+        msg.type = Message.ANS_ERR
+        msg.device_id = device_id
+        msg.data = [str(errorcode)]
+        return msg
+    
+    @staticmethod
+    def createOK(device_id: int, data: list):
+        msg=Message()
+        msg.type = Message.ANS_OK
+        msg.device_id = device_id
+        msg.data = data
+        return msg
+        
 class MessageMgr():
     ServerSocket = None
     actionHandler=None
@@ -151,27 +196,20 @@ class MessageMgr():
                     #print ("Received message: " + str(msg))
                 except RuntimeError as e:
                     logmessagemgr.warning("RuntimeError in __threaded_client while decoding message (" +(str(e))+')')
-                    msg_ans=Message()
-                    msg_ans.type = Message.ANS_ERR
-                    msg_ans.data = [str(3)] # error 3 (invalid frame)
-                    msg_ans.device_id=msg.device_id
+                    msg_ans=Message.createERR(msg.device_id, Message.ERR_INVALID_FRAME)
                 except Exception as e:
                     logmessagemgr.warning("Unknown error in __threaded_client while decoding message (" +(str(e))+')')
-                    msg_ans=Message()
-                    msg_ans.type = Message.ANS_ERR
-                    msg_ans.data = [str(4)] # error 4 (unknwo error in decoding frame)
-                    msg_ans.device_id=msg.device_id
+                    msg_ans=Message.createERR(msg.device_id, Message.ERR_ERROR_DECODING_FRAME)
                 
                 if msg_ans == None:
                     if self.actionHandler != None:
                         msg_ans = self.actionHandler(msg,gateway)
+                        # !!!attention: msg_ans = None dans le cas d'une command REPORT !!!
                     else:
-                        msg_ans=Message()
-                        msg_ans.type = Message.ANS_ERR
-                        msg_ans.data = [str(2)] # no action from server
-                        msg_ans.device_id=msg.device_id
+                        msg_ans=Message.createERR(msg.device_id, Message.ERR_NO_ACTION)
                 
-                connection.sendall(str.encode(msg_ans.encode_to_client()))   
+                if msg_ans != None: # on n'est pas dans le cas du traitement d'une commande REPORT
+                    connection.sendall(str.encode(msg_ans.encode_to_client()))   
                 break
         
         #close tcp connection with client

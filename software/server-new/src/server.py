@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from calendar import calendar
+from datetime import datetime
 import time
 from threading import Thread
 from queue import Queue
@@ -12,7 +13,7 @@ import argparse
 import configparser
 import json
 
-from common import Datetool, Calendar, Room
+from common import Datetool, Calendar, Display, Room
 from ade import Ade
 
 from messages import *
@@ -26,11 +27,16 @@ adeLogin=""
 adePassword=""
 adeProjectId=""
 
+rf_panId = 0x1234
+rf_chanId =0x10
+
 refreshTime=15*60  #15 minutes 
+refreshStartTime="6:00"
+refreshEndTime="19:00"
 
 authorizedGateways=[]        # list of authorized gateways, given in config file
 roomsList:Room = []          # list of rooms, given in config file
-authentifiedDisplays = [{}]  # list (dictionnary) of accepted display, with corresponding room
+authentifiedDisplays = {}  # list (dictionnary) of accepted display, with corresponding room
 
 reportLog = ""
 errorLog = ""
@@ -62,11 +68,12 @@ def getConfiguration(confFile: str)->bool:
     global adeServer
     global adeLogin
     global adePassword
-    global refreshTime
+    global refreshTime,refreshStartTime,refreshEndTime
     global authorizedGateways
     global roomsList
     global reportLog, errorLog, dictionnaryFile
-
+    global rf_chanId, rf_panId
+    
     config = configparser.ConfigParser()
     if config.read(confFile) == []:
         log.info('Unable to open configuration file "' + confFile + '"')
@@ -82,6 +89,11 @@ def getConfiguration(confFile: str)->bool:
         adeLogin = config['server']['adelogin']
         adePassword = config['server']['adepassword']
         refreshTime = int(config['server']['refreshtime'])*60
+        refreshStartTime = config['server']['refreshstarttime']
+        refreshEndTime = config['server']['refreshendtime']
+        rf_chanId = int(config['server']['rf_chanid'],base=16)
+        rf_panId = int(config['server']['rf_panid'],base=16)
+        
         reportLog = config['server']['reportlog'] 
         errorLog = config['server']['errorlog'] 
         dictionnaryFile = config['server']['dictionnary'] 
@@ -98,7 +110,7 @@ def getConfiguration(confFile: str)->bool:
     try:
         for key in config:
             if key != "server" and key != "authorized gateways" and key != "DEFAULT":
-                room = Room(key, config[key]['ade_pattern'],[],[])
+                room = Room(key, config[key]['type'], config[key]['ade_pattern'],[],[])
                 room.calendars=[]
                 room.ressourcesId=[]
                 
@@ -172,14 +184,125 @@ def updateCalendars():
                
         room.calendars = Calendar.cleanup(room.calendars, wordDictionnary)
 
+def isGatewayAuthentified(gateway:str)->bool:
+    if authorizedGateways == None or \
+       authorizedGateways == []:
+        return True
+    else:
+        for g in authorizedGateways:
+            if gateway == g:
+                return True
+    
+    return False
+
+def isDisplayAuthentified(display:int)->bool:
+    if display in authentifiedDisplays:
+        return True
+    else:
+        return False
+
+def getRoomfromDisplay(display: int) -> Room:
+    for r in roomsList:
+        if display in r.displayId:
+            return r
+        
+    return None
+
 def actionHandler(msg: Message, gateway:str) -> Message:
-    msg_ans=Message()
+    msg_ans=None
     print ("Received message in action handler from " + gateway)
     print (str(msg))
     
-    msg_ans.type = Message.ANS_ERR
-    msg_ans.data = [str(10)] # no action from server
-    msg_ans.device_id=msg.device_id
+    if not isGatewayAuthentified(gateway):
+        msg_ans=Message.createERR(msg.device_id, Message.ERR_GW_REFUSED)
+    elif not isDisplayAuthentified(msg.device_id) and \
+        msg.type != Message.CMD_JOIN and \
+        msg.type != Message.CMD_CONFIG:
+        msg_ans=Message.createERR(msg.device_id, Message.ERR_DISPLAY_REFUSED)
+    else:
+        if msg.type == Message.CMD_CONFIG:
+            msg_ans = Message.createOK(msg.device_id, 
+                                       [hex(rf_panId)[2:].upper(), 
+                                        hex(rf_chanId)[2:].upper(),
+                                        " "]) # gateway name is set to " "
+        elif msg.type == Message.CMD_JOIN:
+            #timer to be set
+            room = getRoomfromDisplay(msg.device_id)
+            if room !=None:
+                if not isDisplayAuthentified(msg.device_id):
+                    display = Display()
+                    display.id = msg.device_id
+                    display.room = room
+                    display.gw = gateway
+                    authentifiedDisplays[msg.device_id]=display
+                
+                display.joinSignalStrength[gateway] = int(msg.data[0],base=16)
+                msg_ans = Message.createACCEPT(msg.device_id, rf_panId)
+            else:
+                msg_ans = Message.createREJECT(msg.device_id)
+        elif msg.type == Message.CMD_SETUP:
+            currentHour = datetime.now().strftime("%H:%M:%S")
+            currentDate = Datetool.getDayNumber(datetime.now())
+            display = authentifiedDisplays[msg.device_id]
+            
+            msg_ans = Message.createOK(msg.device_id, 
+                                       [currentHour,
+                                        str(currentDate),
+                                        display.room.name,
+                                        display.room.type,
+                                        datetime.strptime(refreshStartTime, '%H:%M').time().strftime("%H:%M:%S"),
+                                        datetime.strptime(refreshEndTime, '%H:%M').time().strftime("%H:%M:%S"),
+                                        str(refreshTime),
+                                        str(0)]) # update order is set to 0
+        elif msg.type == Message.CMD_GET_CALENDAR:
+            cal = authentifiedDisplays[msg.device_id].room.calendars # get calendar for associated display'room
+            data = [Datetool.getDaysofWeek()]
+            
+            s = ""
+            for c in cal:
+                s+=str(Datetool.getDayNumber(Datetool.toDate(c.day)))
+                s+=';' + str(Datetool.minutsFromMidnight(c.firstHour))
+                s+=';' + str(Datetool.minutsFromMidnight(c.lastHour))
+                s+=';' + c.title
+                s+=';'
+                
+                for t in c.trainees:
+                    s+=t+','
+                    
+                if s[-1] == ',':
+                    s= s[:-1]
+                    
+                s+=';'
+                for i in c.instructors:
+                    s+=i+','
+                
+                if s[-1] == ',':
+                    s= s[:-1]
+                
+                s+='#'
+                
+            if s[-1] == '#':
+                s= s[:-1]
+            
+            data.append(s)
+            msg_ans = Message.createOK(msg.device_id, data)
+        elif msg.type == Message.CMD_GET_UPDATE:
+            if authentifiedDisplays[msg.device_id].calendarUpdate:
+                msg_ans = Message.createOK(msg.device_id,[str(1)])
+            else:
+                msg_ans = Message.createOK(msg.device_id,[str(0)])
+        elif msg.type == Message.CMD_REPORT:
+            authentifiedDisplays[msg.device_id].displayMinRSSI= int(msg.data[0],base=16)
+            authentifiedDisplays[msg.device_id].displayMaxRSSI= int(msg.data[1],base=16)
+            authentifiedDisplays[msg.device_id].displayMoyRSSI= int(msg.data[2],base=16)
+            authentifiedDisplays[msg.device_id].batterylevel= int(msg.data[3])
+            authentifiedDisplays[msg.device_id].gwMinRSSI= int(msg.data[4],base=16)
+            authentifiedDisplays[msg.device_id].gwMaxRSSI= int(msg.data[5],base=16)
+            authentifiedDisplays[msg.device_id].gwMoyRSSI= int(msg.data[6],base=16)
+            
+            # pas de msg_ans, fermeture du socket à la place
+        else: # command unknown
+            msg_ans=Message.createERR(msg.device_id, Message.ERR_NO_ACTION)
     
     return msg_ans
     
@@ -203,7 +326,7 @@ def main():
                 break
     
     if not configOk:
-        exit(1)
+        return 1
       
     if dictionnaryFile != None and dictionnaryFile != "":
         wordDictionnary=getDictionnary(dictionnaryFile)
@@ -213,8 +336,8 @@ def main():
             if wordDictionnary!=None:
                 break
             
-    # # Initialize calendar information
-    # updateCalendars()
+    # Initialize calendar information
+    updateCalendars()
                      
     # for room in roomsList:
     #     print()
@@ -226,7 +349,7 @@ def main():
         messagesManager = MessageMgr('localhost',serverPort,30)
     except Exception as e:
         log.error (str(e))
-        exit (2)
+        return 2
     
     messagesManager.actionHandler = actionHandler
     messagesManager.start()
