@@ -175,7 +175,6 @@ class MessageMgr():
         
     def __threaded_client(self, connection:socket.socket, gateway):
         print ("Client thread started")
-        connection.sendall(str.encode('Welcome to server\n'))
         raw_message=""
         
         while True:

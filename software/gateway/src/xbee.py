@@ -444,7 +444,7 @@ class XBEE():
                 self.sendFrame(frame)
     
     def sendFrame(self, frame: API_Frame, end=False) -> None:
-        np = 60 # A reprendre en faisant une lecture du parametre NP du XBEE, qui limite la taille d'une frame Xbee
+        np = 0x60 # A reprendre en faisant une lecture du parametre NP du XBEE, qui limite la taille d'une frame Xbee
         raw_frames = frame.encode_frame(np)
         
         for f in raw_frames:

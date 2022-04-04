@@ -19,6 +19,9 @@ import tests
 import argparse
 import configparser
 
+MAJOR_VERSION = 0
+MINOR_VERSION = 1
+
 serialDevice = "/dev/serial0"
 serverName = ""
 serverPort = -1
@@ -32,9 +35,9 @@ DEFAULT_CONFIG_FILE = "/home/dimercur/Travail/git/afficheurs/software/gateway/sr
 
 log = logging.getLogger("gateway")
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-GPIO.setwarnings(False)
 
 try:
+    GPIO.setwarnings(False)
     GPIO_LED_ERROR = (29, GPIO.OUT)
     GPIO_LED_ACTIVITY = (31, GPIO.OUT)
     GPIO_LED_PWR = (33, GPIO.OUT)
@@ -107,6 +110,7 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
             msg.data.append(str(hex(max(rssi_device[frame.sender]))[2:].upper()))
             msg.data.append(str(hex(min(rssi_device[frame.sender]))[2:].upper()))
             msg.data.append(str(hex(int(statistics.mean(rssi_device[frame.sender])))[2:].upper()))
+            msg.data.append(str(hex(0))[2:].upper()) # Nombre d'erreur, non utilisé pour l'instant
         else:
             ack=True
             
@@ -179,7 +183,8 @@ def main():
     global gatewayName
     global rssi_device
     
-    print ("\nSmartRoom gateway v. 1.0\n")
+    print ("\nSmartDoor gateway ver %s.%S\n"%(MAJOR_VERSION,MINOR_VERSION))
+    
     if not getConfiguration(parseCommandLine()):
         exit(-1)
     
