@@ -68,8 +68,10 @@ void Error_Handler(void);
 #define SPI_CS_GPIO_Port GPIOA
 #define BUTTON_Pin GPIO_PIN_0
 #define BUTTON_GPIO_Port GPIOB
+#define BUTTON_EXTI_IRQn EXTI0_IRQn
 #define BUSY_Pin GPIO_PIN_1
 #define BUSY_GPIO_Port GPIOB
+#define BUSY_EXTI_IRQn EXTI1_IRQn
 #define XBEE_RESET_Pin GPIO_PIN_8
 #define XBEE_RESET_GPIO_Port GPIOA
 #define XBEE_SLEEP_RQ_Pin GPIO_PIN_11
@@ -82,6 +84,7 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOA
 #define XBEE_SLEEP_Pin GPIO_PIN_3
 #define XBEE_SLEEP_GPIO_Port GPIOB
+#define XBEE_SLEEP_EXTI_IRQn EXTI3_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
