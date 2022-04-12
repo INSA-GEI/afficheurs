@@ -114,6 +114,8 @@ int XBEE_LL_SendData(char* data, int length) {
 
 	while (XBEE_LL_TxReady != SET); // wait for last transfert to end
 
+	/* Restore huart->gState to ready */
+	//XBEE_LL_Uart.gState = HAL_UART_STATE_READY;
 	XBEE_LL_TxReady = RESET;
 	if(HAL_UART_Transmit_DMA(&XBEE_LL_Uart, (uint8_t*)data, data_length)!= HAL_OK) {
 		XBEE_LL_TxReady = SET;
@@ -127,7 +129,6 @@ int XBEE_LL_ReceiveData(char* data, int length) {
 	int data_length;
 
 	while (XBEE_LL_RxReady != SET); // wait for last RX to end
-	XBEE_LL_TxReady = RESET;
 
 	if (length == -1) {
 		// set API mode
@@ -140,6 +141,8 @@ int XBEE_LL_ReceiveData(char* data, int length) {
 		XBEE_LL_Mode = XBEE_LL_MODE_TRANSPARENT;
 		data_length = length;
 	}
+
+	XBEE_LL_RxReady = RESET;
 
 	if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)data, data_length)!= HAL_OK) {
 		XBEE_LL_RxReady = SET;
@@ -158,7 +161,7 @@ int XBEE_LL_ReceiveData(char* data, int length) {
  * @retval None
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
-	int length;
+	int frame_length;
 
 	if (XBEE_LL_Mode == XBEE_LL_MODE_TRANSPARENT)
 		/* Set reception flag: transfer complete*/
@@ -168,8 +171,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 			/* Set reception flag: transfer complete*/
 			XBEE_LL_RxReady = SET;
 		else {
-			length = ((API_LENGTH_ST*)XBEE_LL_RxBuffer)->frameLength+1;
-			if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)(XBEE_LL_RxBuffer+3), length)!= HAL_OK) {
+			frame_length = 1+(((int)XBEE_LL_RxBuffer[1]<<8))+(int)XBEE_LL_RxBuffer[2];
+			XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_EOF;
+
+			if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)(XBEE_LL_RxBuffer+3), frame_length)!= HAL_OK) {
 				// Something went wrong
 				XBEE_LL_RxReady = SET;
 			}
@@ -187,4 +192,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle) {
 	/* Set transmission flag: transfer complete*/
 	XBEE_LL_TxReady = SET;
+
+	/* Restore huart->gState to ready */
+	//UartHandle->gState = HAL_UART_STATE_READY;
 }

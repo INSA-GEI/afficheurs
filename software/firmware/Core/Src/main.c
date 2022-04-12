@@ -24,7 +24,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tasks.h"
-#include "xbee.h"
+//#include "xbee.h"
+#include "app.h"
 
 /* USER CODE END Includes */
 
@@ -126,7 +127,9 @@ int main(void)
   //EPD_7in5b_V2_test();
   //EPD_7in5_test();
   //EPD_7in5_HD_test();
-  XBEE_Init(&huart1);
+//  if (XBEE_Init()!= XBEE_OK)
+//	  PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+  APP_Init();
 
   /* USER CODE END 2 */
 
