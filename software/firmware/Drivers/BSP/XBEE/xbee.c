@@ -20,9 +20,42 @@ uint64_t XBEE_uid;
 char tx_frame_buffer[18+20]; /* space for a tx frame with 20 bytes of data */
 char rx_frame_buffer[18+0x80]; /* space for a rx frame with 0x80 bytes of data (max possible rx frame length) */
 
+#define XBEE_TIMEOUT_FOR_STATUS_FRAME		500 // 500 ms for receiving a TX or AT status frame
+
+int XBEE_EnterCommandMode_PARANOIA() {
+	char buffer[5];
+	uint8_t index;
+	int status;
+
+	for (index=0; index < 5; index++)
+		buffer[index]=0;
+
+	// flush eventual furbish
+	status=XBEE_LL_ReceiveData(buffer, 1, 50); // 50ms
+
+	/* Enter AT command mode */
+	if (XBEE_LL_SendData("+++",strlen("+++")) != XBEE_LL_OK)
+		return XBEE_CONFIG_ERROR;
+
+	status=XBEE_LL_ReceiveData(buffer, 3, 2000); // 50ms
+	if ((status!=XBEE_LL_ERROR_RX_TIMEOUT) && (status!=XBEE_LL_OK)) // no timeout
+		return XBEE_CONFIG_ERROR;
+
+	if ((buffer[1]!='O') && (buffer[1]!='K')) // error setting configuration mode
+		return XBEE_CONFIG_ERROR;
+
+	// wait for an eventual \r at the end
+	status=XBEE_LL_ReceiveData(buffer, 1, 50); // 50ms
+	if ((status!=XBEE_LL_ERROR_RX_TIMEOUT)&& (status!=XBEE_LL_OK))
+		return XBEE_CONFIG_ERROR;
+
+	return XBEE_OK;
+}
+
 int XBEE_EnterCommandMode() {
 	char buffer[5];
 	uint8_t index;
+	int status;
 
 	for (index=0; index < 5; index++)
 		buffer[index]=0;
@@ -31,10 +64,11 @@ int XBEE_EnterCommandMode() {
 	if (XBEE_LL_SendData("+++",strlen("+++")) != XBEE_LL_OK)
 		return XBEE_CONFIG_ERROR;
 
-	if (XBEE_LL_ReceiveData(buffer, 3) != XBEE_LL_OK)
+	status=XBEE_LL_ReceiveData(buffer, 3, 2000); // 2s
+	if (status!=XBEE_LL_OK) // timeout
 		return XBEE_CONFIG_ERROR;
 
-	if (strcmp(buffer,"OK\r")!=0) // error setting configuration mode
+	if (strstr(buffer, "OK")==NULL) // error setting configuration mode
 		return XBEE_CONFIG_ERROR;
 
 	return XBEE_OK;
@@ -51,7 +85,7 @@ int XBEE_SetATCommand(char* atcmd) {
 	if (XBEE_LL_SendData(atcmd,strlen(atcmd)) != XBEE_LL_OK)
 		return XBEE_AT_CMD_ERROR;
 
-	if (XBEE_LL_ReceiveData(buffer, 3) != XBEE_LL_OK)
+	if (XBEE_LL_ReceiveData(buffer, 3, 500) != XBEE_LL_OK) // Timeout: 500 ms
 		return XBEE_AT_CMD_ERROR;
 
 	if (strcmp(buffer,"OK\r")!=0) // error setting configuration mode
@@ -78,7 +112,7 @@ int XBEE_GetATValue(char* atcmd, char* value) {
 	index=0;
 
 	while (tmp!='\r') {
-		if (XBEE_LL_ReceiveData(&tmp, 1) != XBEE_LL_OK)
+		if (XBEE_LL_ReceiveData(&tmp, 1, 500) != XBEE_LL_OK) // timeout 500 ms
 			return XBEE_AT_CMD_ERROR;
 
 		if (index >=20 ) return XBEE_AT_CMD_ERROR; // too much data received
@@ -169,20 +203,23 @@ int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame) {
 
 	switch (frame_type) {
 	case XBEE_RX_PACKET_TYPE:
-		*decoded_frame = (XBEE_GENERIC_FRAME*)malloc(sizeof(XBEE_RX_PACKET_FRAME)+(frame_length-12));
+		*decoded_frame = (XBEE_GENERIC_FRAME*)malloc(sizeof(XBEE_RX_PACKET_FRAME)+(frame_length-12)+1); // +1 for 0 ending in data frame
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->type = frame_type;
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data_length = frame_length-12;
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->options = frame[14];
 
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->source_addr =0;
 		for (i=0; i<8; i++) {
-			((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->source_addr +=(uint64_t)frame[4+i];
 			((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->source_addr = ((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->source_addr<<8;
+			((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->source_addr +=(uint64_t)frame[4+i];
 		}
 
 		for (i=0; i<((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data_length; i++) {
 			((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data[i] =(char)frame[15+i];
 		}
+
+		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data[((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data_length]=0x0; // 0 ending frame
+
 		break;
 	case XBEE_MODEM_STATUS_TYPE:
 		*decoded_frame = (XBEE_GENERIC_FRAME*)malloc(sizeof(XBEE_MODEM_STATUS_FRAME));
@@ -235,9 +272,13 @@ int XBEE_SendFrame (char* frame) {
 	return XBEE_OK;
 }
 
-int XBEE_GetFrame (char* frame) {
+int XBEE_GetFrame (char* frame, int timeout) {
+	int status;
 
-	if (XBEE_LL_ReceiveData(frame, -1) != XBEE_LL_OK)
+	status = XBEE_LL_ReceiveData(frame, -1,timeout);
+	if (status == XBEE_LL_ERROR_RX_TIMEOUT)
+		return XBEE_RX_TIMEOUT;
+	else if (status != XBEE_LL_OK)
 		return XBEE_RX_ERROR;
 
 	return XBEE_OK;
@@ -245,10 +286,6 @@ int XBEE_GetFrame (char* frame) {
 
 int XBEE_ConfigureDevice(void) {
 #define RXBUFFERSIZE 30
-	char aRxBuffer[RXBUFFERSIZE];
-	uint32_t uid_sh, uid_sl;
-	char*endPtr;
-
 	if (XBEE_EnterCommandMode()!=XBEE_OK)
 		return XBEE_CONFIG_ERROR;
 
@@ -263,25 +300,13 @@ int XBEE_ConfigureDevice(void) {
 	if (XBEE_SetATCommand("ATAP=1\r")!=XBEE_OK)
 		return XBEE_CONFIG_ERROR;
 
+	// disable legacy mode for API mode
+	if (XBEE_SetATCommand("ATAO=0\r")!=XBEE_OK)
+		return XBEE_CONFIG_ERROR;
+
 	// Set baudrate to 115200
 	if (XBEE_SetATCommand("ATBD=7\r")!=XBEE_OK)
 		return XBEE_CONFIG_ERROR;
-
-	// Get device UID
-	if (XBEE_GetATValue("ATSH\r", aRxBuffer)!=XBEE_OK)
-		return XBEE_CONFIG_ERROR;
-
-	// Data should contains upper part of 64-bit UID, in hex format
-	uid_sh=strtol( aRxBuffer, &endPtr, 16);
-	XBEE_uid = ((uint64_t)uid_sh)<<32;
-
-	// Get device UID
-	if (XBEE_GetATValue("ATSL\r", aRxBuffer)!=XBEE_OK)
-		return XBEE_CONFIG_ERROR;
-
-	// Data should contains upper part of 64-bit UID, in hex format
-	uid_sl=strtol( aRxBuffer, &endPtr, 16);
-	XBEE_uid = XBEE_uid+ uid_sl;
 
 	// Finally, exit configuration mode
 	if (XBEE_SetATCommand("ATCN\r")!=XBEE_OK)
@@ -293,6 +318,9 @@ int XBEE_ConfigureDevice(void) {
 int XBEE_Init (void) {
 	/* First, init GPIO */
 	XBEE_LL_ConfigureGPIO();
+
+	/* then configure timer for timeout */
+	XBEE_LL_ConfigureTimer();
 
 	/* Then, setup usart at 9600 bauds and configure the device */
 	XBEE_LL_ConfigureUart(XBEE_USART, 9600);
@@ -319,7 +347,7 @@ int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast,
 		return XBEE_TX_ERROR;
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer) != XBEE_OK)
+	if (XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME) != XBEE_OK) //500ms
 		return XBEE_RX_ERROR;
 
 	// Decode frame
@@ -341,20 +369,26 @@ int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast,
 	return XBEE_OK;
 }
 
-int XBEE_GetData (XBEE_GENERIC_FRAME** frame) {
+int XBEE_GetData (XBEE_GENERIC_FRAME** frame, int timeout) {
+	int status;
+	status = XBEE_LL_ReceiveData(rx_frame_buffer, -1, timeout);
 
-	if (XBEE_LL_ReceiveData(rx_frame_buffer, -1) != XBEE_LL_OK)
+	if (status == XBEE_LL_ERROR_RX_TIMEOUT)
+		return XBEE_RX_TIMEOUT;
+	else if (status != XBEE_LL_OK)
 		return XBEE_RX_ERROR;
 
-	if (XBEE_DecodeFrame(rx_frame_buffer, *frame) != XBEE_OK){
+	if (XBEE_DecodeFrame(rx_frame_buffer, frame) != XBEE_OK) {
 		free (*frame);
 		return XBEE_INVALID_FRAME;
 	}
 
 	return XBEE_OK;
 }
+
 int XBEE_GetATValueU32(char* at_cmd, uint32_t *value, uint8_t *status) {
 	XBEE_GENERIC_FRAME* at_status;
+	int com_status;
 
 	// Format frame for sending data
 	XBEE_EncodeATFrame(tx_frame_buffer, at_cmd, (uint8_t*)0x0, 0, 1);
@@ -364,8 +398,9 @@ int XBEE_GetATValueU32(char* at_cmd, uint32_t *value, uint8_t *status) {
 		return XBEE_TX_ERROR;
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer) != XBEE_OK)
-		return XBEE_RX_ERROR;
+	com_status = XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	// Decode frame
 	if (XBEE_DecodeFrame(rx_frame_buffer, &at_status) != XBEE_OK)
@@ -394,6 +429,7 @@ int XBEE_GetATValueU32(char* at_cmd, uint32_t *value, uint8_t *status) {
 
 int XBEE_GetATValueU16(char* at_cmd, uint16_t *value, uint8_t *status) {
 	XBEE_GENERIC_FRAME* at_status;
+	int com_status;
 
 	// Format frame for sending data
 	XBEE_EncodeATFrame(tx_frame_buffer, at_cmd, (uint8_t*)0x0, 0, 1);
@@ -403,8 +439,9 @@ int XBEE_GetATValueU16(char* at_cmd, uint16_t *value, uint8_t *status) {
 		return XBEE_TX_ERROR;
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer) != XBEE_OK)
-		return XBEE_RX_ERROR;
+	com_status = XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	// Decode frame
 	if (XBEE_DecodeFrame(rx_frame_buffer, &at_status) != XBEE_OK)
@@ -436,6 +473,7 @@ int XBEE_GetATValueU16(char* at_cmd, uint16_t *value, uint8_t *status) {
 
 int XBEE_GetATValueU8(char* at_cmd, uint8_t *value, uint8_t *status) {
 	XBEE_GENERIC_FRAME* at_status;
+	int com_status;
 
 	// Format frame for sending data
 	XBEE_EncodeATFrame(tx_frame_buffer, at_cmd, (uint8_t*)0x0, 0, 1);
@@ -445,8 +483,9 @@ int XBEE_GetATValueU8(char* at_cmd, uint8_t *value, uint8_t *status) {
 		return XBEE_TX_ERROR;
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer) != XBEE_OK)
-		return XBEE_RX_ERROR;
+	com_status = XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	// Decode frame
 	if (XBEE_DecodeFrame(rx_frame_buffer, &at_status) != XBEE_OK)
@@ -476,6 +515,7 @@ int XBEE_GetATValueU8(char* at_cmd, uint8_t *value, uint8_t *status) {
 int XBEE_SetATValueU16(char* at_cmd, uint16_t value, uint8_t *status) {
 	XBEE_GENERIC_FRAME* at_status;
 	uint8_t data[2];
+	int com_status;
 
 	// Format frame for sending data
 	data[0] = (uint8_t)(value >>8);
@@ -487,8 +527,9 @@ int XBEE_SetATValueU16(char* at_cmd, uint16_t value, uint8_t *status) {
 		return XBEE_TX_ERROR;
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer) != XBEE_OK)
-		return XBEE_RX_ERROR;
+	com_status = XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	// Decode frame
 	if (XBEE_DecodeFrame(rx_frame_buffer, &at_status) != XBEE_OK)
@@ -511,9 +552,14 @@ int XBEE_SetATValueU16(char* at_cmd, uint16_t value, uint8_t *status) {
 
 int XBEE_SetChannel(uint8_t channel) {
 	uint8_t status;
+	int com_status;
 
-	if (XBEE_SetATValueU16("CH", (uint16_t)channel, &status) != XBEE_OK)
+	if ((channel < XBEE_CHANNEL_FIRST) || (channel > XBEE_CHANNEL_LAST)) // Invalid channel value
 		return XBEE_AT_CMD_ERROR;
+
+	com_status = XBEE_SetATValueU16("CH", (uint16_t)channel, &status);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	if (status != XBEE_AT_STATUS_SUCCESS)
 		return XBEE_AT_CMD_ERROR;
@@ -523,9 +569,11 @@ int XBEE_SetChannel(uint8_t channel) {
 
 int XBEE_SetPanID(uint16_t panid) {
 	uint8_t status;
+	int com_status;
 
-	if (XBEE_SetATValueU16("ID", panid, &status) != XBEE_OK)
-		return XBEE_AT_CMD_ERROR;
+	com_status=XBEE_SetATValueU16("ID", panid, &status);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	if (status != XBEE_AT_STATUS_SUCCESS)
 		return XBEE_AT_CMD_ERROR;
@@ -535,9 +583,11 @@ int XBEE_SetPanID(uint16_t panid) {
 
 int XBEE_GetRSSI(uint8_t *rssi) {
 	uint8_t status;
+	int com_status;
 
-	if (XBEE_GetATValueU8("DB", rssi, &status) != XBEE_OK)
-		return XBEE_AT_CMD_ERROR;
+	com_status=XBEE_GetATValueU8("DB", rssi, &status);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	if (status != XBEE_AT_STATUS_SUCCESS)
 		return XBEE_AT_CMD_ERROR;
@@ -548,14 +598,17 @@ int XBEE_GetRSSI(uint8_t *rssi) {
 int XBEE_GetUID(uint64_t *uid) {
 	uint8_t status;
 	uint32_t id=0;
+	int com_status;
 
-	if (XBEE_GetATValueU32("SH", &id, &status) != XBEE_OK)
-		return XBEE_AT_CMD_ERROR;
+	com_status = XBEE_GetATValueU32("SH", &id, &status);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	*uid = ((uint64_t)id<<32);
 
-	if (XBEE_GetATValueU32("SL", &id, &status) != XBEE_OK)
-			return XBEE_AT_CMD_ERROR;
+	com_status = XBEE_GetATValueU32("SL", &id, &status);
+	if (com_status != XBEE_OK)
+		return com_status;
 
 	*uid += id;
 

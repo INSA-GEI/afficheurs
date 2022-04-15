@@ -46,6 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+LPTIM_HandleTypeDef hlptim2;
+
 RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
@@ -77,6 +79,7 @@ static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_LPTIM2_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -122,6 +125,7 @@ int main(void)
   MX_SPI1_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
 
   //EPD_7in5b_V2_test();
@@ -171,7 +175,6 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
 
   while (1)
   {
@@ -287,6 +290,40 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief LPTIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPTIM2_Init(void)
+{
+
+  /* USER CODE BEGIN LPTIM2_Init 0 */
+
+  /* USER CODE END LPTIM2_Init 0 */
+
+  /* USER CODE BEGIN LPTIM2_Init 1 */
+
+  /* USER CODE END LPTIM2_Init 1 */
+  hlptim2.Instance = LPTIM2;
+  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+  hlptim2.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV128;
+  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPTIM2_Init 2 */
+
+  /* USER CODE END LPTIM2_Init 2 */
 
 }
 

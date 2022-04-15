@@ -54,18 +54,18 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+extern UART_HandleTypeDef XBEE_LL_Uart;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
+extern LPTIM_HandleTypeDef hlptim2;
 extern RTC_HandleTypeDef hrtc;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
-//extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef XBEE_LL_Uart;
+extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -328,6 +328,21 @@ void RTC_Alarm_IRQHandler(void)
   /* USER CODE BEGIN RTC_Alarm_IRQn 1 */
 
   /* USER CODE END RTC_Alarm_IRQn 1 */
+}
+
+
+/**
+  * @brief This function handles LPTIM2 global interrupt.
+  */
+void LPTIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPTIM2_IRQn 0 */
+
+  /* USER CODE END LPTIM2_IRQn 0 */
+  HAL_LPTIM_IRQHandler(&hlptim2);
+  /* USER CODE BEGIN LPTIM2_IRQn 1 */
+
+  /* USER CODE END LPTIM2_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -9,15 +9,28 @@
 #include "stm32l4xx_hal.h"
 
 UART_HandleTypeDef XBEE_LL_Uart;
-uint8_t XBEE_LL_RxReady;
-uint8_t XBEE_LL_TxReady;
-int XBEE_LL_Mode;
+LPTIM_HandleTypeDef XBEE_LL_Timer;
 char* XBEE_LL_RxBuffer;
 
-int XBEE_LL_RXState;
+typedef enum {
+	XBEE_LL_MODE_TRANSPARENT=0,
+	XBEE_LL_MODE_API
+} XBEE_LL_ModeType;
 
-#define XBEE_LL_RX_STATE_WAIT_HEADER	1
-#define XBEE_LL_RX_STATE_WAIT_EOF		2
+XBEE_LL_ModeType XBEE_LL_Mode;
+FlagStatus XBEE_LL_RxReady;
+FlagStatus XBEE_LL_TxReady;
+
+typedef enum
+{
+	XBEE_LL_RX_STATE_OK=0,
+	XBEE_LL_RX_STATE_WAIT_DATA,
+	XBEE_LL_RX_STATE_WAIT_HEADER,
+	XBEE_LL_RX_STATE_WAIT_EOF,
+	XBEE_LL_RX_STATE_TIMEOUT,
+	XBEE_LL_RX_STATE_ERROR,
+} XBEE_LL_RxStatus;
+XBEE_LL_RxStatus XBEE_LL_RXState;
 
 typedef struct {
 	uint8_t startChar;
@@ -25,6 +38,8 @@ typedef struct {
 } API_LENGTH_ST;
 
 volatile uint16_t tmp; // to be used by XBEE_LL_ConfigureUart
+void XBEE_LL_StartTimeout(uint32_t timeout);
+void XBEE_LL_StopTimeout(void);
 
 int XBEE_LL_ConfigureUart(USART_TypeDef* usart, uint32_t baudrate) {
 	__HAL_RCC_USART1_FORCE_RESET();
@@ -93,14 +108,83 @@ void XBEE_LL_ConfigureGPIO(void) {
 	 *
 	 */
 	HAL_GPIO_WritePin(XBEE_SLEEP_RQ_PORT, XBEE_SLEEP_RQ_PIN, GPIO_PIN_RESET);
+	HAL_Delay(100);
 
 	/* Reset XBEE module
-	 * Pin to 0 -> wait 10 ms -> pin to 1 -> wait 300 ms
+	 * Pin to 0 -> wait 100 ms -> pin to 1 -> wait 300 ms
 	 */
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_RESET);
-	HAL_Delay(10);
+	HAL_Delay(20);
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_SET);
 	HAL_Delay(300);
+}
+
+void XBEE_LL_ConfigureTimer(void) {
+	/* Peripheral reset */
+	__HAL_RCC_LPTIM1_FORCE_RESET();
+	__HAL_RCC_LPTIM1_RELEASE_RESET();
+
+	XBEE_LL_Timer.Instance = LPTIM1;
+	XBEE_LL_Timer.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+	XBEE_LL_Timer.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV128;
+	XBEE_LL_Timer.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+	XBEE_LL_Timer.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+	XBEE_LL_Timer.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+	XBEE_LL_Timer.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+	XBEE_LL_Timer.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+	XBEE_LL_Timer.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+
+	HAL_LPTIM_Init(&XBEE_LL_Timer);
+	__HAL_LPTIM_ENABLE(&XBEE_LL_Timer);
+	__HAL_LPTIM_ENABLE_IT(&XBEE_LL_Timer, LPTIM_IT_CMPM);
+	__HAL_LPTIM_AUTORELOAD_SET(&XBEE_LL_Timer, 0xFFFF); /* full scale for timer */
+	__HAL_LPTIM_DISABLE(&XBEE_LL_Timer);
+}
+
+/**
+ * @brief  Start the Counter mode in interrupt mode.
+ * @param  hlptim LPTIM handle
+ * @param  Period Specifies the Autoreload value.
+ *         This parameter must be a value between 0x0000 and 0xFFFF.
+ * @retval HAL status
+ */
+void XBEE_LL_StartTimeout(uint32_t timeout)
+{
+	uint16_t compare_val;
+	uint16_t period;
+
+	if (timeout>0) {
+		/* Enable the Peripheral */
+		__HAL_LPTIM_ENABLE(&XBEE_LL_Timer);
+
+		/* Clear Compare match flag */
+		__HAL_LPTIM_CLEAR_FLAG(&XBEE_LL_Timer,LPTIM_IT_CMPM);
+		/* Load the period value  + current counter in the compare register */
+		period = (uint16_t)((timeout*(4000000UL/128UL))/1000UL);
+
+		if (XBEE_LL_Timer.Instance->CNT>period)
+			compare_val = (uint16_t)(((uint32_t)XBEE_LL_Timer.Instance->CNT)+period-65536);
+		else
+			compare_val = (uint16_t)(((uint32_t)XBEE_LL_Timer.Instance->CNT)+period);
+		__HAL_LPTIM_COMPARE_SET(&XBEE_LL_Timer, compare_val);
+
+		/* Start timer in continuous mode */
+		__HAL_LPTIM_START_CONTINUOUS(&XBEE_LL_Timer);
+	}
+}
+
+/**
+ * @brief  Stop the Counter mode in interrupt mode.
+ * @param  hlptim LPTIM handle
+ * @retval HAL status
+ */
+void XBEE_LL_StopTimeout(void)
+{
+	/* Disable the Peripheral */
+	__HAL_LPTIM_DISABLE(&XBEE_LL_Timer);
+
+	/* Clear Compare match flag */
+	__HAL_LPTIM_CLEAR_FLAG(&XBEE_LL_Timer,LPTIM_IT_CMPM);
 }
 
 int XBEE_LL_SendData(char* data, int length) {
@@ -125,7 +209,7 @@ int XBEE_LL_SendData(char* data, int length) {
 	return XBEE_LL_OK;
 }
 
-int XBEE_LL_ReceiveData(char* data, int length) {
+int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 	int data_length;
 
 	while (XBEE_LL_RxReady != SET); // wait for last RX to end
@@ -139,18 +223,35 @@ int XBEE_LL_ReceiveData(char* data, int length) {
 	} else {
 		// set TRANSPARENT mode
 		XBEE_LL_Mode = XBEE_LL_MODE_TRANSPARENT;
+		XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_DATA;
 		data_length = length;
 	}
+
+	XBEE_LL_StartTimeout(timeout);
 
 	XBEE_LL_RxReady = RESET;
 
 	if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)data, data_length)!= HAL_OK) {
+		XBEE_LL_StopTimeout();
+		HAL_UART_DMAStop(&XBEE_LL_Uart);
+		XBEE_LL_RXState = XBEE_LL_RX_STATE_ERROR;
 		XBEE_LL_RxReady = SET;
+
 		return XBEE_LL_ERROR_RX;
 	}
 
 	while (XBEE_LL_RxReady != SET); // wait for RX to end
-	return XBEE_LL_OK;
+
+	if (XBEE_LL_RXState == XBEE_LL_RX_STATE_ERROR)
+		return XBEE_LL_ERROR_RX;
+	else if (XBEE_LL_RXState == XBEE_LL_RX_STATE_TIMEOUT) {
+		XBEE_LL_StopTimeout();
+		HAL_UART_DMAStop(&XBEE_LL_Uart);
+
+		return XBEE_LL_ERROR_RX_TIMEOUT;
+	}
+	else
+		return XBEE_LL_OK;
 }
 
 /**
@@ -163,19 +264,23 @@ int XBEE_LL_ReceiveData(char* data, int length) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 	int frame_length;
 
-	if (XBEE_LL_Mode == XBEE_LL_MODE_TRANSPARENT)
+	if (XBEE_LL_Mode == XBEE_LL_MODE_TRANSPARENT){
 		/* Set reception flag: transfer complete*/
+		XBEE_LL_RXState = XBEE_LL_RX_STATE_OK;
 		XBEE_LL_RxReady = SET;
-	else {
-		if (XBEE_LL_RXState == XBEE_LL_RX_STATE_WAIT_EOF)
+	} else {
+		if (XBEE_LL_RXState == XBEE_LL_RX_STATE_WAIT_EOF) {
 			/* Set reception flag: transfer complete*/
+			XBEE_LL_RXState = XBEE_LL_RX_STATE_OK;
 			XBEE_LL_RxReady = SET;
-		else {
+		} else {
 			frame_length = 1+(((int)XBEE_LL_RxBuffer[1]<<8))+(int)XBEE_LL_RxBuffer[2];
 			XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_EOF;
 
 			if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)(XBEE_LL_RxBuffer+3), frame_length)!= HAL_OK) {
 				// Something went wrong
+				XBEE_LL_StopTimeout();
+				XBEE_LL_RXState = XBEE_LL_RX_STATE_ERROR;
 				XBEE_LL_RxReady = SET;
 			}
 		}
@@ -196,3 +301,19 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle) {
 	/* Restore huart->gState to ready */
 	//UartHandle->gState = HAL_UART_STATE_READY;
 }
+
+/**
+ * @brief This function handles LPTIM1 global interrupt.
+ */
+void LPTIM1_IRQHandler(void)
+{
+	/* Clear Compare match flag */
+	__HAL_LPTIM_CLEAR_FLAG(&XBEE_LL_Timer,LPTIM_IT_CMPM);
+
+	XBEE_LL_StopTimeout();
+
+	/* Set reception flag: Timeout*/
+	XBEE_LL_RXState = XBEE_LL_RX_STATE_TIMEOUT;
+	XBEE_LL_RxReady = SET;
+}
+

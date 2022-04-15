@@ -45,6 +45,14 @@
 #define XBEE_RX_OPTIONS_BRODCASTED			0x02
 #define XBEE_RX_OPTIONS_PAN_BROADCASTED		0x04
 
+#define XBEE_CHANNEL_FIRST					0x0B
+#define XBEE_CHANNEL_LAST					0x1A
+
+#define XBEE_BROADCAST_ADDRESS				0x000000000000FFFF
+
+#define XBEE_PANID_BROADCAST				SET
+#define XBEE_NO_PANID_BROADCAST				RESET
+
 typedef struct {
 	uint8_t type;
 } XBEE_GENERIC_FRAME;
@@ -82,7 +90,7 @@ int XBEE_ConfigureDevice(void);
 int XBEE_Init (void);
 
 int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame);
-int XBEE_GetData (XBEE_GENERIC_FRAME** frame);
+int XBEE_GetData (XBEE_GENERIC_FRAME** frame, int timeout); // timeout in ms
 int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status);
 
 int XBEE_SetChannel(uint8_t channel);

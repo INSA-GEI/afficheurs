@@ -22,18 +22,16 @@ typedef void (*RXCallback)(char* data, int length);
 #define XBEE_SLEEP_PIN					    GPIO_PIN_3
 #define XBEE_SLEEP_PORT					    GPIOB
 
-#define XBEE_LL_MODE_TRANSPARENT			1
-#define XBEE_LL_MODE_API					2
-
-#define XBEE_LL_OK					0
-#define XBEE_LL_ERROR_USART_CFG		1
-#define XBEE_LL_ERROR_TX			2
-#define XBEE_LL_ERROR_RX			3
-#define XBEE_LL_ERROR_RX_TIMEOUT	4
+#define XBEE_LL_OK							0
+#define XBEE_LL_ERROR_USART_CFG				1
+#define XBEE_LL_ERROR_TX					2
+#define XBEE_LL_ERROR_RX					3
+#define XBEE_LL_ERROR_RX_TIMEOUT			4
 
 int XBEE_LL_ConfigureUart(USART_TypeDef* usart, uint32_t baudrate);
 void XBEE_LL_ConfigureGPIO(void);
+void XBEE_LL_ConfigureTimer(void);
 int XBEE_LL_SendData(char* data, int length) ;
-int XBEE_LL_ReceiveData(char* data, int length);
+int XBEE_LL_ReceiveData(char* data, int length, int timeout);
 
 #endif /* BSP_XBEE_XBEE_LL_H_ */

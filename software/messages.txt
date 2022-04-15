@@ -46,8 +46,8 @@ Exemples:
 Ecran                                           Serveur
 SETUP                ->                         SETUP|0x13a20041c02be8      #Demande de Setup par l'ecran 0x13a20041c02be8
 
-                     <-                         OK|14:37:00|2|GEI-105|Informatique|7:0:0|19:0:0|900|0|0x13a20041c02be8    
-OK|14:37:00|2|GEI-105|Informatique|7:0:0|19:0:0|900|0                       #Reponse du serveur avec 14:37:00 comme heure actuelle, 2 comme jour actuel
+                     <-                         OK|14:37:00|2|GEI 105|Informatique|7:0:0|19:0:0|900|0|0x13a20041c02be8    
+OK|14:37:00|2|GEI 105|Informatique|7:0:0|19:0:0|900|0                       #Reponse du serveur avec 14:37:00 comme heure actuelle, 2 comme jour actuel
                                                                             #GEI-105 pour le nom de la salle, Informatique comme type de salle 
                                                                             #debut de mise à jour periodique de l'ecran à 7:0:0 et fin de periode à 19:0:0
                                                                             #periodicité de la mise à jour à 900 secondes et ordre d'ecran de 0
