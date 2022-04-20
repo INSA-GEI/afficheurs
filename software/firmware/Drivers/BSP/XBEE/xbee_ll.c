@@ -108,15 +108,15 @@ void XBEE_LL_ConfigureGPIO(void) {
 	 *
 	 */
 	HAL_GPIO_WritePin(XBEE_SLEEP_RQ_PORT, XBEE_SLEEP_RQ_PIN, GPIO_PIN_RESET);
-	HAL_Delay(100);
+	HAL_Delay(300);
 
 	/* Reset XBEE module
 	 * Pin to 0 -> wait 100 ms -> pin to 1 -> wait 300 ms
 	 */
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_RESET);
-	HAL_Delay(20);
+	HAL_Delay(50);
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_SET);
-	HAL_Delay(300);
+	HAL_Delay(400);
 }
 
 void XBEE_LL_ConfigureTimer(void) {
