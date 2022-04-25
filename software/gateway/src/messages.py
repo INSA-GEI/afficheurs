@@ -104,7 +104,10 @@ class Message():
             self.type = self.data[0]
             
             if self.type == "JOIN":
-                self.rssi = frame.rssi
+                try:
+                    self.rssi = frame.rssi
+                except:
+                    self.rssi = 0xFF
                 
             if len(self.data) >=1:
                 self.data = self.data[1:]

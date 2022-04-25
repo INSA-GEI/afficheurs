@@ -204,6 +204,7 @@ int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame) {
 	switch (frame_type) {
 	case XBEE_RX_PACKET_TYPE:
 		*decoded_frame = (XBEE_GENERIC_FRAME*)malloc(sizeof(XBEE_RX_PACKET_FRAME)+(frame_length-12)+1); // +1 for 0 ending in data frame
+		memset((void*)*decoded_frame, 0, sizeof(XBEE_RX_PACKET_FRAME)+(frame_length-12)+1);
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->type = frame_type;
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->data_length = frame_length-12;
 		((XBEE_RX_PACKET_FRAME*)(*decoded_frame))->options = frame[14];

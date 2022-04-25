@@ -32,13 +32,13 @@ void APP_Init(void) {
 			while (1);
 	}
 
-	//	// Get screen configuration
-	//	status = PROTOCOL_GetConfiguration(&configuration);
-	//
-	//	if (status != PROTOCOL_OK) {
-	//		if (status == PROTOCOL_RX_HW_ERROR)
-	//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-	//	}
+	// Get screen configuration
+	status = PROTOCOL_GetConfiguration(&configuration);
+
+	if (status != PROTOCOL_OK) {
+		if (status == PROTOCOL_RX_HW_ERROR)
+			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+	}
 
 	// Get calendar
 	status = PROTOCOL_GetCalendar(&configuration, &calendar);

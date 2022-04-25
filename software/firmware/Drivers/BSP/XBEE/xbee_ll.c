@@ -242,12 +242,12 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 
 	while (XBEE_LL_RxReady != SET); // wait for RX to end
 
+	XBEE_LL_StopTimeout();
+
 	if (XBEE_LL_RXState == XBEE_LL_RX_STATE_ERROR)
 		return XBEE_LL_ERROR_RX;
 	else if (XBEE_LL_RXState == XBEE_LL_RX_STATE_TIMEOUT) {
-		XBEE_LL_StopTimeout();
 		HAL_UART_DMAStop(&XBEE_LL_Uart);
-
 		return XBEE_LL_ERROR_RX_TIMEOUT;
 	}
 	else

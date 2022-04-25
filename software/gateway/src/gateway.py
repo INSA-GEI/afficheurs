@@ -90,17 +90,25 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
        frame.__class__ == xbee.Explicit_Receive_Indicator:
         msg= Message()
         msg.decode_from_xbee(frame)
+        print(str(msg))
+        
         end = False
         
+        try:
+            rcvd_rssi = frame.rssi
+        except:
+            # field rssi absent
+            rcvd_rssi = 0xFF
+            
         if frame.sender in rssi_device:
             rssi = rssi_device[frame.sender]
             try:
-                rssi.append(frame.rssi)
+                rssi.append(rcvd_rssi)
             except:
                 rssi.append(0)
             rssi_device[frame.sender]=rssi
         else:
-            rssi_device[frame.sender]=[frame.rssi]
+            rssi_device[frame.sender]=[rcvd_rssi]
             
         if msg.type == "REPORT":
             #print("Report: " + str(msg))
@@ -122,10 +130,11 @@ def RxCallback(xb:xbee.XBEE, frame:xbee.API_Frame)->None:
             else:
                 ans_frame = ans.encode_to_xbee(1, 0x00)
           
-            if msg.type == "CAL" or \
-                msg.type == "SETUP":
+            if msg.type == "CAL": 
+                #or msg.type == "SETUP":
                 end = True
           
+            print(str(ans_frame))
             xb.sendFrame(ans_frame, end)
             
     elif frame.__class__ == xbee.Transmit_Status or\
@@ -183,7 +192,7 @@ def main():
     global gatewayName
     global rssi_device
     
-    print ("\nSmartDoor gateway ver %s.%S\n"%(MAJOR_VERSION,MINOR_VERSION))
+    print ("\nSmartDoor gateway ver %s.%s\n"%(MAJOR_VERSION,MINOR_VERSION))
     
     if not getConfiguration(parseCommandLine()):
         exit(-1)

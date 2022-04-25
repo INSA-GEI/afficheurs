@@ -9,7 +9,8 @@ from functools import total_ordering
 class Datetool:
     @staticmethod
     def getCurrentDay():
-        date_obj = date(datetime.now().year, datetime.now().month, datetime.now().day)
+        #date_obj = date(datetime.now().year, datetime.now().month, datetime.now().day)
+        date_obj = date(2022, 5, 16)
         return date_obj
     
     @staticmethod

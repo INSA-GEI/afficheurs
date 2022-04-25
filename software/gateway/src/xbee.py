@@ -275,18 +275,22 @@ class Transmit_Request(API_Frame):
         header_size = 17
         
         while remainingBytes:
-            if len(payload)>=(np-header_size):   # header + checksum is 17 bytes for a transmit request
-                local_buffer= payload[0:np-header_size-1]
+            # if len(payload)>=(np-header_size):   # header + checksum is 17 bytes for a transmit request
+            #     local_buffer= payload[0:np-header_size-1]
+            if len(payload)>=(np):  
+                local_buffer= payload[0:np-1]
             else:   
                 local_buffer= payload
                 
             frames_list.append(self.__encode_payload(local_buffer,frame_id, self.dest, self.options))
             
-            remainingBytes = remainingBytes-(np-header_size)
+            #remainingBytes = remainingBytes-(np-header_size)
+            remainingBytes = remainingBytes-np
             if remainingBytes < 0:
                 remainingBytes =0
             else:
-                payload = payload[np-header_size-1:]
+                #payload = payload[np-header_size-1:]
+                payload = payload[np-1:]
                 frame_id+=1
         return frames_list
         
@@ -444,11 +448,21 @@ class XBEE():
                 self.sendFrame(frame)
     
     def sendFrame(self, frame: API_Frame, end=False) -> None:
+        
         np = 0x60 # A reprendre en faisant une lecture du parametre NP du XBEE, qui limite la taille d'une frame Xbee
         raw_frames = frame.encode_frame(np)
+        if (len(raw_frames)>1):
+            print ("nb of frame: " + str(len(raw_frames)))
+            demande=1
+        else:
+            demande=0
         
         for f in raw_frames:
+            if demande==1:
+            #    input ("press a key to send 1 frame")
+                print ("send 1 frame")
             self.uart.write(f)
+            #time.sleep(0.1)
         
         if end:    
             self.uart.write(Transmit_Request(1, frame.dest, frame.options, "END").encode_frame(np)[0])

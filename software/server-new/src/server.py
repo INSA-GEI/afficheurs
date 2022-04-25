@@ -235,8 +235,8 @@ def actionHandler(msg: Message, gateway:str) -> Message:
                     display.room = room
                     display.gw = gateway
                     authentifiedDisplays[msg.device_id]=display
-                
-                display.joinSignalStrength[gateway] = int(msg.data[0],base=16)
+                    
+                authentifiedDisplays[msg.device_id].joinSignalStrength[gateway] = int(msg.data[0],base=16)
                 msg_ans = Message.createACCEPT(msg.device_id, rf_panId)
             else:
                 msg_ans = Message.createREJECT(msg.device_id)
