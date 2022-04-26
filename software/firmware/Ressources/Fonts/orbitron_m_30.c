@@ -3246,7 +3246,7 @@ static const lv_font_glyph_dsc_t orbitron_m_30_glyph_dsc[] =
   {.w_px = 9,	.glyph_index = 6420},	/*Unicode: U+007e (~)*/
 };
 
-lv_font_t orbitron_m_30 = 
+const lv_font_t orbitron_m_30 =
 {
     .unicode_first = 32,	/*First Unicode letter in this font*/
     .unicode_last = 126,	/*Last Unicode letter in this font*/

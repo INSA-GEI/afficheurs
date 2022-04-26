@@ -3816,7 +3816,7 @@ static const lv_font_glyph_dsc_t liberation_sans_b_36_glyph_dsc[] =
   {.w_px = 16,	.glyph_index = 7956},	/*Unicode: U+007e (~)*/
 };
 
-lv_font_t liberation_sans_b_36 = 
+const lv_font_t liberation_sans_b_36 =
 {
     .unicode_first = 32,	/*First Unicode letter in this font*/
     .unicode_last = 126,	/*Last Unicode letter in this font*/

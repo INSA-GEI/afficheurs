@@ -519,7 +519,7 @@ parameter:
  ******************************************************************************/
 
 //uint16_t Paint_DrawChar (uint16_t Xpoint, uint16_t Ypoint, const uint16_t Unicode_char,
-//		lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
+//		const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
 //	uint16_t Page, Column;
 //	uint16_t charOffset;
 //	uint16_t glyphWidth =0;
@@ -570,7 +570,7 @@ parameter:
 //	return glyphWidth;
 //}
 
-uint32_t Paint_GetGlyphOffsetAndWidth(const uint16_t Unicode_char, lv_font_t* Font, uint16_t *width) {
+uint32_t Paint_GetGlyphOffsetAndWidth(const uint16_t Unicode_char, const lv_font_t* Font, uint16_t *width) {
 	uint16_t charOffset=0;
 
 	/* Compute char offset in glyph description table */
@@ -597,7 +597,7 @@ uint32_t Paint_GetGlyphOffsetAndWidth(const uint16_t Unicode_char, lv_font_t* Fo
 }
 
 uint16_t Paint_DrawChar (uint16_t Xpoint, uint16_t Ypoint, const uint16_t Unicode_char,
-		lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
+		const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
 	uint16_t Page, Column;
 	uint16_t glyphWidth =0;
 	uint32_t glyphOffset =0;
@@ -640,7 +640,7 @@ uint16_t Paint_DrawChar (uint16_t Xpoint, uint16_t Ypoint, const uint16_t Unicod
 }
 
 void Paint_DrawString (uint16_t Xstart, uint16_t Ystart, const char *pString,
-		lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
+		const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
 
 	uint16_t Xpoint = Xstart;
 	uint16_t Ypoint = Ystart;
@@ -670,7 +670,7 @@ void Paint_DrawString (uint16_t Xstart, uint16_t Ystart, const char *pString,
 	}
 }
 
-lv_font_box_t Paint_GetStringBox(const char *pString, lv_font_t* Font) {
+lv_font_box_t Paint_GetStringBox(const char *pString, const lv_font_t* Font) {
 	uint16_t lineWidth=0;
 	uint16_t charWidth=0;
 	uint16_t fontHeight = Font->h_px;

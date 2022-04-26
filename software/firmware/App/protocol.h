@@ -30,10 +30,6 @@ typedef struct {
 
 #define PROTOCOL_ROOM_NAME_LENGTH	8
 #define PROTOCOL_ROOM_TYPE_LENGTH	22
-#define PROTOCOL_DATE_STRING_MAX_LENGTH	10
-#define PROTOCOL_TITLE_MAX_LENGTH	30
-#define PROTOCOL_TRAINEE_MAX_LENGTH	10
-#define PROTOCOL_TRAINER_MAX_LENGTH	18
 
 typedef struct {
 	uint64_t device_uid;
@@ -53,27 +49,11 @@ typedef struct {
 	PROTOCOL_RSSI rssi;
 } PROTOCOL_ConfigurationTypedef;
 
-typedef char PROTOCOL_Day[PROTOCOL_DATE_STRING_MAX_LENGTH+1];
-
-typedef struct pReservation {
-	uint16_t start_time;
-	uint16_t end_time;
-	uint8_t day_nbr;
-	char* title;
-	char* trainees[4];
-	char* trainers[4];
-	struct pReservation* next_reservation;
-} PROTOCOL_Reservation;
-
-typedef struct {
-	PROTOCOL_Day week[7];
-	PROTOCOL_Reservation* first_reservation;
-} PROTOCOL_CalendarTypedef;
-
 PROTOCOL_Status PROTOCOL_Init(void);
 PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetConfiguration(PROTOCOL_ConfigurationTypedef* conf);
-PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar);
+//PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar);
+PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* conf, uint8_t* update_status);
 PROTOCOL_Status PROTOCOL_SendReport(PROTOCOL_ConfigurationTypedef* conf);
 

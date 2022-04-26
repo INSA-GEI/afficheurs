@@ -2346,7 +2346,7 @@ static const uint32_t montserrat_li_150_unicode_list[] = {
   0,    /*End indicator*/
 };
 
-lv_font_t montserrat_li_150 = 
+const lv_font_t montserrat_li_150 =
 {
     .unicode_first = 32,	/*First Unicode letter in this font*/
     .unicode_last = 126,	/*Last Unicode letter in this font*/

@@ -94,11 +94,11 @@ parameter:
 static void EPD_Reset(void)
 {
     DEV_Digital_Write(EPD_RST_PIN, 1);
-    DEV_Delay_ms(200);
+    HAL_Delay(200);
     DEV_Digital_Write(EPD_RST_PIN, 0);
-    DEV_Delay_ms(2);
+    HAL_Delay(2);
     DEV_Digital_Write(EPD_RST_PIN, 1);
-    DEV_Delay_ms(200);
+    HAL_Delay(200);
 }
 
 /******************************************************************************
@@ -148,18 +148,18 @@ parameter:
 ******************************************************************************/
 static void EPD_WaitUntilIdle(void)
 {
-    Debug("e-Paper busy\r\n");
+    //Debug("e-Paper busy\r\n");
     unsigned char busy;
 	do{
-		//DEV_Delay_ms(1000);
+		//HAL_Delay(1000);
 		//EPD_SendCommand(0x71);
-		DEV_Delay_ms(5);
+		HAL_Delay(5);
 		busy = DEV_Digital_Read(EPD_BUSY_PIN);
 		busy =!(busy & 0x01);        
 	}while(busy);
 
-	DEV_Delay_ms(5);
-    Debug("e-Paper busy release\r\n");
+	HAL_Delay(5);
+    //Debug("e-Paper busy release\r\n");
 }
 
 //static void EPD_7IN5_V2_LUT(uint8_t* lut_vcom,  uint8_t* lut_ww, uint8_t* lut_bw, uint8_t* lut_wb, uint8_t* lut_bb)
@@ -194,7 +194,7 @@ parameter:
 static void EPD_7IN5_V2_TurnOnDisplay(void)
 {
     EPD_SendCommand(0x12);			//DISPLAY REFRESH
-    DEV_Delay_ms(100);	        //!!!The delay here is necessary, 200uS at least!!!
+    HAL_Delay(100);	        //!!!The delay here is necessary, 200uS at least!!!
     EPD_WaitUntilIdle();
 }
 
@@ -226,7 +226,7 @@ uint8_t EPD_7IN5_V2_Init(void)
 	EPD_SendData(*(Voltage_Frame_7IN5_V2+0));  // 2-0=100: N=4  ; 5-3=111: M=7  ;  3C=50Hz     3A=100HZ
 
     EPD_SendCommand(0x04); //POWER ON
-    DEV_Delay_ms(100);
+    HAL_Delay(100);
     EPD_WaitUntilIdle();
 
     EPD_SendCommand(0X00);			//PANNEL SETTING

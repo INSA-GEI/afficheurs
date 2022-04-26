@@ -3625,7 +3625,7 @@ static const lv_font_glyph_dsc_t montserrat_li_34_glyph_dsc[] =
   {.w_px = 15,	.glyph_index = 7990},	/*Unicode: U+007e (~)*/
 };
 
-lv_font_t montserrat_li_34 = 
+const lv_font_t montserrat_li_34 =
 {
     .unicode_first = 32,	/*First Unicode letter in this font*/
     .unicode_last = 126,	/*Last Unicode letter in this font*/

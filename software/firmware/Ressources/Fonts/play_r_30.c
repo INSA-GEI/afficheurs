@@ -3246,7 +3246,7 @@ static const lv_font_glyph_dsc_t play_r_30_glyph_dsc[] =
   {.w_px = 13,	.glyph_index = 5340},	/*Unicode: U+007e (~)*/
 };
 
-lv_font_t play_r_30 = 
+const lv_font_t play_r_30 =
 {
     .unicode_first = 32,	/*First Unicode letter in this font*/
     .unicode_last = 126,	/*Last Unicode letter in this font*/

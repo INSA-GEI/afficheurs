@@ -8,7 +8,7 @@
 #include "tasks.h"
 #include "task.h"
 
-#include "EPD_Test.h"
+//#include "EPD_Test.h"
 
 #define STACK_SIZE 200
 #define PriorityDrawDisplay		16
@@ -31,7 +31,7 @@ void vTaskDrawDisplay(void* params)
 	//	/* Task code goes here. */
 	//}
 
-	EPD_7in5_V2_test();
+	//EPD_7in5_V2_test();
 }
 
 /* Function that creates a task. */

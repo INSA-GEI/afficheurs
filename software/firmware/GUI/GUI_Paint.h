@@ -214,9 +214,9 @@ void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16
 void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill);
 
 //Display string
-uint16_t Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const uint16_t Unicode_char, lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawString(uint16_t Xstart, uint16_t Ystart, const char *pString, lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-lv_font_box_t Paint_GetStringBox(const char *pString, lv_font_t* Font);
+uint16_t Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const uint16_t Unicode_char, const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
+void Paint_DrawString(uint16_t Xstart, uint16_t Ystart, const char *pString, const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background);
+lv_font_box_t Paint_GetStringBox(const char *pString, const lv_font_t* Font);
 
 //pic
 void Paint_DrawBitMap(const uint8_t* image_buffer);

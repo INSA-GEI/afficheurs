@@ -8,6 +8,8 @@
 #include "protocol.h"
 #include "xbee.h"
 
+#include "calendar.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,7 +97,7 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 		if ((rx_frame->type == XBEE_RX_PACKET_TYPE) || (rx_frame->type == XBEE_RX_EXPLICIT_TYPE)) {
 			data = ((XBEE_RX_PACKET_FRAME*)rx_frame)->data;
 
-			if (strstr((const char*)data, PROTOCOL_ANS_ACCEPT)!= NULL) {
+			if (strcmp((const char*)data, PROTOCOL_ANS_ACCEPT)==0) {
 				/* retrieve panid */
 				char *ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
 				ptr = strtok(NULL, PROTOCOL_SEPARATOR);
@@ -152,7 +154,7 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 				data = ((XBEE_RX_PACKET_FRAME*)rx_frame)->data;
 				gw = ((XBEE_RX_PACKET_FRAME*)rx_frame)->source_addr;
 
-				if (strstr((const char*)data, PROTOCOL_ANS_ACCEPT)!= NULL) {
+				if (strcmp((const char*)data, PROTOCOL_ANS_ACCEPT)==0) {
 					/* retrieve panid */
 					char *ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
 					ptr = strtok(NULL, PROTOCOL_SEPARATOR);
@@ -317,9 +319,9 @@ PROTOCOL_Status PROTOCOL_GetConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 		ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
 
 		//check if it is OK or ERR
-		if (strstr (ptr, PROTOCOL_ANS_OK)!= NULL) { // answer is "OK"
+		if (strcmp (ptr, PROTOCOL_ANS_OK)==0) { // answer is "OK"
 			status = PROTOCOL_ParseConfiguration(conf, ptr);
-		} else if (strstr (ptr, PROTOCOL_ANS_ERR)!= NULL) { // answer is "ERR"
+		} else if (strcmp (ptr, PROTOCOL_ANS_ERR)==0) { // answer is "ERR"
 			ptr = strtok(NULL, PROTOCOL_SEPARATOR);
 			conf->last_error = (uint16_t)strtol(ptr,NULL, 10);
 			status = PROTOCOL_RX_CMD_ERROR;
@@ -365,7 +367,7 @@ typedef struct pCalEventList {
 	struct pCalEventList* nextevent;
 } PROTOCOL_CalEventList;
 
-static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str) {
+static int PROTOCOL_ParseCalendar(char* str) {
 	char* datelist =NULL;
 	char* traineesptr=NULL;
 	char* trainersptr = NULL;
@@ -375,7 +377,6 @@ static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str)
 
 	PROTOCOL_CalEventList* headptr = NULL;
 	PROTOCOL_CalEventList* indexptr=NULL;
-	PROTOCOL_Reservation* indexreservationptr=NULL;
 
 	ptr = strtok(str, PROTOCOL_SEPARATOR); // ptr should be on date list
 	if (ptr == NULL)
@@ -407,48 +408,54 @@ static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str)
 	// 2nd step: split week date
 	ptr = strtok(datelist, ";"); // ptr should be on first date
 
+	CAL_Day* days;
+	days = CAL_GetDayArray();
+
 	for (i=0; i<7 ; i++) {
 		if (ptr != NULL) {
-			strncpy(calendar->week[i], ptr, PROTOCOL_DATE_STRING_MAX_LENGTH);
-			calendar->week[i][PROTOCOL_DATE_STRING_MAX_LENGTH]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_DATE_STRING_MAX_LENGTH
+			strncpy(days[i], ptr, CAL_DATE_STRING_MAX_LENGTH);
+			days[i][CAL_DATE_STRING_MAX_LENGTH]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_DATE_STRING_MAX_LENGTH
 		}
 
 		ptr = strtok(NULL, ";"); // ptr should be on next date
 	}
 
 	// 3rd step: split events
-	while (headptr!=NULL) {
-		if (calendar->first_reservation == NULL) {
-			calendar->first_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-			indexreservationptr =calendar->first_reservation;
-		} else {
-			indexreservationptr->next_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-			indexreservationptr = indexreservationptr->next_reservation;
-		}
+	CAL_Reservation* reservation;
 
-		memset(indexreservationptr, 0, sizeof(PROTOCOL_Reservation)); // init all field to '0'
+	while (headptr!=NULL) {
+//		if (calendar->first_reservation == NULL) {
+//			calendar->first_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
+//			indexreservationptr =calendar->first_reservation;
+//		} else {
+//			indexreservationptr->next_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
+//			indexreservationptr = indexreservationptr->next_reservation;
+//		}
+
+//		memset(indexreservationptr, 0, sizeof(PROTOCOL_Reservation)); // init all field to '0'
+		reservation = CAL_NewReservation();
 
 		ptr = strtok(headptr->event, ";"); // ptr should be on event day
 		if (ptr!=NULL)
-			indexreservationptr->day_nbr = (uint8_t)strtoul(ptr,NULL,10);
+			reservation->day_nbr = (uint8_t)strtoul(ptr,NULL,10);
 
 		ptr = strtok(NULL, ";"); // ptr should be on start time
 		if (ptr!=NULL)
-			indexreservationptr->start_time = (uint16_t)strtoul(ptr,NULL,10);
+			reservation->start_time = (uint16_t)strtoul(ptr,NULL,10);
 
 		ptr = strtok(NULL, ";"); // ptr should be on end time
 		if (ptr!=NULL)
-			indexreservationptr->end_time = (uint16_t)strtoul(ptr,NULL,10);
+			reservation->end_time = (uint16_t)strtoul(ptr,NULL,10);
 
 		ptr = strtok(NULL, ";"); // ptr should be on title
 		if (ptr!=NULL) {
 			length = strlen(ptr);
-			if (length > PROTOCOL_TITLE_MAX_LENGTH)
-				length = PROTOCOL_TITLE_MAX_LENGTH;
+			if (length > CAL_TITLE_MAX_LENGTH)
+				length = CAL_TITLE_MAX_LENGTH;
 
-			indexreservationptr->title = (char*)malloc(length+1); // for '0' ending
-			strncpy(indexreservationptr->title, ptr, length);
-			indexreservationptr->title[length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TITLE_MAX_LENGTH
+			reservation->title = (char*)malloc(length+1); // for '0' ending
+			strncpy(reservation->title, ptr, length);
+			reservation->title[length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TITLE_MAX_LENGTH
 		}
 
 		ptr = strtok(NULL, ";"); // ptr should be on trainees
@@ -461,12 +468,12 @@ static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str)
 			i=0;
 			while ((ptr != NULL) && (i<4)) {
 				length = strlen(ptr);
-				if (length> PROTOCOL_TRAINEE_MAX_LENGTH)
-					length = PROTOCOL_TRAINEE_MAX_LENGTH;
+				if (length> CAL_TRAINEE_MAX_LENGTH)
+					length = CAL_TRAINEE_MAX_LENGTH;
 
-				indexreservationptr->trainees[i]=(char*)malloc(length);
-				strncpy(indexreservationptr->trainees[i], ptr, length);
-				indexreservationptr->trainees[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINEE_MAX_LENGTH
+				reservation->trainees[i]=(char*)malloc(length);
+				strncpy(reservation->trainees[i], ptr, length);
+				reservation->trainees[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINEE_MAX_LENGTH
 
 				i++;
 				ptr = strtok(NULL, ",");// ptr should be on next trainee
@@ -478,12 +485,12 @@ static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str)
 			i=0;
 			while ((ptr != NULL) && (i<4)) {
 				length = strlen(ptr);
-				if (length> PROTOCOL_TRAINER_MAX_LENGTH)
-					length = PROTOCOL_TRAINER_MAX_LENGTH;
+				if (length> CAL_TRAINER_MAX_LENGTH)
+					length = CAL_TRAINER_MAX_LENGTH;
 
-				indexreservationptr->trainers[i]=(char*)malloc(length);
-				strncpy(indexreservationptr->trainers[i], ptr, length);
-				indexreservationptr->trainers[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINER_MAX_LENGTH
+				reservation->trainers[i]=(char*)malloc(length);
+				strncpy(reservation->trainers[i], ptr, length);
+				reservation->trainers[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINER_MAX_LENGTH
 
 				i++;
 				ptr = strtok(NULL, ",");// ptr should be on next trainer
@@ -502,12 +509,149 @@ static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str)
 	return PROTOCOL_OK;
 }
 
+//static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str) {
+//	char* datelist =NULL;
+//	char* traineesptr=NULL;
+//	char* trainersptr = NULL;
+//	char* ptr;
+//	int i;
+//	int length;
+//
+//	PROTOCOL_CalEventList* headptr = NULL;
+//	PROTOCOL_CalEventList* indexptr=NULL;
+//	PROTOCOL_Reservation* indexreservationptr=NULL;
+//
+//	ptr = strtok(str, PROTOCOL_SEPARATOR); // ptr should be on date list
+//	if (ptr == NULL)
+//		return PROTOCOL_INVALID_FRAME;
+//	else
+//		// copy date list for further analysis
+//		datelist = ptr;
+//
+//	// 1st step: split string in reservation string
+//	ptr = strtok(NULL, PROTOCOL_SEPARATOR); // ptr should be on first event
+//	ptr = strtok(ptr, "#"); // ptr still should be on first event
+//
+//	while (ptr!=NULL) {
+//		if (headptr == NULL) {
+//			headptr = (PROTOCOL_CalEventList*)malloc(sizeof(PROTOCOL_CalEventList));
+//			indexptr = headptr;
+//		} else {
+//			indexptr->nextevent = (PROTOCOL_CalEventList*)malloc(sizeof(PROTOCOL_CalEventList));
+//			indexptr = indexptr->nextevent;
+//		}
+//
+//		indexptr->nextevent = NULL;
+//		indexptr->event = ptr;
+//
+//
+//		ptr = strtok(NULL, "#"); // ptr should be on next event
+//	};
+//
+//	// 2nd step: split week date
+//	ptr = strtok(datelist, ";"); // ptr should be on first date
+//
+//	for (i=0; i<7 ; i++) {
+//		if (ptr != NULL) {
+//			strncpy(calendar->week[i], ptr, PROTOCOL_DATE_STRING_MAX_LENGTH);
+//			calendar->week[i][PROTOCOL_DATE_STRING_MAX_LENGTH]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_DATE_STRING_MAX_LENGTH
+//		}
+//
+//		ptr = strtok(NULL, ";"); // ptr should be on next date
+//	}
+//
+//	// 3rd step: split events
+//	while (headptr!=NULL) {
+//		if (calendar->first_reservation == NULL) {
+//			calendar->first_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
+//			indexreservationptr =calendar->first_reservation;
+//		} else {
+//			indexreservationptr->next_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
+//			indexreservationptr = indexreservationptr->next_reservation;
+//		}
+//
+//		memset(indexreservationptr, 0, sizeof(PROTOCOL_Reservation)); // init all field to '0'
+//
+//		ptr = strtok(headptr->event, ";"); // ptr should be on event day
+//		if (ptr!=NULL)
+//			indexreservationptr->day_nbr = (uint8_t)strtoul(ptr,NULL,10);
+//
+//		ptr = strtok(NULL, ";"); // ptr should be on start time
+//		if (ptr!=NULL)
+//			indexreservationptr->start_time = (uint16_t)strtoul(ptr,NULL,10);
+//
+//		ptr = strtok(NULL, ";"); // ptr should be on end time
+//		if (ptr!=NULL)
+//			indexreservationptr->end_time = (uint16_t)strtoul(ptr,NULL,10);
+//
+//		ptr = strtok(NULL, ";"); // ptr should be on title
+//		if (ptr!=NULL) {
+//			length = strlen(ptr);
+//			if (length > PROTOCOL_TITLE_MAX_LENGTH)
+//				length = PROTOCOL_TITLE_MAX_LENGTH;
+//
+//			indexreservationptr->title = (char*)malloc(length+1); // for '0' ending
+//			strncpy(indexreservationptr->title, ptr, length);
+//			indexreservationptr->title[length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TITLE_MAX_LENGTH
+//		}
+//
+//		ptr = strtok(NULL, ";"); // ptr should be on trainees
+//		traineesptr= ptr;
+//		ptr = strtok(NULL, ";"); // ptr should be on trainers
+//		trainersptr= ptr;
+//
+//		if (traineesptr!=NULL) {
+//			ptr = strtok(traineesptr, ",");// ptr should be on 1st trainee
+//			i=0;
+//			while ((ptr != NULL) && (i<4)) {
+//				length = strlen(ptr);
+//				if (length> PROTOCOL_TRAINEE_MAX_LENGTH)
+//					length = PROTOCOL_TRAINEE_MAX_LENGTH;
+//
+//				indexreservationptr->trainees[i]=(char*)malloc(length);
+//				strncpy(indexreservationptr->trainees[i], ptr, length);
+//				indexreservationptr->trainees[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINEE_MAX_LENGTH
+//
+//				i++;
+//				ptr = strtok(NULL, ",");// ptr should be on next trainee
+//			}
+//		}
+//
+//		if (trainersptr!=NULL) {
+//			ptr = strtok(trainersptr, ",");// ptr should be on 1st trainer
+//			i=0;
+//			while ((ptr != NULL) && (i<4)) {
+//				length = strlen(ptr);
+//				if (length> PROTOCOL_TRAINER_MAX_LENGTH)
+//					length = PROTOCOL_TRAINER_MAX_LENGTH;
+//
+//				indexreservationptr->trainers[i]=(char*)malloc(length);
+//				strncpy(indexreservationptr->trainers[i], ptr, length);
+//				indexreservationptr->trainers[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINER_MAX_LENGTH
+//
+//				i++;
+//				ptr = strtok(NULL, ",");// ptr should be on next trainer
+//			}
+//		}
+//
+//		indexptr= headptr;
+//		headptr= headptr->nextevent;
+//		free((void*)indexptr);
+//	}
+//
+//	// 4th step: free the main string
+//	// All the main string is now split, we can deallocate it.
+//	free((void*)str);
+//
+//	return PROTOCOL_OK;
+//}
+
 typedef struct pCalFrameList {
 	XBEE_RX_PACKET_FRAME* frame;
 	struct pCalFrameList* nextframe;
 } PROTOCOL_CalFrameList;
 
-PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar) {
+PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf) {
 	int com_status;
 	PROTOCOL_Status status=PROTOCOL_OK;
 	XBEE_GENERIC_FRAME *rx_frame;
@@ -555,14 +699,14 @@ PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOC
 				data = ((XBEE_RX_PACKET_FRAME*)rx_frame)->data;
 
 				ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
-				if (strstr (ptr, PROTOCOL_ANS_ERR)!= NULL) { // answer is "ERR"
+				if (strcmp (ptr, PROTOCOL_ANS_ERR)==0) { // answer is "ERR"
 					ptr = strtok(NULL, PROTOCOL_SEPARATOR);
 					conf->last_error = (uint16_t)strtol(ptr,NULL, 10);
 					status = PROTOCOL_RX_CMD_ERROR;
 					end_rx=1;
 
 					free(rx_frame);
-				} else if (strstr (ptr, PROTOCOL_ANS_END)!= NULL) { // answer is "END"
+				} else if (strcmp (ptr, PROTOCOL_ANS_END)==0) { // answer is "END"
 					end_rx=1;
 					free(rx_frame);
 				} else { // its an acceptable frame
@@ -622,11 +766,132 @@ PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOC
 			free ((void*)framelistindex);
 		}
 
-		status=PROTOCOL_ParseCalendar(calendar, data);
+		status=PROTOCOL_ParseCalendar(data);
 	}
 
 	return status;
 }
+
+//PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar) {
+//	int com_status;
+//	PROTOCOL_Status status=PROTOCOL_OK;
+//	XBEE_GENERIC_FRAME *rx_frame;
+//	uint8_t transmit_status;
+//	char* data;
+//	char *ptr;
+//	int end_rx=0;
+//
+//	PROTOCOL_CalFrameList* framelisthead=NULL;
+//	PROTOCOL_CalFrameList* framelistindex=NULL;
+//
+//#if DEBUG_PROTOCOL != 2
+//	/* Send a "CAL" command */
+//	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_CALENDAR, &transmit_status)!= XBEE_OK) {
+//		status= PROTOCOL_RX_HW_ERROR;
+//	}
+//
+//	if (transmit_status !=XBEE_TX_STATUS_SUCCESS ) {
+//		// here we should increment no ack counter for report
+//		// not good to have either no ack or CCA failure
+//		conf->rssi.no_ack++;
+//	}
+//#endif /* #if DEBUG_PROTOCOL==1 */
+//
+//	// Wait for answer
+//	/* Wait for OK, ERR, END or no answer */
+//	while (!end_rx) {
+//#if DEBUG_PROTOCOL == 2
+//		com_status = PROTOCOL_GetDataSim(&rx_frame, DEBUG_PROTOCOL_TIMEOUT);
+//#elif DEBUG_PROTOCOL == 1
+//		com_status = XBEE_GetData(&rx_frame, 0);
+//#else
+//		com_status = XBEE_GetData(&rx_frame, PROTOCOL_CONNECT_TIMEOUT);
+//#endif /* #if DEBUG_PROTOCOL==1 */
+//		if (com_status == XBEE_RX_ERROR) {
+//			status= PROTOCOL_RX_HW_ERROR;
+//			end_rx=1;
+//		} else if (com_status == XBEE_RX_TIMEOUT) {
+//			status = PROTOCOL_RX_TIMEOUT;
+//			end_rx=1;
+//		} else if (com_status == XBEE_INVALID_FRAME) {
+//			status = PROTOCOL_RX_CMD_ERROR;
+//		} else {
+//			if ((rx_frame->type == XBEE_RX_PACKET_TYPE) || (rx_frame->type == XBEE_RX_EXPLICIT_TYPE)) {
+//				data = ((XBEE_RX_PACKET_FRAME*)rx_frame)->data;
+//
+//				ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
+//				if (strcmp (ptr, PROTOCOL_ANS_ERR)==0) { // answer is "ERR"
+//					ptr = strtok(NULL, PROTOCOL_SEPARATOR);
+//					conf->last_error = (uint16_t)strtol(ptr,NULL, 10);
+//					status = PROTOCOL_RX_CMD_ERROR;
+//					end_rx=1;
+//
+//					free(rx_frame);
+//				} else if (strcmp (ptr, PROTOCOL_ANS_END)==0) { // answer is "END"
+//					end_rx=1;
+//					free(rx_frame);
+//				} else { // its an acceptable frame
+//					if (framelisthead == NULL) {
+//						framelisthead = (PROTOCOL_CalFrameList*)malloc(sizeof(PROTOCOL_CalFrameList));
+//						framelistindex=framelisthead;
+//					} else {
+//						framelistindex->nextframe = (PROTOCOL_CalFrameList*)malloc(sizeof(PROTOCOL_CalFrameList));
+//						framelistindex = framelistindex->nextframe;
+//					}
+//
+//					framelistindex->frame=(XBEE_RX_PACKET_FRAME*)rx_frame;
+//					framelistindex->nextframe=NULL;
+//				}
+//			} else {
+//				// do nothing, free memory frame and wait for an other frame
+//				free(rx_frame);
+//			}
+//		}
+//	}
+//
+//	if ((status == PROTOCOL_OK) || (status == PROTOCOL_RX_TIMEOUT)) {
+//		// build the concatenated answer string
+//		int string_length=0;
+//		framelistindex = framelisthead;
+//
+//		// compute necessary string size
+//		while (framelistindex!=NULL) {
+//			if (strstr(framelistindex->frame->data,"OK"))
+//				string_length += framelistindex->frame->data_length-3; // -3 to remove "OK\0" at start of data
+//			else
+//				string_length += framelistindex->frame->data_length; // -3 to remove "OK\0" at start of data
+//			framelistindex = framelistindex->nextframe;
+//		}
+//
+//		string_length+=1; // for 0 ending
+//		data = (char*)malloc(string_length);
+//		memset(data, 0, string_length); // fill array with '0' to avoid strncpy missing '0' at end of copy
+//		ptr = data;
+//
+//		framelistindex = framelisthead;
+//
+//		// copy string chunks and free memory
+//		while (framelisthead!=NULL) {
+//			if (strstr(framelisthead->frame->data,"OK")) {
+//				ptr=strncpy(ptr,framelisthead->frame->data+3, framelisthead->frame->data_length-3);// move data 3 chars ahead, to step over "OK" and find start of PDU
+//				framelistindex = framelisthead;
+//				ptr= ptr+(framelisthead->frame->data_length-3); // go to end of string 0 ending
+//			} else {
+//				ptr=strncpy(ptr,framelisthead->frame->data, framelisthead->frame->data_length);// move data 3 chars ahead, to step over "OK" and find start of PDU
+//				framelistindex = framelisthead;
+//				ptr= ptr+(framelisthead->frame->data_length); // go to end of string 0 ending
+//			}
+//
+//			free ((void*)framelisthead->frame);
+//			framelisthead = framelisthead->nextframe;
+//			free ((void*)framelistindex);
+//		}
+//
+//		status=PROTOCOL_ParseCalendar(calendar, data);
+//	}
+//
+//	return status;
+//}
 
 PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* conf, uint8_t* update_status) {
 	int com_status;
@@ -667,13 +932,13 @@ PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* 
 		ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
 
 		//check if it is OK or ERR
-		if (strstr (ptr, PROTOCOL_ANS_OK)!= NULL) { // answer is "OK"
+		if (strcmp (ptr, PROTOCOL_ANS_OK)==0) { // answer is "OK"
 			ptr = strtok(NULL, PROTOCOL_SEPARATOR);
 			if (ptr==NULL)
 				status = PROTOCOL_INVALID_FRAME;
 			else
 				*update_status = (uint8_t)strtoul(ptr, NULL, 10);
-		} else if (strstr (ptr, PROTOCOL_ANS_ERR)!= NULL) { // answer is "ERR"
+		} else if (strcmp (ptr, PROTOCOL_ANS_ERR)==0) { // answer is "ERR"
 			ptr = strtok(NULL, PROTOCOL_SEPARATOR);
 			conf->last_error = (uint16_t)strtol(ptr,NULL, 10);
 			status = PROTOCOL_RX_CMD_ERROR;
