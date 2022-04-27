@@ -30,11 +30,6 @@
 
 #define PROTOCOL_CONNECT_TIMEOUT	200 // step channel every 200 ms in case of no answer
 
-#define DEBUG_PROTOCOL				1
-#define DEBUG_CHANNEL				0x12
-#define DEBUG_PANID					0x1337
-#define DEBUG_PROTOCOL_TIMEOUT	    2000 // Timeout of around 2s
-
 PROTOCOL_Status PROTOCOL_Init(void) {
 
 	/* First init XBEE */
@@ -424,15 +419,6 @@ static int PROTOCOL_ParseCalendar(char* str) {
 	CAL_Reservation* reservation;
 
 	while (headptr!=NULL) {
-//		if (calendar->first_reservation == NULL) {
-//			calendar->first_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-//			indexreservationptr =calendar->first_reservation;
-//		} else {
-//			indexreservationptr->next_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-//			indexreservationptr = indexreservationptr->next_reservation;
-//		}
-
-//		memset(indexreservationptr, 0, sizeof(PROTOCOL_Reservation)); // init all field to '0'
 		reservation = CAL_NewReservation();
 
 		ptr = strtok(headptr->event, ";"); // ptr should be on event day
@@ -508,143 +494,6 @@ static int PROTOCOL_ParseCalendar(char* str) {
 
 	return PROTOCOL_OK;
 }
-
-//static int PROTOCOL_ParseCalendar(PROTOCOL_CalendarTypedef* calendar, char* str) {
-//	char* datelist =NULL;
-//	char* traineesptr=NULL;
-//	char* trainersptr = NULL;
-//	char* ptr;
-//	int i;
-//	int length;
-//
-//	PROTOCOL_CalEventList* headptr = NULL;
-//	PROTOCOL_CalEventList* indexptr=NULL;
-//	PROTOCOL_Reservation* indexreservationptr=NULL;
-//
-//	ptr = strtok(str, PROTOCOL_SEPARATOR); // ptr should be on date list
-//	if (ptr == NULL)
-//		return PROTOCOL_INVALID_FRAME;
-//	else
-//		// copy date list for further analysis
-//		datelist = ptr;
-//
-//	// 1st step: split string in reservation string
-//	ptr = strtok(NULL, PROTOCOL_SEPARATOR); // ptr should be on first event
-//	ptr = strtok(ptr, "#"); // ptr still should be on first event
-//
-//	while (ptr!=NULL) {
-//		if (headptr == NULL) {
-//			headptr = (PROTOCOL_CalEventList*)malloc(sizeof(PROTOCOL_CalEventList));
-//			indexptr = headptr;
-//		} else {
-//			indexptr->nextevent = (PROTOCOL_CalEventList*)malloc(sizeof(PROTOCOL_CalEventList));
-//			indexptr = indexptr->nextevent;
-//		}
-//
-//		indexptr->nextevent = NULL;
-//		indexptr->event = ptr;
-//
-//
-//		ptr = strtok(NULL, "#"); // ptr should be on next event
-//	};
-//
-//	// 2nd step: split week date
-//	ptr = strtok(datelist, ";"); // ptr should be on first date
-//
-//	for (i=0; i<7 ; i++) {
-//		if (ptr != NULL) {
-//			strncpy(calendar->week[i], ptr, PROTOCOL_DATE_STRING_MAX_LENGTH);
-//			calendar->week[i][PROTOCOL_DATE_STRING_MAX_LENGTH]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_DATE_STRING_MAX_LENGTH
-//		}
-//
-//		ptr = strtok(NULL, ";"); // ptr should be on next date
-//	}
-//
-//	// 3rd step: split events
-//	while (headptr!=NULL) {
-//		if (calendar->first_reservation == NULL) {
-//			calendar->first_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-//			indexreservationptr =calendar->first_reservation;
-//		} else {
-//			indexreservationptr->next_reservation = (PROTOCOL_Reservation*)malloc(sizeof(PROTOCOL_Reservation));
-//			indexreservationptr = indexreservationptr->next_reservation;
-//		}
-//
-//		memset(indexreservationptr, 0, sizeof(PROTOCOL_Reservation)); // init all field to '0'
-//
-//		ptr = strtok(headptr->event, ";"); // ptr should be on event day
-//		if (ptr!=NULL)
-//			indexreservationptr->day_nbr = (uint8_t)strtoul(ptr,NULL,10);
-//
-//		ptr = strtok(NULL, ";"); // ptr should be on start time
-//		if (ptr!=NULL)
-//			indexreservationptr->start_time = (uint16_t)strtoul(ptr,NULL,10);
-//
-//		ptr = strtok(NULL, ";"); // ptr should be on end time
-//		if (ptr!=NULL)
-//			indexreservationptr->end_time = (uint16_t)strtoul(ptr,NULL,10);
-//
-//		ptr = strtok(NULL, ";"); // ptr should be on title
-//		if (ptr!=NULL) {
-//			length = strlen(ptr);
-//			if (length > PROTOCOL_TITLE_MAX_LENGTH)
-//				length = PROTOCOL_TITLE_MAX_LENGTH;
-//
-//			indexreservationptr->title = (char*)malloc(length+1); // for '0' ending
-//			strncpy(indexreservationptr->title, ptr, length);
-//			indexreservationptr->title[length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TITLE_MAX_LENGTH
-//		}
-//
-//		ptr = strtok(NULL, ";"); // ptr should be on trainees
-//		traineesptr= ptr;
-//		ptr = strtok(NULL, ";"); // ptr should be on trainers
-//		trainersptr= ptr;
-//
-//		if (traineesptr!=NULL) {
-//			ptr = strtok(traineesptr, ",");// ptr should be on 1st trainee
-//			i=0;
-//			while ((ptr != NULL) && (i<4)) {
-//				length = strlen(ptr);
-//				if (length> PROTOCOL_TRAINEE_MAX_LENGTH)
-//					length = PROTOCOL_TRAINEE_MAX_LENGTH;
-//
-//				indexreservationptr->trainees[i]=(char*)malloc(length);
-//				strncpy(indexreservationptr->trainees[i], ptr, length);
-//				indexreservationptr->trainees[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINEE_MAX_LENGTH
-//
-//				i++;
-//				ptr = strtok(NULL, ",");// ptr should be on next trainee
-//			}
-//		}
-//
-//		if (trainersptr!=NULL) {
-//			ptr = strtok(trainersptr, ",");// ptr should be on 1st trainer
-//			i=0;
-//			while ((ptr != NULL) && (i<4)) {
-//				length = strlen(ptr);
-//				if (length> PROTOCOL_TRAINER_MAX_LENGTH)
-//					length = PROTOCOL_TRAINER_MAX_LENGTH;
-//
-//				indexreservationptr->trainers[i]=(char*)malloc(length);
-//				strncpy(indexreservationptr->trainers[i], ptr, length);
-//				indexreservationptr->trainers[i][length]=0; // force '0' ending in case ptr string is long or longer than PROTOCOL_TRAINER_MAX_LENGTH
-//
-//				i++;
-//				ptr = strtok(NULL, ",");// ptr should be on next trainer
-//			}
-//		}
-//
-//		indexptr= headptr;
-//		headptr= headptr->nextevent;
-//		free((void*)indexptr);
-//	}
-//
-//	// 4th step: free the main string
-//	// All the main string is now split, we can deallocate it.
-//	free((void*)str);
-//
-//	return PROTOCOL_OK;
-//}
 
 typedef struct pCalFrameList {
 	XBEE_RX_PACKET_FRAME* frame;
@@ -772,127 +621,6 @@ PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf) {
 	return status;
 }
 
-//PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar) {
-//	int com_status;
-//	PROTOCOL_Status status=PROTOCOL_OK;
-//	XBEE_GENERIC_FRAME *rx_frame;
-//	uint8_t transmit_status;
-//	char* data;
-//	char *ptr;
-//	int end_rx=0;
-//
-//	PROTOCOL_CalFrameList* framelisthead=NULL;
-//	PROTOCOL_CalFrameList* framelistindex=NULL;
-//
-//#if DEBUG_PROTOCOL != 2
-//	/* Send a "CAL" command */
-//	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_CALENDAR, &transmit_status)!= XBEE_OK) {
-//		status= PROTOCOL_RX_HW_ERROR;
-//	}
-//
-//	if (transmit_status !=XBEE_TX_STATUS_SUCCESS ) {
-//		// here we should increment no ack counter for report
-//		// not good to have either no ack or CCA failure
-//		conf->rssi.no_ack++;
-//	}
-//#endif /* #if DEBUG_PROTOCOL==1 */
-//
-//	// Wait for answer
-//	/* Wait for OK, ERR, END or no answer */
-//	while (!end_rx) {
-//#if DEBUG_PROTOCOL == 2
-//		com_status = PROTOCOL_GetDataSim(&rx_frame, DEBUG_PROTOCOL_TIMEOUT);
-//#elif DEBUG_PROTOCOL == 1
-//		com_status = XBEE_GetData(&rx_frame, 0);
-//#else
-//		com_status = XBEE_GetData(&rx_frame, PROTOCOL_CONNECT_TIMEOUT);
-//#endif /* #if DEBUG_PROTOCOL==1 */
-//		if (com_status == XBEE_RX_ERROR) {
-//			status= PROTOCOL_RX_HW_ERROR;
-//			end_rx=1;
-//		} else if (com_status == XBEE_RX_TIMEOUT) {
-//			status = PROTOCOL_RX_TIMEOUT;
-//			end_rx=1;
-//		} else if (com_status == XBEE_INVALID_FRAME) {
-//			status = PROTOCOL_RX_CMD_ERROR;
-//		} else {
-//			if ((rx_frame->type == XBEE_RX_PACKET_TYPE) || (rx_frame->type == XBEE_RX_EXPLICIT_TYPE)) {
-//				data = ((XBEE_RX_PACKET_FRAME*)rx_frame)->data;
-//
-//				ptr = strtok(data, PROTOCOL_SEPARATOR); // ptr is on first word
-//				if (strcmp (ptr, PROTOCOL_ANS_ERR)==0) { // answer is "ERR"
-//					ptr = strtok(NULL, PROTOCOL_SEPARATOR);
-//					conf->last_error = (uint16_t)strtol(ptr,NULL, 10);
-//					status = PROTOCOL_RX_CMD_ERROR;
-//					end_rx=1;
-//
-//					free(rx_frame);
-//				} else if (strcmp (ptr, PROTOCOL_ANS_END)==0) { // answer is "END"
-//					end_rx=1;
-//					free(rx_frame);
-//				} else { // its an acceptable frame
-//					if (framelisthead == NULL) {
-//						framelisthead = (PROTOCOL_CalFrameList*)malloc(sizeof(PROTOCOL_CalFrameList));
-//						framelistindex=framelisthead;
-//					} else {
-//						framelistindex->nextframe = (PROTOCOL_CalFrameList*)malloc(sizeof(PROTOCOL_CalFrameList));
-//						framelistindex = framelistindex->nextframe;
-//					}
-//
-//					framelistindex->frame=(XBEE_RX_PACKET_FRAME*)rx_frame;
-//					framelistindex->nextframe=NULL;
-//				}
-//			} else {
-//				// do nothing, free memory frame and wait for an other frame
-//				free(rx_frame);
-//			}
-//		}
-//	}
-//
-//	if ((status == PROTOCOL_OK) || (status == PROTOCOL_RX_TIMEOUT)) {
-//		// build the concatenated answer string
-//		int string_length=0;
-//		framelistindex = framelisthead;
-//
-//		// compute necessary string size
-//		while (framelistindex!=NULL) {
-//			if (strstr(framelistindex->frame->data,"OK"))
-//				string_length += framelistindex->frame->data_length-3; // -3 to remove "OK\0" at start of data
-//			else
-//				string_length += framelistindex->frame->data_length; // -3 to remove "OK\0" at start of data
-//			framelistindex = framelistindex->nextframe;
-//		}
-//
-//		string_length+=1; // for 0 ending
-//		data = (char*)malloc(string_length);
-//		memset(data, 0, string_length); // fill array with '0' to avoid strncpy missing '0' at end of copy
-//		ptr = data;
-//
-//		framelistindex = framelisthead;
-//
-//		// copy string chunks and free memory
-//		while (framelisthead!=NULL) {
-//			if (strstr(framelisthead->frame->data,"OK")) {
-//				ptr=strncpy(ptr,framelisthead->frame->data+3, framelisthead->frame->data_length-3);// move data 3 chars ahead, to step over "OK" and find start of PDU
-//				framelistindex = framelisthead;
-//				ptr= ptr+(framelisthead->frame->data_length-3); // go to end of string 0 ending
-//			} else {
-//				ptr=strncpy(ptr,framelisthead->frame->data, framelisthead->frame->data_length);// move data 3 chars ahead, to step over "OK" and find start of PDU
-//				framelistindex = framelisthead;
-//				ptr= ptr+(framelisthead->frame->data_length); // go to end of string 0 ending
-//			}
-//
-//			free ((void*)framelisthead->frame);
-//			framelisthead = framelisthead->nextframe;
-//			free ((void*)framelistindex);
-//		}
-//
-//		status=PROTOCOL_ParseCalendar(calendar, data);
-//	}
-//
-//	return status;
-//}
-
 PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* conf, uint8_t* update_status) {
 	int com_status;
 	PROTOCOL_Status status=PROTOCOL_OK;
@@ -993,5 +721,44 @@ PROTOCOL_Status PROTOCOL_SendReport(PROTOCOL_ConfigurationTypedef* conf) {
 	return status;
 }
 
+#if DEBUG_PROTOCOL_FAKE_CONFIG==1
+static const char* fake_conf="OK|16:31:26|2|GEI 109|Informatique|06:00:00|19:00:00|900|0";
+static const char* fake_cal="15/11/2021;16/11/2021;17/11/2021;18/11/2021;19/11/2021;20/11/2021;21/11/2021|1;570;735;PROJET Integrateur - 2/7;5GEI_SDBD_A,5GEI_SDBD_B;FERRY Julien,HUGUET Marie-Jose,MARIGO Pierre,SIALA Mohamed,YANGUI Sami#1;840;915;SOA-TD(9) MOOC - I5IRIL12;5GEI_SDBD_A;#1;930;1095;TP Langage C - E;3_MIC_E;CAYRE Romain,CHABI SIKA BONI Abdel Kader#2;480;585;25A - I5TSSL11 - TP Vuln Logicielles 3//6;5GEI_TLS_SEC;ALATA Eric,NICOMETTE Vincent#2;615;720;25A -I5TSSL11 -  TP  Vuln Logicielles 4//6;5GEI_TLS_SEC;ALATA Eric,NICOMETTE Vincent#2;750;915;Analyse Exp. TP(5) - I5IRAD12;5GEI_SDBD_A1,5GEI_SDBD_A2;FEUILLET Laure,TREDAN Gilles#2;930;1095;Analyse Exp. TP(5) - I5IRAD12;5GEI_SDBD_B1,5GEI_SDBD_B2;FEUILLET Laure,HU Hao#3;480;585;25A - I5TSSL11 - TP  Vuln Logicielles 5/6;5GEI_TLS_SEC;ALATA Eric,NICOMETTE Vincent#3;615;720;25A - I5TSSL11 - TP  Vuln Logicielles 6/6;5GEI_TLS_SEC;ALATA Eric,NICOMETTE Vincent#3;750;915;Big Data Arch.-TP2 - I5IRBD12;5GEI_SDBD_A1,5GEI_SDBD_A2;GHARBI Ghada,YANGUI Sami#4;570;735;SoC EC11 (TP) du 9/11;5 IS - AE1,5 IS - AE2;DRAGOMIRESCU Daniela#5;570;735;AP-PLNE-TP4 (B1);5GEI_SDBD_B1;CAPELLE Mikael#5;840;915;TD Processus de developpement logiciel automatise 1/7 - IB;4IR_I_B;GUERMOUCHE Nawal#5;930;1005;TD Processus de developpement logiciel automatise 7/7 - IB;4IR_I_B;GUERMOUCHE Nawal";
 
+PROTOCOL_Status PROTOCOL_FakeConfig(PROTOCOL_ConfigurationTypedef* conf) {
+	PROTOCOL_Status status=PROTOCOL_OK;
+	char* data;
+	char* ptr;
+	int len=strlen(fake_conf);
+
+	data= (char*)malloc(len+1);
+	memcpy(data, fake_conf, len);
+	data[len]=0;
+
+	ptr = strtok(data, PROTOCOL_SEPARATOR);
+	status=PROTOCOL_ParseConfiguration(conf, ptr);
+	free((void*) data);
+
+	conf->device_uid=0x13a20041c02be8;
+	conf->gw_address=0x13a20041c0bae6;
+	conf->rf_channel=0x12;
+	conf->rf_panid=0x1337;
+
+	return status;
+}
+
+PROTOCOL_Status PROTOCOL_FakeCalendar(void) {
+	PROTOCOL_Status status=PROTOCOL_OK;
+	char* data;
+	int len=strlen(fake_cal);
+
+	data= (char*)malloc(len+1);
+	memcpy(data, fake_cal, len);
+	data[len]=0;
+
+	status=PROTOCOL_ParseCalendar(data);
+	//free((void*) data);
+	return status;
+}
+#endif /* DEBUG_PROTOCOL_FAKE_CONFIG==1 */
 

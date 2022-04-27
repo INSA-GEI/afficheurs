@@ -111,3 +111,7 @@ char* CAL_HourToStr(uint16_t hour) {
 
 	return hour_to_str_buffer;
 }
+
+uint16_t CAL_HourToInt(int hour, int min) {
+	return (hour*60)+min;
+}

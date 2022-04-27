@@ -8,6 +8,9 @@
 #ifndef PANIC_H_
 #define PANIC_H_
 
+#include "stm32l4xx_hal.h"
+#include "config.h"
+
 typedef enum {
 	PANIC_EVT_XBEE_CONFIG_ERROR=1,
 	PANIC_EVT_DISPLAY_CONFIG_ERROR

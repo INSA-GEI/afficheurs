@@ -9,6 +9,8 @@
 #define DISPLAY_H_
 
 #include "stm32l4xx_hal.h"
+#include "config.h"
+
 #include "calendar.h"
 #include "protocol.h"
 
@@ -32,6 +34,7 @@ void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day
 void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf);
 
 void DISPLAY_ShowWaitToConnect(uint64_t uid);
-void DISPLAY_ShowConfiguration(void);
+void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf);
+void DISPLAY_ShowPanic(uint32_t error_code);
 
 #endif /* DISPLAY_H_ */

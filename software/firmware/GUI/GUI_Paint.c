@@ -284,7 +284,7 @@ void Paint_Clear(uint16_t Color)
 				Paint.Image[Addr] = Color;
 			}
 		}		
-	}else if(Paint.Scale == 7){
+	} else if(Paint.Scale == 7){
 		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
 			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {
 				uint32_t Addr = X + Y*Paint.WidthByte;
@@ -434,6 +434,108 @@ void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16
 		Paint_DrawLine(Xstart, Ystart, Xstart, Yend, Color, Line_width, LINE_STYLE_SOLID);
 		Paint_DrawLine(Xend, Yend, Xend, Ystart, Color, Line_width, LINE_STYLE_SOLID);
 		Paint_DrawLine(Xend, Yend, Xstart, Yend, Color, Line_width, LINE_STYLE_SOLID);
+	}
+}
+
+/******************************************************************************
+function: Draw a rectangle
+parameter:
+    Xstart ：Rectangular  Starting Xpoint point coordinates
+    Ystart ：Rectangular  Starting Xpoint point coordinates
+    Xend   ：Rectangular  End point Xpoint coordinate
+    Yend   ：Rectangular  End point Ypoint coordinate
+    Color  ：The color of the Rectangular segment
+    Line_width: Line width
+    Draw_Fill : Whether to fill the inside of the rectangle
+ ******************************************************************************/
+void Paint_DrawFillRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
+{
+	uint8_t shift;
+
+	if (Xstart > Paint.Width || Ystart > Paint.Height ||
+			Xend > Paint.Width || Yend > Paint.Height) {
+		Debug("Input exceeds the normal display range\r\n");
+		return;
+	}
+
+	for (uint16_t Y = Ystart; Y < Yend; Y++) {
+		for (uint16_t X = Xstart; X < Xend; X++ ) {
+			uint32_t Addr = (X + Y*800)/8;
+			shift = (uint8_t)X%8;
+			shift = 7-shift;
+
+			if (Color == BLACK)
+				Paint.Image[Addr] = Paint.Image[Addr] | ((uint8_t)0x1<<shift);
+			else
+				Paint.Image[Addr] = Paint.Image[Addr] & ~((uint8_t)0x1<<shift);
+		}
+	}
+}
+
+/******************************************************************************
+function: Draw a rectangle
+parameter:
+    Xstart ：Rectangular  Starting Xpoint point coordinates
+    Ystart ：Rectangular  Starting Xpoint point coordinates
+    Xend   ：Rectangular  End point Xpoint coordinate
+    Yend   ：Rectangular  End point Ypoint coordinate
+    Color  ：The color of the Rectangular segment
+    Line_width: Line width
+    Draw_Fill : Whether to fill the inside of the rectangle
+ ******************************************************************************/
+void Paint_DrawFillRectangleOptim(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
+{
+	uint8_t shift;
+	uint16_t plain_x_start;
+	uint16_t plain_x_end;
+
+	if (Xstart > Paint.Width || Ystart > Paint.Height ||
+			Xend > Paint.Width || Yend > Paint.Height) {
+		Debug("Input exceeds the normal display range\r\n");
+		return;
+	}
+
+	for (uint16_t Y = Ystart; Y < Yend; Y++) {
+		if (Xstart%8 ==0)
+			plain_x_start = (Xstart>>3)<<3;
+		else
+			plain_x_start = 8+((Xstart>>3)<<3);
+
+		plain_x_end = (Xend>>3)<<3;
+
+		if (Xstart%8 !=0) {
+			for (uint16_t X= Xstart; X < plain_x_start; X++ ) {
+				uint32_t Addr = (X + Y*800)>>3;
+				shift = (uint8_t)X%8;
+				shift = 7-shift;
+
+				if (Color == BLACK)
+					Paint.Image[Addr] = Paint.Image[Addr] | ((uint8_t)0x1<<shift);
+				else
+					Paint.Image[Addr] = Paint.Image[Addr] & ~((uint8_t)0x1<<shift);
+			}
+		}
+
+		for (uint16_t X = plain_x_start; X<plain_x_end; X++) {
+			uint32_t Addr = (X + Y*800)>>3;
+			if (Color == BLACK)
+				Paint.Image[Addr] = BLACK;
+			else
+				Paint.Image[Addr] = (uint8_t)(~BLACK);
+		}
+
+		if (Xend%8 !=0) {
+			for (uint16_t X= plain_x_end; X < Xend; X++ ) {
+				uint32_t Addr = (X + Y*800)>>3;
+				shift = (uint8_t)X%8;
+				shift = 7-shift;
+
+				if (Color == BLACK)
+					Paint.Image[Addr] = Paint.Image[Addr] | ((uint8_t)0x1<<shift);
+				else
+					Paint.Image[Addr] = Paint.Image[Addr] & ~((uint8_t)0x1<<shift);
+			}
+		}
 	}
 }
 
@@ -676,7 +778,7 @@ lv_font_box_t Paint_GetStringBox(const char *pString, const lv_font_t* Font) {
 	uint16_t fontHeight = Font->h_px;
 	lv_font_box_t box = {
 			.width = 0,
-			.height = 0};
+			.height = Font->h_px};
 
 	while (* pString != '\0') {
 		if (* pString == '\n') {

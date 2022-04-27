@@ -43,6 +43,13 @@ extern const lv_img_dsc_t no_connection_24;
 
 extern const lv_img_dsc_t on_line_24;
 
+extern const lv_img_dsc_t morning_32;
+extern const lv_img_dsc_t afternoon_32;
+
+extern const lv_img_dsc_t cloud_sync_100;
+extern const lv_img_dsc_t services_96;
+extern const lv_img_dsc_t error_96;
+
 #ifdef __cplusplus
 }
 #endif

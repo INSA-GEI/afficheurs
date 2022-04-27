@@ -5,10 +5,11 @@
  *      Author: dimercur
  */
 
-#include "stm32l4xx_hal.h"
-
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
+
+#include "stm32l4xx_hal.h"
+#include "config.h"
 
 typedef enum {
 	PROTOCOL_OK=0,
@@ -47,14 +48,19 @@ typedef struct {
 	uint8_t order_nbr;
 	uint8_t battery_level;
 	PROTOCOL_RSSI rssi;
+	uint8_t rf_power;
 } PROTOCOL_ConfigurationTypedef;
 
 PROTOCOL_Status PROTOCOL_Init(void);
 PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetConfiguration(PROTOCOL_ConfigurationTypedef* conf);
-//PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf, PROTOCOL_CalendarTypedef* calendar);
 PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* conf, uint8_t* update_status);
 PROTOCOL_Status PROTOCOL_SendReport(PROTOCOL_ConfigurationTypedef* conf);
+
+#if DEBUG_PROTOCOL_FAKE_CONFIG==1
+PROTOCOL_Status PROTOCOL_FakeConfig(PROTOCOL_ConfigurationTypedef* conf);
+PROTOCOL_Status PROTOCOL_FakeCalendar(void);
+#endif /* DEBUG_PROTOCOL_FAKE_CONFIG==1 */
 
 #endif /* PROTOCOL_H_ */

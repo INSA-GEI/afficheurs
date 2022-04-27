@@ -59,6 +59,7 @@ extern const lv_font_t montserrat_li_34;
 extern const lv_font_t montserrat_li_40;
 
 // montserrat medium family
+extern const lv_font_t montserrat_m_16;
 extern const lv_font_t montserrat_m_26;
 extern const lv_font_t montserrat_m_34;
 extern const lv_font_t montserrat_m_40;
@@ -67,6 +68,7 @@ extern const lv_font_t montserrat_m_40;
 extern const lv_font_t montserrat_mi_150;
 
 // montserrat regular family
+extern const lv_font_t montserrat_r_14;
 extern const lv_font_t montserrat_r_26;
 extern const lv_font_t montserrat_r_34;
 extern const lv_font_t montserrat_r_40;

@@ -24,6 +24,7 @@ void APP_Init(void) {
 	if (display_status != DISPLAY_OK)
 		PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
 
+#if DEBUG_PROTOCOL_FAKE_CONFIG!=1
 	/* Init RF layer */
 	if (PROTOCOL_Init()!=PROTOCOL_OK)
 		PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
@@ -71,11 +72,22 @@ void APP_Init(void) {
 	//		if (status == PROTOCOL_RX_HW_ERROR)
 	//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
 	//	}
+#else
+	PROTOCOL_FakeConfig(&configuration);
+	PROTOCOL_FakeCalendar();
+#endif /* DEBUG_PROTOCOL_FAKE_CONFIG */
 
-	// SHow first reservation
+	// Show first reservation
 	//DISPLAY_ShowReservation(&configuration, CAL_GetFirst(), "Test", DISPLAY_PromptIconNext);
 	DISPLAY_ShowDayReservation(&configuration, 1);
+	//DISPLAY_ShowWaitToConnect(configuration.device_uid);
+	//DISPLAY_ShowPanic(0x12345678);
+	//DISPLAY_ShowConfiguration(&configuration);
+	//DISPLAY_ShowWeekReservation(&configuration);
 
 	// everything worked fine, but no code here yet
+	// Switch off display and wait
+	DISPLAY_EnterPowerOff();
+
 	while(1);
 }

@@ -8,6 +8,9 @@
 #ifndef APP_H_
 #define APP_H_
 
+#include "stm32l4xx_hal.h"
+#include "config.h"
+
 void APP_Init(void);
 
 #endif /* APP_H_ */
