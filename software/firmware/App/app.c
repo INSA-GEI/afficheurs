@@ -11,18 +11,27 @@
 #include "protocol.h"
 #include "calendar.h"
 #include "display.h"
+#include "rtc.h"
+#include "battery.h"
+#include "button_led.h"
 
 PROTOCOL_ConfigurationTypedef configuration;
 
 void APP_Init(void) {
-	PROTOCOL_Status status;
-	DISPLAY_StatusTypedef display_status;
+	//PROTOCOL_Status status;
 
 	//uint8_t update_status;
 	/* Init screen */
-	display_status = DISPLAY_Init();
-	if (display_status != DISPLAY_OK)
-		PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+	if (DISPLAY_Init() != DISPLAY_OK)
+		PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
+
+	if (RTC_Init() != RTC_OK)
+		PANIC_Handler(PANIC_EVT_RTC_CONFIG_ERROR);
+
+	if (BATTERY_Init() != BATTERY_OK)
+		PANIC_Handler(PANIC_EVT_ADC_CONFIG_ERROR);
+
+	BUTTON_Init();
 
 #if DEBUG_PROTOCOL_FAKE_CONFIG!=1
 	/* Init RF layer */
