@@ -23,8 +23,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "tasks.h"
-//#include "xbee.h"
 #include "app.h"
 
 /* USER CODE END Includes */
@@ -55,13 +53,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -74,7 +66,6 @@ static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_LPTIM2_Init(void);
-void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -120,13 +111,6 @@ int main(void)
   MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  //EPD_7in5b_V2_test();
-  //EPD_7in5_test();
-  //EPD_7in5_HD_test();
-//  if (XBEE_Init()!= XBEE_OK)
-//	  PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-  APP_Init();
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -150,7 +134,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
 
   /* USER CODE BEGIN RTOS_THREADS */
   TASKS_Create();
@@ -471,24 +455,6 @@ int __io_putchar(int ch)
 }
 
 /* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.

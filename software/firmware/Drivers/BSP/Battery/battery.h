@@ -9,6 +9,7 @@
 #define BSP_BATTERY_BATTERY_H_
 
 #include "stm32l4xx_hal.h"
+#include "config.h"
 
 typedef enum {
 	BATTERY_OK=1,

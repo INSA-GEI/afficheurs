@@ -9,6 +9,7 @@
 #define BSP_XBEE_XBEE_LL_H_
 
 #include "stm32l4xx_hal.h"
+#include "config.h"
 
 typedef void (*RXCallback)(char* data, int length);
 

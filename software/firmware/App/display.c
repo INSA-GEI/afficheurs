@@ -242,10 +242,17 @@ void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day
 
 	Paint_DrawLine(EPD_7IN5_V2_WIDTH/2, 60, EPD_7IN5_V2_WIDTH/2, 455, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
-	Paint_DrawImage((EPD_7IN5_V2_WIDTH/2+50)/2-morning_32.header.w/2,
+	stringBox = Paint_GetStringBox("Matin", &montserrat_m_26);
+	Paint_DrawImage((EPD_7IN5_V2_WIDTH/2+50)/2-(morning_32.header.w+stringBox.width+10)/2,
 			(80+36)/2-morning_32.header.h/2, (lv_img_dsc_t *) &morning_32, DRAW_IMAGE_NORMAL);
-	Paint_DrawImage((EPD_7IN5_V2_WIDTH/2+EPD_7IN5_V2_WIDTH-50)/2-afternoon_32.header.w/2,
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2+50)/2-(morning_32.header.w+stringBox.width+10)/2 + morning_32.header.w +10,
+			(80+36)/2-stringBox.height/2,"Matin", &montserrat_m_26, BLACK, WHITE);
+
+	stringBox = Paint_GetStringBox("Apres-midi", &montserrat_m_26);
+	Paint_DrawImage((EPD_7IN5_V2_WIDTH/2+EPD_7IN5_V2_WIDTH-50)/2-(afternoon_32.header.w+stringBox.width+10)/2,
 			(80+36)/2-afternoon_32.header.h/2, (lv_img_dsc_t *) &afternoon_32, DRAW_IMAGE_NORMAL);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2+EPD_7IN5_V2_WIDTH-50)/2-(afternoon_32.header.w+stringBox.width+10)/2+afternoon_32.header.w+10,
+			(80+36)/2-stringBox.height/2,"Apres-midi", &montserrat_m_26, BLACK, WHITE);
 
 	// 3. Draw today reservations
 	res= CAL_GetFirst();

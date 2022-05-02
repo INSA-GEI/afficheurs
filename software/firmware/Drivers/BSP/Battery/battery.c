@@ -132,4 +132,5 @@ void ADC1_IRQHandler(void) {
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	adc_raw_value = (uint16_t)hadc->Instance->DR;
+	conversion_complete = 1;
 }

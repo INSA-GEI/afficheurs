@@ -9,6 +9,7 @@
 #define BSP_RTC_RTC_H_
 
 #include "stm32l4xx_hal.h"
+#include "config.h"
 
 typedef enum {
 	RTC_OK=0,
@@ -16,7 +17,12 @@ typedef enum {
 	RTC_Invalid_Parameter
 } RTC_Status;
 
-typedef void (*RTC_AlarmCallback)(uint32_t alarm_src);
+typedef enum {
+	RTC_AlarmEvent_WeekStart=1,
+	RTC_AlarmEvent_OtherEvent
+} RTC_AlarmEvent;
+
+typedef void (*RTC_AlarmCallback)(RTC_AlarmEvent event);
 
 RTC_Status RTC_Init(void);
 
@@ -37,11 +43,13 @@ RTC_Status RTC_GetWeekDay(uint8_t *weekday);
 RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year);
 
 void RTC_SetAlarmCallback(RTC_AlarmCallback callback);
-
 /** Program a futur event (in minute)
  */
 RTC_Status RTC_SetNextEvent (uint16_t min);
 
 RTC_Status RTC_StopEvent (void);
 
+RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr);
+
+uint32_t RTC_UnitTests(void);
 #endif /* BSP_RTC_RTC_H_ */

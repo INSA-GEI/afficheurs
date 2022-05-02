@@ -5,6 +5,9 @@
  *      Author: dimercur
  */
 
+#include "stm32l4xx_hal.h"
+#include "cmsis_os.h"
+
 #include "app.h"
 #include "panic.h"
 
@@ -15,10 +18,90 @@
 #include "battery.h"
 #include "button_led.h"
 
-PROTOCOL_ConfigurationTypedef configuration;
+#define STACK_SIZE 200
+#define PriorityDrawDisplay		16
 
-void APP_Init(void) {
+/* Structure that will hold the TCB of the task being created. */
+StaticTask_t xTaskBufferDrawDisplay;
+
+/* Buffer that the task being created will use as its stack.  Note this is
+    an array of StackType_t variables.  The size of StackType_t is dependent on
+    the RTOS port. */
+StackType_t xStackDrawDisplay[ STACK_SIZE ];
+
+TaskHandle_t xHandleDrawDisplay = NULL;
+
+PROTOCOL_ConfigurationTypedef configuration;
+void Alarm_Callback(RTC_AlarmEvent event);
+void Button_Callback(BUTTON_Event event);
+void DefaultTask(void *argument);
+void InitApplicationTask(void *argument);
+
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+		.name = "defaultTask",
+		.stack_size = 128 * 4,
+		.priority = (osPriority_t) osPriorityNormal,
+};
+
+osThreadId_t initTaskHandle;
+const osThreadAttr_t initTask_attributes = {
+		.name = "initApplication",
+		.stack_size = 128 * 4,
+		.priority = (osPriority_t) osPriorityNormal,
+};
+
+TickType_t msToTicks(TickType_t ms) {
+	TickType_t tmp = ms;
+
+	if (ms<(1000/configTICK_RATE_HZ))
+		tmp = 1;
+	else {
+		tmp = ms/(1000/configTICK_RATE_HZ);
+
+		if (ms % (1000/configTICK_RATE_HZ)) // if the delay is not true multiple of tick rate, increase by one (delay longer)
+			tmp ++;
+	}
+	return tmp;
+}
+
+/* Function that creates a task. */
+void TASKS_Create(void) {
+	TickType_t tmp;
+
+	tmp = msToTicks(15);
+	tmp = msToTicks(100);
+	tmp = msToTicks(250);
+	tmp = msToTicks(1000);
+
+	defaultTaskHandle = osThreadNew(DefaultTask, NULL, &defaultTask_attributes);
+	initTaskHandle = osThreadNew(InitApplicationTask, NULL, &initTask_attributes);
+	/* Create the task without using any dynamic memory allocation. */
+	//	xHandleDrawDisplay = xTaskCreateStatic(
+	//			vTaskDrawDisplay,       /* Function that implements the task. */
+	//			"DrawDisplay",          /* Text name for the task. */
+	//			STACK_SIZE,      /* Number of indexes in the xStack array. */
+	//			NULL,    /* Parameter passed into the task. */
+	//			PriorityDrawDisplay,/* Priority at which the task is created. */
+	//			xStackDrawDisplay,          /* Array to use as the task's stack. */
+	//			&xTaskBufferDrawDisplay);  /* Variable to hold the task's data structure. */
+
+	/* puxStackBuffer and pxTaskBuffer were not NULL, so the task will have
+        been created, and xHandleDrawDisplay will be the task's handle.  Use the handle
+        to suspend the task. */
+	//vTaskSuspend(xHandleDrawDisplay);
+}
+
+/* Function that creates a task. */
+void TASKS_Run(void) {
+	//vTaskResume(xHandleDrawDisplay);
+}
+
+void InitApplicationTask(void *argument) {
 	//PROTOCOL_Status status;
+	//uint32_t val;
+	uint16_t battery_val=0x00;
 
 	//uint8_t update_status;
 	/* Init screen */
@@ -88,15 +171,89 @@ void APP_Init(void) {
 
 	// Show first reservation
 	//DISPLAY_ShowReservation(&configuration, CAL_GetFirst(), "Test", DISPLAY_PromptIconNext);
-	DISPLAY_ShowDayReservation(&configuration, 1);
+	//DISPLAY_ShowDayReservation(&configuration, 1);
 	//DISPLAY_ShowWaitToConnect(configuration.device_uid);
 	//DISPLAY_ShowPanic(0x12345678);
 	//DISPLAY_ShowConfiguration(&configuration);
 	//DISPLAY_ShowWeekReservation(&configuration);
 
-	// everything worked fine, but no code here yet
+	// Test RTC
+	//	RTC_SetAlarmCallback(Alarm_Callback);
+	//
+	//	if (RTC_SetTime(8, 0, 0) != RTC_OK)
+	//		while (1);
+	//
+	//	if (RTC_SetDate(1, 2, 05, 22) != RTC_OK)
+	//		while (1);
+	//
+	//	if (RTC_SetNextEvent(1) != RTC_OK)
+	//		while (1);
+	//
+	//	if (RTC_EnableWeekStartEvent(0) != RTC_OK)
+	//		while (1);
+	//	if ((val=RTC_UnitTests()) != 0)
+	//		while (1);
+
+	// Test battery
+	// if (BATTERY_GetVoltage(&battery_val) != BATTERY_OK)
+	//	while (1);
+
+	// Test Bouton
+	BUTTON_SetCallback(Button_Callback);
+
+	// Everything worked fine, but no code here yet
 	// Switch off display and wait
 	DISPLAY_EnterPowerOff();
 
 	while(1);
 }
+
+void DefaultTask(void *argument) {
+	while (1)
+		vTaskDelay(msToTicks(1000));
+}
+
+void Button_Callback(BUTTON_Event event) {
+	int i;
+	if (event == BUTTON_ShortPress)
+		i=0;
+	else
+		i=1;
+
+}
+
+void Alarm_Callback(RTC_AlarmEvent event) {
+	uint8_t hour;
+	uint8_t min;
+	uint8_t sec;
+	uint8_t weekday;
+
+	if (RTC_GetTime(&hour, &min, &sec)!= RTC_OK)
+		while (1);
+
+	if (RTC_GetWeekDay(&weekday)!= RTC_OK)
+		while (1);
+
+	if (event == RTC_AlarmEvent_OtherEvent)
+		RTC_StopEvent();
+
+	while(1);
+}
+
+
+
+
+
+
+/* Function that implements the task being created. */
+void vTaskDrawDisplay(void* params)
+{
+	//for( ;; )
+	//{
+	//	/* Task code goes here. */
+	//}
+
+	//EPD_7in5_V2_test();
+}
+
+
