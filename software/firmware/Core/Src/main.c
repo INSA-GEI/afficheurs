@@ -137,6 +137,8 @@ int main(void)
 
 
   /* USER CODE BEGIN RTOS_THREADS */
+  APP_Init();
+
   TASKS_Create();
   TASKS_Run();
   /* USER CODE END RTOS_THREADS */

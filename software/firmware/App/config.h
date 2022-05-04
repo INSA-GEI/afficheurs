@@ -8,8 +8,15 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include "FreeRTOSConfig.h"
+#include "stm32l4xx_hal.h"
+#include "cmsis_os.h"
 
+TickType_t msToTicks(TickType_t ms);
+
+#define STACK_SIZE 					200
+#define PriorityDrawDisplay			16
+#define PriorityProtocol			15
+#define PriorityPeriodicWakeup		14
 
 #define DEBUG_PROTOCOL				1
 #define DEBUG_CHANNEL				0x12
