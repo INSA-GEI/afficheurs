@@ -124,7 +124,6 @@ void TASKS_Run(void) {
 void APP_Init(void) {
 	//PROTOCOL_Status status;
 	//uint32_t val;
-	uint16_t battery_val=0x00;
 
 	//uint8_t update_status;
 	/* Init screen */
@@ -134,13 +133,11 @@ void APP_Init(void) {
 
 	if (RTC_Init() != RTC_OK)
 		PANIC_Handler(PANIC_EVT_RTC_CONFIG_ERROR);
-	RTC_SetAlarmCallback(Alarm_Callback);
 
 	if (BATTERY_Init() != BATTERY_OK)
 		PANIC_Handler(PANIC_EVT_ADC_CONFIG_ERROR);
 
 	BUTTON_Init();
-	BUTTON_SetCallback(Button_Callback);
 
 #if DEBUG_PROTOCOL_FAKE_CONFIG!=1
 	/* Init RF layer */
@@ -228,14 +225,6 @@ void APP_Init(void) {
 void DefaultTask(void *argument) {
 	while (1)
 		vTaskDelay(msToTicks(1000));
-}
-
-void Button_Callback(BUTTON_Event event) {
-	int i;
-	if (event == BUTTON_ShortPress)
-		i=0;
-	else
-		i=1;
 }
 
 void Alarm_Callback(RTC_AlarmEvent event) {

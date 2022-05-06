@@ -17,10 +17,10 @@
 #include <sys/_stdint.h>
 
 RTC_HandleTypeDef hrtc;
-static RTC_AlarmCallback alarm_callback= {0};
+static TaskHandle_t rtc_thread_handler;
+static RTC_AlarmEvent RTC_CurrentAlarmEvent;
 
-static uint8_t dec2bcd(uint8_t num)
-{
+static uint8_t dec2bcd(uint8_t num) {
 	uint8_t ones = 0;
 	uint8_t tens = 0;
 	uint8_t temp = 0;
@@ -34,8 +34,7 @@ static uint8_t dec2bcd(uint8_t num)
 	return (tens + ones);
 }
 
-static uint8_t bcd2dec(uint8_t num)
-{
+static uint8_t bcd2dec(uint8_t num) {
 	uint8_t ones = 0;
 	uint8_t tens = 0;
 
@@ -160,8 +159,14 @@ RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year
 	return RTC_OK;
 }
 
-void RTC_SetAlarmCallback(RTC_AlarmCallback callback) {
-	alarm_callback = callback;
+RTC_AlarmEvent RTC_WaitForEvent(void) {
+	rtc_thread_handler= xTaskGetCurrentTaskHandle();
+
+	// wait for event, without timeout
+	ulTaskNotifyTake( pdFALSE, 0 ); // unlimited wait
+	rtc_thread_handler = NULL;
+
+	return RTC_CurrentAlarmEvent;
 }
 
 /** Program a futur event (in minute)
@@ -191,9 +196,9 @@ RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr) {
 	hours %=24;
 
 	sAlarm.AlarmDateWeekDay = RTC_WEEKDAY_MONDAY;
-//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
-//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
-//	sAlarm.AlarmTime.Seconds = dec2bcd(sec);
+	//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
+	//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
+	//	sAlarm.AlarmTime.Seconds = dec2bcd(sec);
 
 	sAlarm.AlarmTime.Hours = hours;
 	sAlarm.AlarmTime.Minutes = minutes;
@@ -236,8 +241,8 @@ RTC_Status RTC_SetNextEvent (uint16_t min) {
 	hours = min/60;
 	minutes = min - ((uint16_t)hours)*60;
 
-//	hours += bcd2dec(sTime.Hours);
-//	minutes += bcd2dec(sTime.Minutes);
+	//	hours += bcd2dec(sTime.Hours);
+	//	minutes += bcd2dec(sTime.Minutes);
 
 	hours += sTime.Hours;
 	minutes += sTime.Minutes;
@@ -250,8 +255,8 @@ RTC_Status RTC_SetNextEvent (uint16_t min) {
 	if (hours >=24 )
 		hours-=24;
 
-//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
-//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
+	//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
+	//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
 
 	sAlarm.AlarmTime.Hours = hours;
 	sAlarm.AlarmTime.Minutes = minutes;
@@ -442,11 +447,41 @@ void RTC_Alarm_IRQHandler(void) {
 }
 
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc) {
-	if (alarm_callback!=NULL)
-		alarm_callback(RTC_AlarmEvent_OtherEvent);
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+	RTC_CurrentAlarmEvent = RTC_AlarmEvent_OtherEvent;
+
+	if (rtc_thread_handler != NULL) {
+		/* Notify the task that an event has been emitted. */
+		vTaskNotifyGiveFromISR(rtc_thread_handler, &xHigherPriorityTaskWoken );
+
+		/* There are no more eventin progress, so no tasks to notify. */
+		rtc_thread_handler = NULL;
+
+		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+			    should be performed to ensure the interrupt returns directly to the highest
+			    priority task.  The macro used for this purpose is dependent on the port in
+			    use and may be called portEND_SWITCHING_ISR(). */
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
 }
 
 void HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc) {
-	if (alarm_callback!=NULL)
-		alarm_callback(RTC_AlarmEvent_WeekStart);
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+	RTC_CurrentAlarmEvent = RTC_AlarmEvent_WeekStart;
+
+	if (rtc_thread_handler != NULL) {
+		/* Notify the task that an event has been emitted. */
+		vTaskNotifyGiveFromISR(rtc_thread_handler, &xHigherPriorityTaskWoken );
+
+		/* There are no more eventin progress, so no tasks to notify. */
+		rtc_thread_handler = NULL;
+
+		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+			    should be performed to ensure the interrupt returns directly to the highest
+			    priority task.  The macro used for this purpose is dependent on the port in
+			    use and may be called portEND_SWITCHING_ISR(). */
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
 }

@@ -11,6 +11,8 @@
 static ADC_HandleTypeDef hadc1;
 static uint8_t conversion_complete;
 static uint16_t adc_raw_value;
+static TaskHandle_t battery_thread_handler;
+
 /**
  * @brief ADC1 Initialization Function
  * @param None
@@ -54,15 +56,26 @@ BATTERY_Status BATTERY_Init(void) {
 }
 
 BATTERY_Status BATTERY_GetVoltage(uint16_t *val) {
-	conversion_complete=0;
-	adc_raw_value=0;
+	uint32_t ulNotificationValue;
+	conversion_complete = 0;
+	adc_raw_value = 0;
 
-	if (HAL_ADC_Start_IT(&hadc1)!=HAL_OK)
+	if (HAL_ADC_Start_IT(&hadc1) != HAL_OK)
 		return BATTERY_HW_ERROR;
 
-	while (conversion_complete!=1);
+	battery_thread_handler = xTaskGetCurrentTaskHandle();
+	ulNotificationValue = ulTaskNotifyTake( pdFALSE, pdMS_TO_TICKS(100)); // wait max 100 ms
 
-	*val = adc_raw_value;
+	if (ulNotificationValue == 1) {
+		/* The transmission ended as expected. */
+		*val = adc_raw_value;
+	} else {
+		/* The call to ulTaskNotifyTake() timed out. */
+		return BATTERY_HW_ERROR;
+	}
+
+	battery_thread_handler = NULL;
+
 	return BATTERY_OK;
 }
 

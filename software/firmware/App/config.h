@@ -17,6 +17,7 @@ TickType_t msToTicks(TickType_t ms);
 #define PriorityDrawDisplay			16
 #define PriorityProtocol			15
 #define PriorityPeriodicWakeup		14
+#define PriorityXBEERxThread        13
 
 #define DEBUG_PROTOCOL				1
 #define DEBUG_CHANNEL				0x12

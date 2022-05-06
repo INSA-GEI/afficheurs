@@ -16,9 +16,7 @@ typedef enum {
 	BUTTON_LongPress
 } BUTTON_Event;
 
-typedef void (*BUTTON_Callback)(BUTTON_Event event);
-
 void BUTTON_Init(void);
-void BUTTON_SetCallback(BUTTON_Callback callback);
+BUTTON_Event BUTTON_WaitForEvent(void);
 
 #endif /* BSP_BUTTON_LED_BUTTON_LED_H_ */

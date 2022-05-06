@@ -7,19 +7,18 @@
 
 #include "xbee_ll.h"
 #include "stm32l4xx_hal.h"
+#include "cmsis_os.h"
 
 UART_HandleTypeDef XBEE_LL_Uart;
 LPTIM_HandleTypeDef XBEE_LL_Timer;
 char* XBEE_LL_RxBuffer;
 
-typedef enum {
-	XBEE_LL_MODE_TRANSPARENT=0,
-	XBEE_LL_MODE_API
-} XBEE_LL_ModeType;
-
 XBEE_LL_ModeType XBEE_LL_Mode;
 FlagStatus XBEE_LL_RxReady;
 FlagStatus XBEE_LL_TxReady;
+
+TaskHandle_t rx_thread_handler;
+TaskHandle_t tx_thread_handler;
 
 typedef enum
 {
@@ -57,9 +56,7 @@ int XBEE_LL_ConfigureUart(USART_TypeDef* usart, uint32_t baudrate) {
 	XBEE_LL_Uart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
 	if (HAL_UART_Init(&XBEE_LL_Uart) != HAL_OK)
-	{
 		return XBEE_LL_ERROR_USART_CFG;
-	}
 
 	/* Debug usart */
 	tmp = usart->CR1;
@@ -187,8 +184,19 @@ void XBEE_LL_StopTimeout(void)
 	__HAL_LPTIM_CLEAR_FLAG(&XBEE_LL_Timer,LPTIM_IT_CMPM);
 }
 
+void XBEE_LL_SetRxMode(XBEE_LL_ModeType mode) {
+	XBEE_LL_Mode = mode;
+}
+
+void XBEE_LL_SetRXTaskHandler(TaskHandle_t handler) {
+	rx_thread_handler = handler;
+}
+
 int XBEE_LL_SendData(char* data, int length) {
 	int data_length;
+	uint32_t ulNotificationValue;
+
+	tx_thread_handler= xTaskGetCurrentTaskHandle();
 
 	if (length == -1) {
 		/* Envoi d'un trame API, donc, recherche de la longueur dans la trame */
@@ -196,7 +204,18 @@ int XBEE_LL_SendData(char* data, int length) {
 	}
 	else data_length = length;
 
-	while (XBEE_LL_TxReady != SET); // wait for last transfert to end
+	if (XBEE_LL_TxReady != SET) {
+		ulNotificationValue = ulTaskNotifyTake( pdFALSE, pdMS_TO_TICKS(200) ); // wait max 200 ms
+
+		if( ulNotificationValue == 1 ) {
+			/* The transmission ended as expected. */
+		} else {
+			/* The call to ulTaskNotifyTake() timed out. */
+			return XBEE_LL_ERROR_TX;
+		}
+	} else {
+		tx_thread_handler = NULL;
+	}
 
 	/* Restore huart->gState to ready */
 	//XBEE_LL_Uart.gState = HAL_UART_STATE_READY;
@@ -295,11 +314,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
  * @retval None
  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle) {
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
 	/* Set transmission flag: transfer complete*/
 	XBEE_LL_TxReady = SET;
 
-	/* Restore huart->gState to ready */
-	//UartHandle->gState = HAL_UART_STATE_READY;
+	if (tx_thread_handler != NULL) {
+		/* Notify the task that the transmission is complete. */
+		vTaskNotifyGiveFromISR( tx_thread_handler, &xHigherPriorityTaskWoken );
+
+		/* There are no transmissions in progress, so no tasks to notify. */
+		tx_thread_handler = NULL;
+
+		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+		    should be performed to ensure the interrupt returns directly to the highest
+		    priority task.  The macro used for this purpose is dependent on the port in
+		    use and may be called portEND_SWITCHING_ISR(). */
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
 }
 
 /**

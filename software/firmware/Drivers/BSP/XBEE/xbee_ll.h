@@ -13,6 +13,11 @@
 
 typedef void (*RXCallback)(char* data, int length);
 
+typedef enum {
+	XBEE_LL_MODE_TRANSPARENT=0,
+	XBEE_LL_MODE_API
+} XBEE_LL_ModeType;
+
 #define XBEE_USART							USART1
 #define XBEE_RST_PIN						GPIO_PIN_8
 #define XBEE_RST_PORT						GPIOA
@@ -34,5 +39,7 @@ void XBEE_LL_ConfigureGPIO(void);
 void XBEE_LL_ConfigureTimer(void);
 int XBEE_LL_SendData(char* data, int length) ;
 int XBEE_LL_ReceiveData(char* data, int length, int timeout);
+void XBEE_LL_SetRxMode(XBEE_LL_ModeType mode);
+void XBEE_LL_SetRXTaskHandler(TaskHandle_t handler);
 
 #endif /* BSP_XBEE_XBEE_LL_H_ */

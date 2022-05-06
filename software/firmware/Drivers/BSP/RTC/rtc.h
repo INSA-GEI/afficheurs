@@ -22,7 +22,6 @@ typedef enum {
 	RTC_AlarmEvent_OtherEvent
 } RTC_AlarmEvent;
 
-typedef void (*RTC_AlarmCallback)(RTC_AlarmEvent event);
 
 RTC_Status RTC_Init(void);
 
@@ -42,7 +41,8 @@ RTC_Status RTC_GetWeekDay(uint8_t *weekday);
  */
 RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year);
 
-void RTC_SetAlarmCallback(RTC_AlarmCallback callback);
+RTC_AlarmEvent RTC_WaitForEvent(void);
+
 /** Program a futur event (in minute)
  */
 RTC_Status RTC_SetNextEvent (uint16_t min);

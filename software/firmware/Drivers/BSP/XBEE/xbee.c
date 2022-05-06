@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "cmsis_os.h"
 
 #include "xbee.h"
 #include "xbee_ll.h"
@@ -21,6 +22,11 @@ char tx_frame_buffer[18+20]; /* space for a tx frame with 20 bytes of data */
 char rx_frame_buffer[18+0x80]; /* space for a rx frame with 0x80 bytes of data (max possible rx frame length) */
 
 #define XBEE_TIMEOUT_FOR_STATUS_FRAME		500 // 500 ms for receiving a TX or AT status frame
+StaticTask_t xTaskBufferXBEERxThread;
+StackType_t xStackXBEERxThread[ STACK_SIZE*2 ];
+TaskHandle_t xHandleXBEERxThread = NULL;
+/* Function that implements the task being created. */
+void vTaskXBEERxThread(void* params);
 
 int XBEE_EnterCommandMode_PARANOIA() {
 	char buffer[5];
@@ -285,6 +291,12 @@ int XBEE_GetFrame (char* frame, int timeout) {
 	return XBEE_OK;
 }
 
+void vTaskXBEERxThread(void* params) {
+	while (1) {
+
+	}
+}
+
 int XBEE_ConfigureDevice(void) {
 #define RXBUFFERSIZE 30
 	if (XBEE_EnterCommandMode()!=XBEE_OK)
@@ -317,6 +329,17 @@ int XBEE_ConfigureDevice(void) {
 }
 
 int XBEE_Init (void) {
+	xHandleXBEERxThread = xTaskCreateStatic(
+				vTaskXBEERxThread,       /* Function that implements the task. */
+				"XBEERxThread",          /* Text name for the task. */
+				STACK_SIZE,      /* Number of indexes in the xStack array. */
+				NULL,    /* Parameter passed into the task. */
+				PriorityXBEERxThread,/* Priority at which the task is created. */
+				xStackXBEERxThread,          /* Array to use as the task's stack. */
+				&xTaskBufferXBEERxThread);  /* Variable to hold the task's data structure. */
+
+	vTaskSuspend(xHandleXBEERxThread);
+
 	/* First, init GPIO */
 	XBEE_LL_ConfigureGPIO();
 
@@ -333,6 +356,9 @@ int XBEE_Init (void) {
 
 	/* Wait 100 ms for xbee module to reconf */
 	HAL_Delay(100);
+
+	vTaskResume(xHandleXBEERxThread);
+	XBEE_LL_SetRxMode(XBEE_LL_MODE_API);
 
 	/* Xbee module is ready to be used */
 	return XBEE_OK;
