@@ -20,46 +20,39 @@
 
 /* Structure that will hold the TCB of the task being created. */
 StaticTask_t xTaskBufferDrawDisplay;
-StaticTask_t xTaskBufferProtocol;
+StaticTask_t xTaskBufferInit;
 StaticTask_t xTaskBufferPeriodicWakeup;
+StaticTask_t xTaskBufferEvents;
 
 /* Buffer that the task being created will use as its stack.  Note this is
     an array of StackType_t variables.  The size of StackType_t is dependent on
     the RTOS port. */
 StackType_t xStackDrawDisplay[ STACK_SIZE ];
-StackType_t xStackProtocol[ STACK_SIZE ];
+StackType_t xStackInit[ STACK_SIZE ];
 StackType_t xStackPeriodicWakeup[ STACK_SIZE ];
+StackType_t xStackEvents[ STACK_SIZE ];
 
 TaskHandle_t xHandleDrawDisplay = NULL;
-TaskHandle_t xHandleProtocol = NULL;
+TaskHandle_t xHandleInit = NULL;
 TaskHandle_t xHandlePeriodicWakeup = NULL;
+TaskHandle_t xHandleEvents = NULL;
 
 PROTOCOL_ConfigurationTypedef configuration;
-void Alarm_Callback(RTC_AlarmEvent event);
-void Button_Callback(BUTTON_Event event);
-void DefaultTask(void *argument);
-void InitApplicationTask(void *argument);
+
+#define INIT_DISPLAY	0x00000001
+#define INIT_XBEE		0x00000002
+#define INIT_RTC		0x00000004
+#define INIT_BUTTON		0x00000008
+#define INIT_BATTERY	0x00000010
+
+uint32_t peripheralsToInit;
 
 void vTaskDrawDisplay(void* params);
 /* Function that implements the task being created. */
-void vTaskProtocol(void* params);
+void vTaskInit(void* params);
 /* Function that implements the task being created. */
 void vTaskPeriodicWakeup(void* params);
-
-///* Definitions for defaultTask */
-//osThreadId_t defaultTaskHandle;
-//const osThreadAttr_t defaultTask_attributes = {
-//		.name = "defaultTask",
-//		.stack_size = 128 * 4,
-//		.priority = (osPriority_t) osPriorityNormal,
-//};
-//
-//osThreadId_t initTaskHandle;
-//const osThreadAttr_t initTask_attributes = {
-//		.name = "initApplication",
-//		.stack_size = 128 * 4,
-//		.priority = (osPriority_t) osPriorityNormal,
-//};
+void vTaskEvents(void* params);
 
 TickType_t msToTicks(TickType_t ms) {
 	TickType_t tmp = ms;
@@ -80,6 +73,15 @@ void TASKS_Create(void) {
 	//defaultTaskHandle = osThreadNew(DefaultTask, NULL, &defaultTask_attributes);
 	//initTaskHandle = osThreadNew(InitApplicationTask, NULL, &initTask_attributes);
 	/* Create the task without using any dynamic memory allocation. */
+	xHandleInit = xTaskCreateStatic(
+			vTaskInit,       /* Function that implements the task. */
+			"Init",          /* Text name for the task. */
+			STACK_SIZE,      /* Number of indexes in the xStack array. */
+			NULL,    /* Parameter passed into the task. */
+			PriorityInit,/* Priority at which the task is created. */
+			xStackInit,          /* Array to use as the task's stack. */
+			&xTaskBufferInit);  /* Variable to hold the task's data structure. */
+
 	xHandleDrawDisplay = xTaskCreateStatic(
 			vTaskDrawDisplay,       /* Function that implements the task. */
 			"DrawDisplay",          /* Text name for the task. */
@@ -89,15 +91,6 @@ void TASKS_Create(void) {
 			xStackDrawDisplay,          /* Array to use as the task's stack. */
 			&xTaskBufferDrawDisplay);  /* Variable to hold the task's data structure. */
 
-	xHandleProtocol = xTaskCreateStatic(
-			vTaskProtocol,       /* Function that implements the task. */
-			"Protocol",          /* Text name for the task. */
-			STACK_SIZE,      /* Number of indexes in the xStack array. */
-			NULL,    /* Parameter passed into the task. */
-			PriorityProtocol,/* Priority at which the task is created. */
-			xStackProtocol,          /* Array to use as the task's stack. */
-			&xTaskBufferProtocol);  /* Variable to hold the task's data structure. */
-
 	xHandlePeriodicWakeup = xTaskCreateStatic(
 			vTaskPeriodicWakeup,       /* Function that implements the task. */
 			"PeriodicWakeup",          /* Text name for the task. */
@@ -106,163 +99,179 @@ void TASKS_Create(void) {
 			PriorityPeriodicWakeup,/* Priority at which the task is created. */
 			xStackPeriodicWakeup,          /* Array to use as the task's stack. */
 			&xTaskBufferPeriodicWakeup);  /* Variable to hold the task's data structure. */
+
+	xHandleEvents = xTaskCreateStatic(
+			vTaskEvents,       /* Function that implements the task. */
+			"Events",          /* Text name for the task. */
+			STACK_SIZE,      /* Number of indexes in the xStack array. */
+			NULL,    /* Parameter passed into the task. */
+			PriorityEvents,/* Priority at which the task is created. */
+			xStackEvents,          /* Array to use as the task's stack. */
+			&xTaskBufferEvents);  /* Variable to hold the task's data structure. */
+
 	/* puxStackBuffer and pxTaskBuffer were not NULL, so the task will have
         been created, and xHandleDrawDisplay will be the task's handle.  Use the handle
         to suspend the task. */
+	vTaskSuspend(xHandleInit);
 	vTaskSuspend(xHandleDrawDisplay);
-	vTaskSuspend(xHandleProtocol);
 	vTaskSuspend(xHandlePeriodicWakeup);
+	vTaskSuspend(xHandleEvents);
 }
 
 /* Function that creates a task. */
 void TASKS_Run(void) {
-	vTaskResume(xHandleDrawDisplay);
-	vTaskResume(xHandleProtocol);
-	vTaskResume(xHandlePeriodicWakeup);
+	vTaskResume(xHandleInit);
 }
 
-void APP_Init(void) {
+void vTaskInit(void* params) {
 	//PROTOCOL_Status status;
 	//uint32_t val;
 
 	//uint8_t update_status;
-	/* Init screen */
-	if (DISPLAY_Init() != DISPLAY_OK)
-		PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
-	DISPLAY_EnterPowerOff();
+	// First init, after power up
+	// Init every peripheral, in order to check if there are hardware issues
+	peripheralsToInit = INIT_DISPLAY | INIT_XBEE | INIT_RTC | INIT_BUTTON | INIT_BATTERY;
 
-	if (RTC_Init() != RTC_OK)
-		PANIC_Handler(PANIC_EVT_RTC_CONFIG_ERROR);
+	while (1) {
+		/* Init screen */
+		//		if (peripheralsToInit & INIT_DISPLAY) {
+		//			if (DISPLAY_Init() != DISPLAY_OK)
+		//				PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
+		//			DISPLAY_EnterPowerOff();
+		//		}
 
-	if (BATTERY_Init() != BATTERY_OK)
-		PANIC_Handler(PANIC_EVT_ADC_CONFIG_ERROR);
+		if (peripheralsToInit & INIT_RTC) {
+			if (RTC_Init() != RTC_OK)
+				PANIC_Handler(PANIC_EVT_RTC_CONFIG_ERROR);
+		}
 
-	BUTTON_Init();
+		if (peripheralsToInit & INIT_BATTERY) {
+			if (BATTERY_Init() != BATTERY_OK)
+				PANIC_Handler(PANIC_EVT_ADC_CONFIG_ERROR);
+		}
 
+		if (peripheralsToInit & INIT_BUTTON) {
+			BUTTON_Init();
+		}
+
+		if (peripheralsToInit & INIT_XBEE) {
 #if DEBUG_PROTOCOL_FAKE_CONFIG!=1
-	/* Init RF layer */
-	if (PROTOCOL_Init()!=PROTOCOL_OK)
-		PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+			/* Init RF layer */
+			if (PROTOCOL_Init()!=PROTOCOL_OK)
+				PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
 
-	// Try connect to server
-	status = PROTOCOL_Connect(&configuration);
+			// Try connect to server
+			status = PROTOCOL_Connect(&configuration);
 
-	if (status != PROTOCOL_OK) {
-		if (status == PROTOCOL_RX_HW_ERROR)
-			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-		else if  (status == PROTOCOL_NOT_CONNECTED)
-			// things to do here, try again later
-			while (1);
-	}
+			if (status != PROTOCOL_OK) {
+				if (status == PROTOCOL_RX_HW_ERROR)
+					PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+				else if  (status == PROTOCOL_NOT_CONNECTED)
+					// things to do here, try again later
+					while (1);
+			}
 
-	// Get screen configuration
-	status = PROTOCOL_GetConfiguration(&configuration);
+			// Get screen configuration
+			status = PROTOCOL_GetConfiguration(&configuration);
 
-	if (status != PROTOCOL_OK) {
-		if (status == PROTOCOL_RX_HW_ERROR)
-			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-	}
+			if (status != PROTOCOL_OK) {
+				if (status == PROTOCOL_RX_HW_ERROR)
+					PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+			}
 
-	// Get calendar
-	//status = PROTOCOL_GetCalendar(&configuration, &calendar);
-	status = PROTOCOL_GetCalendar(&configuration);
+			// Get calendar
+			//status = PROTOCOL_GetCalendar(&configuration, &calendar);
+			status = PROTOCOL_GetCalendar(&configuration);
 
-	if (status != PROTOCOL_OK) {
-		if (status == PROTOCOL_RX_HW_ERROR)
-			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-	}
+			if (status != PROTOCOL_OK) {
+				if (status == PROTOCOL_RX_HW_ERROR)
+					PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+			}
 
-	//	// Get calendar update status
-	//	status = PROTOCOL_GetCalendarUpdateStatus(&configuration, &update_status);
-	//
-	//	if (status != PROTOCOL_OK) {
-	//		if (status == PROTOCOL_RX_HW_ERROR)
-	//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-	//	}
+			//	// Get calendar update status
+			//	status = PROTOCOL_GetCalendarUpdateStatus(&configuration, &update_status);
+			//
+			//	if (status != PROTOCOL_OK) {
+			//		if (status == PROTOCOL_RX_HW_ERROR)
+			//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+			//	}
 
-	//	// send rssi report configuration
-	//	status = PROTOCOL_SendReport(&configuration);
-	//
-	//	if (status != PROTOCOL_OK) {
-	//		if (status == PROTOCOL_RX_HW_ERROR)
-	//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-	//	}
+			//	// send rssi report configuration
+			//	status = PROTOCOL_SendReport(&configuration);
+			//
+			//	if (status != PROTOCOL_OK) {
+			//		if (status == PROTOCOL_RX_HW_ERROR)
+			//			PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
+			//	}
 #else
-	PROTOCOL_FakeConfig(&configuration);
-	PROTOCOL_FakeCalendar();
+			PROTOCOL_FakeConfig(&configuration);
+			PROTOCOL_FakeCalendar();
 #endif /* DEBUG_PROTOCOL_FAKE_CONFIG */
+		}
 
-	// Show first reservation
-	//DISPLAY_ShowReservation(&configuration, CAL_GetFirst(), "Test", DISPLAY_PromptIconNext);
-	//DISPLAY_ShowDayReservation(&configuration, 1);
-	//DISPLAY_ShowWaitToConnect(configuration.device_uid);
-	//DISPLAY_ShowPanic(0x12345678);
-	//DISPLAY_ShowConfiguration(&configuration);
-	//DISPLAY_ShowWeekReservation(&configuration);
+		RTC_SetDate(2, 10, 5, 22);
+		RTC_SetTime(14, 8, 00);
 
-	// Test RTC
-	//	RTC_SetAlarmCallback(Alarm_Callback);
-	//
-	//	if (RTC_SetTime(8, 0, 0) != RTC_OK)
-	//		while (1);
-	//
-	//	if (RTC_SetDate(1, 2, 05, 22) != RTC_OK)
-	//		while (1);
-	//
-	//	if (RTC_SetNextEvent(1) != RTC_OK)
-	//		while (1);
-	//
-	//	if (RTC_EnableWeekStartEvent(0) != RTC_OK)
-	//		while (1);
-	//	if ((val=RTC_UnitTests()) != 0)
-	//		while (1);
+		peripheralsToInit =0;
 
-	// Test battery
-	// if (BATTERY_GetVoltage(&battery_val) != BATTERY_OK)
-	//	while (1);
-}
+		/* Init has complete, so we can start others tasks */
+		vTaskResume(xHandleDrawDisplay);
+		vTaskResume(xHandlePeriodicWakeup);
+		vTaskResume(xHandleEvents);
 
-void DefaultTask(void *argument) {
-	while (1)
-		vTaskDelay(msToTicks(1000));
-}
-
-void Alarm_Callback(RTC_AlarmEvent event) {
-	/*uint8_t hour;
-	uint8_t min;
-	uint8_t sec;
-	uint8_t weekday;
-
-	if (RTC_GetTime(&hour, &min, &sec)!= RTC_OK)
-		while (1);
-
-	if (RTC_GetWeekDay(&weekday)!= RTC_OK)
-		while (1);
-
-	if (event == RTC_AlarmEvent_OtherEvent)
-		RTC_StopEvent();
-
-	while(1);*/
+		//wait for next activation of init (after a deep sleep)
+		ulTaskNotifyTake( pdTRUE, portMAX_DELAY); // infinite timeout
+		// wake up this task with xTaskNotifyGive(xHandleInit);
+	}
 }
 
 /* Function that implements the task being created. */
 void vTaskDrawDisplay(void* params) {
+	uint16_t val=0;
+
 	while(1) {
+		vTaskDelay(msToTicks(1000));
 
-	}
-}
-
-/* Function that implements the task being created. */
-void vTaskProtocol(void* params) {
-	while(1) {
-
+		BATTERY_GetVoltage(&val);
 	}
 }
 
 /* Function that implements the task being created. */
 void vTaskPeriodicWakeup(void* params) {
-	while(1) {
+	RTC_AlarmEvent evt;
 
+	while(1) {
+		RTC_SetNextEvent(1);
+		evt = RTC_WaitForEvent();
+
+		switch (evt) {
+		case RTC_AlarmEvent_WeekStart:
+			break;
+		case RTC_AlarmEvent_OtherEvent:
+			break;
+		}
 	}
 }
 
+/* Function that implements the task being created. */
+void vTaskEvents(void* params) {
+	BUTTON_Event evt;
+
+	while(1) {
+		evt=BUTTON_WaitForEvent();
+
+		if (DISPLAY_Init() != DISPLAY_OK)
+			PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
+
+		switch (evt) {
+		case BUTTON_ShortPress:
+			DISPLAY_ShowWaitToConnect(configuration.device_uid);
+			break;
+		case BUTTON_LongPress:
+			DISPLAY_ShowConfiguration(&configuration);
+		}
+
+		DISPLAY_Update();
+		DISPLAY_EnterPowerOff();
+	}
+}

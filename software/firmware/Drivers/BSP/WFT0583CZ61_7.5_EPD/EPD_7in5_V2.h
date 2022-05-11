@@ -33,19 +33,27 @@
 #ifndef _EPD_7IN5_V2_H_
 #define _EPD_7IN5_V2_H_
 
-#include "stm32l4xx.h"
-#include "DEV_Config.h"
+#include "stm32l4xx_hal.h"
+//#include "DEV_Config.h"
+
+typedef enum {
+	EPD_OK=1,
+	EPD_ERROR_HW
+} EPD_Status;
 
 // Display resolution
 #define EPD_7IN5_V2_WIDTH       800
 #define EPD_7IN5_V2_HEIGHT      480
 
-uint8_t EPD_7IN5_V2_Init(void);
-uint8_t* EPD_7IN5_V2_GetFramebuffer();
-/*void EPD_7IN5_V2_Clear(const uint8_t *buffer, uint32_t length);*/
-/*void EPD_7IN5_V2_ClearBlack(const uint8_t *buffer, uint32_t length);*/
-//void EPD_7IN5_V2_Display(const uint8_t *blackimage);
-void EPD_7IN5_V2_Sleep(void);
-void EPD_7IN5_V2_WritePicture(const uint8_t *buffer, uint32_t length);
+EPD_Status EPD_HWInit(void);
+EPD_Status EPD_SWInit(void);
+EPD_Status EPD_Reset(void);
+
+uint8_t* EPD_GetFramebuffer();
+void EPD_WritePicture(const uint8_t *buffer, uint32_t length);
+void EPD_RefreshDisplay(void);
+
+void EPD_Sleep(void);
+void EPD_ShutDown(void);
 
 #endif

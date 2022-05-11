@@ -45,12 +45,18 @@ BATTERY_Status BATTERY_Init(void) {
 	 */
 	sConfig.Channel = ADC_CHANNEL_5;
 	sConfig.Rank = ADC_REGULAR_RANK_1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+	sConfig.SamplingTime = ADC_SAMPLETIME_24CYCLES_5;
 	sConfig.SingleDiff = ADC_SINGLE_ENDED;
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;
 	sConfig.Offset = 0;
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 		return BATTERY_HW_ERROR;
+
+	/* Run the ADC calibration in single-ended mode */
+	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK) {
+		/* Calibration Error */
+		return BATTERY_HW_ERROR;
+	}
 
 	return BATTERY_OK;
 }
@@ -60,18 +66,19 @@ BATTERY_Status BATTERY_GetVoltage(uint16_t *val) {
 	conversion_complete = 0;
 	adc_raw_value = 0;
 
+	battery_thread_handler = xTaskGetCurrentTaskHandle();
+
 	if (HAL_ADC_Start_IT(&hadc1) != HAL_OK)
 		return BATTERY_HW_ERROR;
 
-	battery_thread_handler = xTaskGetCurrentTaskHandle();
-	ulNotificationValue = ulTaskNotifyTake( pdFALSE, pdMS_TO_TICKS(100)); // wait max 100 ms
+	ulNotificationValue = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(100)); // wait max 100 ms
 
 	if (ulNotificationValue == 1) {
 		/* The transmission ended as expected. */
 		*val = adc_raw_value;
 	} else {
 		/* The call to ulTaskNotifyTake() timed out. */
-		return BATTERY_HW_ERROR;
+		return BATTERY_TIMEOUT;
 	}
 
 	battery_thread_handler = NULL;
@@ -80,70 +87,85 @@ BATTERY_Status BATTERY_GetVoltage(uint16_t *val) {
 }
 
 /**
-* @brief ADC MSP Initialization
-* This function configures the hardware resources used in this example
-* @param hadc: ADC handle pointer
-* @retval None
-*/
+ * @brief ADC MSP Initialization
+ * This function configures the hardware resources used in this example
+ * @param hadc: ADC handle pointer
+ * @retval None
+ */
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  if(hadc->Instance==ADC1) {
-  /** Initializes the peripherals clock
-  */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-    PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_SYSCLK;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-    	PANIC_Handler(PANIC_EVT_ADC_MSP_CONFIG_ERROR);
+	if(hadc->Instance==ADC1) {
+		/** Initializes the peripherals clock
+		 */
+		PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+		PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_SYSCLK;
+		if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+			PANIC_Handler(PANIC_EVT_ADC_MSP_CONFIG_ERROR);
 
-    /* Peripheral clock enable */
-    __HAL_RCC_ADC_CLK_ENABLE();
+		/* Peripheral clock enable */
+		__HAL_RCC_ADC_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**ADC1 GPIO Configuration
+		__HAL_RCC_GPIOA_CLK_ENABLE();
+		/**ADC1 GPIO Configuration
     PA0     ------> ADC1_IN5
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_0;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		 */
+		GPIO_InitStruct.Pin = GPIO_PIN_0;
+		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
+		GPIO_InitStruct.Pull = GPIO_NOPULL;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC1_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(ADC1_IRQn);
-  }
+		/* ADC1 interrupt Init */
+		HAL_NVIC_SetPriority(ADC1_IRQn, 5, 0);
+		HAL_NVIC_EnableIRQ(ADC1_IRQn);
+	}
 }
 
 /**
-* @brief ADC MSP De-Initialization
-* This function freeze the hardware resources used in this example
-* @param hadc: ADC handle pointer
-* @retval None
-*/
+ * @brief ADC MSP De-Initialization
+ * This function freeze the hardware resources used in this example
+ * @param hadc: ADC handle pointer
+ * @retval None
+ */
 void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc) {
-  if(hadc->Instance==ADC1) {
-    /* Peripheral clock disable */
-    __HAL_RCC_ADC_CLK_DISABLE();
+	if(hadc->Instance==ADC1) {
+		/* Peripheral clock disable */
+		__HAL_RCC_ADC_CLK_DISABLE();
 
-    /**ADC1 GPIO Configuration
+		/**ADC1 GPIO Configuration
     PA0     ------> ADC1_IN5
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0);
+		 */
+		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0);
 
-    /* ADC1 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(ADC1_IRQn);
-  }
+		/* ADC1 interrupt DeInit */
+		HAL_NVIC_DisableIRQ(ADC1_IRQn);
+	}
 }
 
 /**
-  * @brief This function handles ADC1 global interrupt.
-  */
+ * @brief This function handles ADC1 global interrupt.
+ */
 void ADC1_IRQHandler(void) {
-  HAL_ADC_IRQHandler(&hadc1);
+	HAL_ADC_IRQHandler(&hadc1);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-	adc_raw_value = (uint16_t)hadc->Instance->DR;
-	conversion_complete = 1;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+	adc_raw_value = HAL_ADC_GetValue(hadc);
+
+	if (battery_thread_handler != NULL) {
+		/* Notify the task that an event has been emitted. */
+		vTaskNotifyGiveFromISR(battery_thread_handler, &xHigherPriorityTaskWoken );
+
+		/* There are no more eventin progress, so no tasks to notify. */
+		battery_thread_handler = NULL;
+
+		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+			    should be performed to ensure the interrupt returns directly to the highest
+			    priority task.  The macro used for this purpose is dependent on the port in
+			    use and may be called portEND_SWITCHING_ISR(). */
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
 }

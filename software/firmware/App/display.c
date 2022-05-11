@@ -18,22 +18,26 @@
 
 DISPLAY_StatusTypedef DISPLAY_Init(void) {
 	//printf("EPD_7IN5_V2_test Demo\r\n");
-	if(DEV_Module_Init()!=0){
+	if(EPD_HWInit()!=EPD_OK){
 		return DISPLAY_HW_ERR;
 	}
 
 	//printf("e-Paper Init and Clear...\r\n");
-	EPD_7IN5_V2_Init();
+	EPD_SWInit();
 
 	//printf("Paint_Init\r\n");
-	Paint_Init(EPD_7IN5_V2_GetFramebuffer(),EPD_7IN5_V2_WIDTH, EPD_7IN5_V2_HEIGHT, ROTATE_0);
-	Paint_SetSendToDisplayFunction(EPD_7IN5_V2_WritePicture);
+	Paint_Init(EPD_GetFramebuffer(),EPD_7IN5_V2_WIDTH, EPD_7IN5_V2_HEIGHT, ROTATE_0);
+	Paint_SetSendToDisplayFunction(EPD_WritePicture);
 
 	return DISPLAY_OK;
 }
 
+void DISPLAY_Update(void) {
+	Paint_SendToDisplay();
+}
+
 void DISPLAY_EnterPowerOff(void) {
-	DEV_Module_Exit();
+	EPD_ShutDown();
 }
 
 void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservation* reservation, const char* prompt, DISPLAY_PromptIcon icon) {
@@ -155,8 +159,6 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 
 	Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_high_24.header.h)/2),
 			(lv_img_dsc_t *) &battery_high_24, DRAW_IMAGE_INVERTED);
-
-	Paint_SendToDisplay();
 }
 
 void DISPLAY_DrawDayReservation(CAL_Reservation* res) {
@@ -264,8 +266,6 @@ void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day
 		if ((res!=NULL) && (res->day_nbr == day))
 			DISPLAY_DrawDayReservation(res);
 	}
-
-	Paint_SendToDisplay();
 }
 
 void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
@@ -368,8 +368,6 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 
 		res=CAL_GetNext();
 	}
-
-	Paint_SendToDisplay();
 }
 
 void DISPLAY_ShowWaitToConnect(uint64_t uid) {
@@ -408,8 +406,6 @@ void DISPLAY_ShowWaitToConnect(uint64_t uid) {
 	stringBox = Paint_GetStringBox(uidtostr, &play_r_60);
 	Paint_DrawString(EPD_7IN5_V2_WIDTH/2 - stringBox.width/2,
 			360,uidtostr, &play_r_60, BLACK, WHITE);
-
-	Paint_SendToDisplay();
 }
 
 void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
@@ -528,8 +524,6 @@ void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 	snprintf(uidtostr, 19, "%02X",(uint8_t)conf->rf_power);
 	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
 	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
-
-	Paint_SendToDisplay();
 }
 
 void DISPLAY_ShowPanic(uint32_t error_code) {
@@ -568,7 +562,5 @@ void DISPLAY_ShowPanic(uint32_t error_code) {
 	stringBox = Paint_GetStringBox(codetostr, &play_r_60);
 	Paint_DrawString(EPD_7IN5_V2_WIDTH/2 - stringBox.width/2,
 			360,codetostr, &play_r_60, BLACK, WHITE);
-
-	Paint_SendToDisplay();
 }
 

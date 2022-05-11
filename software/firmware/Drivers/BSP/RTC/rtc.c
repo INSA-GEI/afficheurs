@@ -163,7 +163,7 @@ RTC_AlarmEvent RTC_WaitForEvent(void) {
 	rtc_thread_handler= xTaskGetCurrentTaskHandle();
 
 	// wait for event, without timeout
-	ulTaskNotifyTake( pdFALSE, 0 ); // unlimited wait
+	ulTaskNotifyTake( pdTRUE, portMAX_DELAY); // unlimited wait
 	rtc_thread_handler = NULL;
 
 	return RTC_CurrentAlarmEvent;

@@ -13,6 +13,6 @@
 
 void TASKS_Create(void);
 void TASKS_Run(void);
-void APP_Init(void);
+//void APP_Init(void);
 
 #endif /* APP_H_ */

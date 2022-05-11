@@ -33,16 +33,16 @@ BUTTON_Event BUTTON_WaitForEvent(void) {
 	button_thread_handler= xTaskGetCurrentTaskHandle();
 
 	// wait for event, without timeout
-	ulTaskNotifyTake( pdFALSE, 0 ); // unlimited wait
+	ulTaskNotifyTake( pdTRUE, portMAX_DELAY ); // unlimited wait
 
 	button_thread_handler = NULL;
 
 	// check if it is a long press or short press
-	vTaskDelay(1);
+	vTaskDelay(1); // wait 1 tick
 	ticks_nbr++;
 
 	while ((HAL_GPIO_ReadPin(GPIOB, BUTTON_Pin)) && (ticks_nbr<30)) {
-		vTaskDelay(1);
+		vTaskDelay(1); // wait 1 tick
 		ticks_nbr++;
 	}
 
@@ -50,6 +50,7 @@ BUTTON_Event BUTTON_WaitForEvent(void) {
 		status = BUTTON_LongPress;
 
 	// Reactivation of exti
+	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 	return status;

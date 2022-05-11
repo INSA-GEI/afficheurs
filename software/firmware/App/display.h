@@ -27,6 +27,7 @@ typedef enum {
 } DISPLAY_StatusTypedef;
 
 DISPLAY_StatusTypedef DISPLAY_Init(void);
+void DISPLAY_Update(void);
 void DISPLAY_EnterPowerOff(void);
 
 void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservation* reservation, const char* prompt, DISPLAY_PromptIcon icon);

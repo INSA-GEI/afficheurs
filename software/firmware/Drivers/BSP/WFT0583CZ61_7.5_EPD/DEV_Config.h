@@ -83,6 +83,4 @@
 void DEV_SPI_WriteByte(uint8_t value);
 void DEV_SPI_WriteBuffer(uint8_t *buffer, uint32_t length);
 
-int DEV_Module_Init(void);
-void DEV_Module_Exit(void);
 #endif

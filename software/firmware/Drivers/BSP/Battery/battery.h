@@ -13,7 +13,8 @@
 
 typedef enum {
 	BATTERY_OK=1,
-	BATTERY_HW_ERROR
+	BATTERY_HW_ERROR,
+	BATTERY_TIMEOUT
 } BATTERY_Status;
 
 BATTERY_Status BATTERY_Init(void);
