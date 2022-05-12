@@ -75,7 +75,7 @@ TickType_t msToTicks(TickType_t ms);
 #define PriorityPeriodicWakeup		(configMAX_PRIORITIES -3)
 #define PriorityDrawDisplay			(configMAX_PRIORITIES -4)
 
-#define EPD_CONFIG_LUT				0
+#define EPD_CONFIG_LUT				1
 
 #define DEBUG_PROTOCOL				1
 #define DEBUG_CHANNEL				0x12

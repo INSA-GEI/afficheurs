@@ -14,6 +14,9 @@
 #include "xbee.h"
 #include "xbee_ll.h"
 
+/* If some function are not used, there will be removed at compile time */
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 /**
  * @brief Buffer used for sending data
  */

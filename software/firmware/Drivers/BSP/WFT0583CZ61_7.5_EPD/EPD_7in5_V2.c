@@ -127,6 +127,7 @@ const uint8_t LUT_BB_7IN5_V2[]={
 void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi) {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
+	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_DMA1_CLK_ENABLE();
 
 	/**SPI1 GPIO Configuration
@@ -220,7 +221,7 @@ EPD_Status EPD_HWInit(void) {
 
 	/*Configure GPIO pins : BUSY_Pin*/
 	GPIO_InitStruct.Pin = BUSY_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -250,9 +251,11 @@ EPD_Status EPD_HWInit(void) {
 	hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
 	hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
 
+	//HAL_SPI_DeInit(&hspi1);
 	if (HAL_SPI_Init(&hspi1) != HAL_OK)
 		status = EPD_ERROR_HW;
 
+	HAL_SPI_MspInit(&hspi1);
 	return status;
 }
 
@@ -322,6 +325,12 @@ EPD_Status EPD_SWInit(void) {
 	return status;
 }
 
+static void EPD_usDelay(uint32_t val) {
+	volatile uint32_t tmp;
+
+	for (tmp=val; tmp!=0; tmp--);
+}
+
 /******************************************************************************
 function :	 Display hardware reset
 parameter:
@@ -332,10 +341,11 @@ EPD_Status EPD_Reset(void) {
 	//vTaskDelay(msToTicks(200));
 	DEV_Digital_Write(EPD_RST_PIN, 0);
 	//HAL_Delay(2);
-	vTaskDelay(msToTicks(100));
+	//vTaskDelay(msToTicks(100));
+	EPD_usDelay(25); // ~ 50 µs
 	DEV_Digital_Write(EPD_RST_PIN, 1);
 	//HAL_Delay(200);
-	vTaskDelay(msToTicks(200));
+	//vTaskDelay(msToTicks(100));
 
 	return EPD_OK;
 }
@@ -404,12 +414,13 @@ static void EPD_SendBuffer(uint8_t *buffer, uint32_t count) {
 	DEV_SPI_WriteBuffer(buffer, count);
 
 	ulTaskNotifyTake( pdTRUE, msToTicks(500)); // timeout to 500ms
+	//while (!__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE)); // Wait last char to be sent
 
 	DEV_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
-function :	Wait until the busy_pin goes LOW
+function :	Wait until the busy_pin is LOW
 parameter:
  ******************************************************************************/
 static void EPD_WaitUntilIdle(void) {
@@ -419,26 +430,11 @@ static void EPD_WaitUntilIdle(void) {
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_1);
 	epd_thread_handler= xTaskGetCurrentTaskHandle();
 
-
-	//	//Debug("e-Paper busy\r\n");
-	//	unsigned char busy;
-	//	do{
-	//		//HAL_Delay(1000);
-	//		//EPD_SendCommand(0x71);
-	//		HAL_Delay(5);
-	//		busy = DEV_Digital_Read(EPD_BUSY_PIN);
-	//		busy =!(busy & 0x01);
-	//	}while(busy);
-	//
-	//	HAL_Delay(5);
-	//	//Debug("e-Paper busy release\r\n");
-
-	// wait for event, without timeout
 	while (!end_busy) {
 		ulNotificationValue= ulTaskNotifyTake( pdTRUE, msToTicks(100)); // timeout to 100ms
 		if (ulNotificationValue!= 1) {
-			//Check if busy is not low
-			if (!(DEV_Digital_Read(EPD_BUSY_PIN) & 0x01))
+			//Check if busy is returned to high state
+			if ((DEV_Digital_Read(EPD_BUSY_PIN) & 0x01))
 				end_busy = 1;
 		} else
 			end_busy = 1;
@@ -481,7 +477,6 @@ parameter:
 void EPD_RefreshDisplay(void) {
 	EPD_SendCommand(0x12);			//DISPLAY REFRESH
 	//HAL_Delay(100);	        //!!!The delay here is necessary, 200uS at least!!!
-	vTaskDelay(msToTicks(200));
 	EPD_WaitUntilIdle();
 }
 
@@ -531,9 +526,16 @@ void EXTI1_IRQHandler(void) {
  * @brief This function handles DMA1 channel3 global interrupt.
  */
 void DMA1_Channel3_IRQHandler(void) {
+	HAL_DMA_IRQHandler(hspi1.hdmatx);
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	/* Turn LED3 on: Transfer in transmission/reception process is complete */
+	//BSP_LED_On(LED3);
+	//wTransferState = TRANSFER_COMPLETE;
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-	HAL_DMA_IRQHandler(&hdma_spi1_tx);
 	if (epd_thread_handler != NULL) {
 		/* Notify the task that an event has been emitted. */
 		vTaskNotifyGiveFromISR(epd_thread_handler, &xHigherPriorityTaskWoken );
@@ -542,9 +544,9 @@ void DMA1_Channel3_IRQHandler(void) {
 		epd_thread_handler = NULL;
 
 		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-			    should be performed to ensure the interrupt returns directly to the highest
-			    priority task.  The macro used for this purpose is dependent on the port in
-			    use and may be called portEND_SWITCHING_ISR(). */
+				    should be performed to ensure the interrupt returns directly to the highest
+				    priority task.  The macro used for this purpose is dependent on the port in
+				    use and may be called portEND_SWITCHING_ISR(). */
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 }
