@@ -51,7 +51,7 @@ typedef struct {
 	uint8_t rf_power;
 } PROTOCOL_ConfigurationTypedef;
 
-PROTOCOL_Status PROTOCOL_Init(void);
+PROTOCOL_Status PROTOCOL_Init(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetConfiguration(PROTOCOL_ConfigurationTypedef* conf);
 PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf);

@@ -9,6 +9,7 @@
 #define BSP_XBEE_XBEE_H_
 
 #include "stm32l4xx_hal.h"
+#include "config.h"
 
 #define XBEE_OK   					0
 #define XBEE_CONFIG_ERROR   		2

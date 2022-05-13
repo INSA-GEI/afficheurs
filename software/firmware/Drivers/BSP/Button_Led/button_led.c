@@ -41,7 +41,7 @@ BUTTON_Event BUTTON_WaitForEvent(void) {
 	vTaskDelay(1); // wait 1 tick
 	ticks_nbr++;
 
-	while ((HAL_GPIO_ReadPin(GPIOB, BUTTON_Pin)) && (ticks_nbr<30)) {
+	while ((HAL_GPIO_ReadPin(GPIOB, BUTTON_Pin)) && (ticks_nbr<15)) {
 		vTaskDelay(1); // wait 1 tick
 		ticks_nbr++;
 	}

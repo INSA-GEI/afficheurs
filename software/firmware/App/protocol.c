@@ -30,10 +30,13 @@
 
 #define PROTOCOL_CONNECT_TIMEOUT	200 // step channel every 200 ms in case of no answer
 
-PROTOCOL_Status PROTOCOL_Init(void) {
+PROTOCOL_Status PROTOCOL_Init(PROTOCOL_ConfigurationTypedef* conf) {
 
 	/* First init XBEE */
 	if (XBEE_Init() != XBEE_OK)
+		return PROTOCOL_XBEE_INIT_ERROR;
+
+	if (XBEE_GetUID(&(conf->device_uid))!=XBEE_OK)
 		return PROTOCOL_XBEE_INIT_ERROR;
 
 	return PROTOCOL_OK;
@@ -63,7 +66,8 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
 
-	HAL_Delay(50);
+	//HAL_Delay(50);
+	vTaskDelay(msToTicks(100));
 
 	conf->rf_channel = 0x12;
 	conf->rf_panid = 0x1337;
@@ -77,13 +81,14 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 	}
 
 	/* Wait for ACCEPT, REJECT or no answer */
-	//com_status = XBEE_GetData(&rx_frame, PROTOCOL_CONNECT_TIMEOUT);
-	com_status = XBEE_GetData(&rx_frame, 0);
+	com_status = XBEE_GetData(&rx_frame, PROTOCOL_CONNECT_TIMEOUT);
+	//com_status = XBEE_GetData(&rx_frame, 0);
+
 	if (com_status == XBEE_RX_ERROR) {
 		status= PROTOCOL_RX_HW_ERROR;
 		return status;
 	} else if (com_status == XBEE_RX_TIMEOUT) {
-		status= PROTOCOL_RX_TIMEOUT;
+		status= PROTOCOL_NOT_CONNECTED;
 		return status;
 	}
 
@@ -127,7 +132,8 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 			break;
 		}
 
-		HAL_Delay(50);
+		//HAL_Delay(50);
+		vTaskDelay(msToTicks(100));
 
 		/* Send a broadcast "JOIN" command */
 		if (XBEE_SendData(XBEE_BROADCAST_ADDRESS, 1, XBEE_PANID_BROADCAST, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
@@ -165,7 +171,8 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 						free (rx_frame);
 
 						XBEE_SetPanID(conf->rf_panid);
-						HAL_Delay(50);
+						//HAL_Delay(50);
+						vTaskDelay(msToTicks(100));
 						break;
 					}
 				}

@@ -124,7 +124,9 @@ void TASKS_Run(void) {
 }
 
 void vTaskInit(void* params) {
-	//PROTOCOL_Status status;
+	PROTOCOL_Status status;
+	uint8_t is_connectDisplayShown =0;
+
 	//uint32_t val;
 
 	//uint8_t update_status;
@@ -134,11 +136,13 @@ void vTaskInit(void* params) {
 
 	while (1) {
 		/* Init screen */
-		//		if (peripheralsToInit & INIT_DISPLAY) {
-		//			if (DISPLAY_Init() != DISPLAY_OK)
-		//				PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
-		//			DISPLAY_EnterPowerOff();
-		//		}
+		if (peripheralsToInit & INIT_DISPLAY) {
+			if (DISPLAY_Init() != DISPLAY_OK) {
+				DISPLAY_EnterPowerOff();
+
+				PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
+			}
+		}
 
 		if (peripheralsToInit & INIT_RTC) {
 			if (RTC_Init() != RTC_OK)
@@ -157,18 +161,22 @@ void vTaskInit(void* params) {
 		if (peripheralsToInit & INIT_XBEE) {
 #if DEBUG_PROTOCOL_FAKE_CONFIG!=1
 			/* Init RF layer */
-			if (PROTOCOL_Init()!=PROTOCOL_OK)
+			if (PROTOCOL_Init(&configuration)!=PROTOCOL_OK)
 				PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
 
 			// Try connect to server
-			status = PROTOCOL_Connect(&configuration);
-
-			if (status != PROTOCOL_OK) {
+			while ((status = PROTOCOL_Connect(&configuration))!=PROTOCOL_OK) {
 				if (status == PROTOCOL_RX_HW_ERROR)
 					PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
-				else if  (status == PROTOCOL_NOT_CONNECTED)
-					// things to do here, try again later
-					while (1);
+				else if  (status == PROTOCOL_NOT_CONNECTED) {
+					if (!is_connectDisplayShown) {
+						is_connectDisplayShown=1;
+						DISPLAY_ShowWaitToConnect(configuration.device_uid);
+						DISPLAY_Update();
+					}
+
+					vTaskDelay(msToTicks(1000*10)); // toutes les 10s
+				}
 			}
 
 			// Get screen configuration
@@ -188,6 +196,9 @@ void vTaskInit(void* params) {
 					PANIC_Handler(PANIC_EVT_XBEE_CONFIG_ERROR);
 			}
 
+			/* Show first reservation (a revoir) */
+			DISPLAY_ShowReservation(&configuration, CAL_GetFirst(), "Hello", DISPLAY_PromptIconInfo);
+			DISPLAY_Update();
 			//	// Get calendar update status
 			//	status = PROTOCOL_GetCalendarUpdateStatus(&configuration, &update_status);
 			//
@@ -209,6 +220,7 @@ void vTaskInit(void* params) {
 #endif /* DEBUG_PROTOCOL_FAKE_CONFIG */
 		}
 
+		DISPLAY_EnterPowerOff();
 		RTC_SetDate(2, 10, 5, 22);
 		RTC_SetTime(14, 8, 00);
 

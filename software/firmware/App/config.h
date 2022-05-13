@@ -82,7 +82,7 @@ TickType_t msToTicks(TickType_t ms);
 #define DEBUG_PANID					0x1337
 #define DEBUG_PROTOCOL_TIMEOUT	    2000 // Timeout of around 2s
 
-#define DEBUG_PROTOCOL_FAKE_CONFIG  1
+#define DEBUG_PROTOCOL_FAKE_CONFIG  0
 
 
 #endif /* CONFIG_H_ */
