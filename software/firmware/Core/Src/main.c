@@ -109,7 +109,7 @@ int main(void)
   //MX_USART1_UART_Init();
   //MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  DEBUG_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */

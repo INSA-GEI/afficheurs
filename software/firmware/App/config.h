@@ -84,5 +84,8 @@ TickType_t msToTicks(TickType_t ms);
 
 #define DEBUG_PROTOCOL_FAKE_CONFIG  0
 
+void DEBUG_Init(void);
+void DEBUG_StartTimeMeasure(void);
+uint32_t DEBUG_EndTimeMeasure(void);
 
 #endif /* CONFIG_H_ */

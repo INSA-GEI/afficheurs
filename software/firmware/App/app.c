@@ -123,6 +123,8 @@ void TASKS_Run(void) {
 	vTaskResume(xHandleInit);
 }
 
+void Paint_Clear(uint16_t Color);
+
 void vTaskInit(void* params) {
 	PROTOCOL_Status status;
 	uint8_t is_connectDisplayShown =0;
@@ -143,6 +145,7 @@ void vTaskInit(void* params) {
 				PANIC_Handler(PANIC_EVT_DISPLAY_CONFIG_ERROR);
 			}
 		}
+		Paint_Clear(0);
 
 		if (peripheralsToInit & INIT_RTC) {
 			if (RTC_Init() != RTC_OK)

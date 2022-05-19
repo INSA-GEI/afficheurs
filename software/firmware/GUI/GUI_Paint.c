@@ -80,6 +80,7 @@
 #include <math.h>
 
 #include "EPD_7in5_V2.h"
+#include "config.h"
 
 PAINT Paint;
 
@@ -277,6 +278,12 @@ parameter:
  ******************************************************************************/
 void Paint_Clear(uint16_t Color)
 {
+	volatile uint32_t val;
+	//uint32_t *ptr;
+	// start measure
+	DEBUG_StartTimeMeasure();
+
+	/*
 	if(Paint.Scale == 2 || Paint.Scale == 4){
 		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
 			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {//8 pixel =  1 byte
@@ -291,7 +298,33 @@ void Paint_Clear(uint16_t Color)
 				Paint.Image[Addr] = (Color<<4)|Color;
 			}
 		}		
-	}
+	}*/
+
+	/*memset(Paint.Image,0,(Paint.Height*Paint.Width)/8);*/
+
+
+	/*for (ptr = (uint32_t*)Paint.Image; ptr< (uint32_t*)Paint.Image + ((Paint.Height*Paint.Width)/8)/4; )
+	 *ptr++ = 0;*/
+
+	asm("push {R0,R1}\n\t"
+			"eor R0,R0\n\t"
+			"eor R1,R1\n\t"
+			"debut: \n\t"
+			"cmp   R0,%[length]\n\t"
+			"bcs   fin\n\t"
+			"str   R1,[%[address],R0]\n\t"
+			"add   R0,#4\n\t"
+			"b  debut\n"
+			"fin:\n\t"
+			"pop {R0,R1}"
+
+			: : [address]"r"   (Paint.Image), /* pointer to framebuffer. */
+			  [length]"r"    ((800*480)/8) /* length */
+			  : /* No clobbers */
+	);
+
+	val=DEBUG_EndTimeMeasure();
+	val++;
 }
 
 /******************************************************************************
