@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "board-v1-cache")(type "Legacy")(uri "${KIPRJMOD}/board-v1-cache.lib")(options "")(descr ""))
+)
