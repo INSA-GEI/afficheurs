@@ -36,8 +36,8 @@ PROTOCOL_Status PROTOCOL_Init(PROTOCOL_ConfigurationTypedef* conf) {
 	if (XBEE_Init() != XBEE_OK)
 		return PROTOCOL_XBEE_INIT_ERROR;
 
-	if (XBEE_GetUID(&(conf->device_uid))!=XBEE_OK)
-		return PROTOCOL_XBEE_INIT_ERROR;
+//	if (XBEE_GetUID(&(conf->device_uid))!=XBEE_OK)
+//		return PROTOCOL_XBEE_INIT_ERROR;
 
 	return PROTOCOL_OK;
 }
@@ -70,12 +70,12 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 	vTaskDelay(msToTicks(100));
 
 	conf->rf_channel = 0x12;
-	conf->rf_panid = 0x1337;
+	conf->rf_panid = DEBUG_PANID;
 	conf->gw_address = 0x13A20041C16E2B;
 
 #if DEBUG_PROTOCOL ==1
 	/* Send a broadcast "JOIN" command */
-	if (XBEE_SendData(XBEE_BROADCAST_ADDRESS, 1, XBEE_PANID_BROADCAST, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData(XBEE_BROADCAST_ADDRESS, XBEE_DEST_ADDRESS, 1, XBEE_PANID_BROADCAST, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 		return status;
 	}
@@ -189,6 +189,7 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 }
 #endif /* #if DEBUG_PROTOCOL!=1 */
 
+
 #define PROTOCOL_TIME_STRING_MAX_LENGTH	8
 
 static PROTOCOL_Status PROTOCOL_ParseConfiguration(PROTOCOL_ConfigurationTypedef* conf, char* ptr) {
@@ -291,7 +292,7 @@ PROTOCOL_Status PROTOCOL_GetConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 	char *ptr;
 
 	/* Send a "SETUP" command */
-	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_SETUP, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData(conf->gw_address, XBEE_DEST_ADDRESS, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_SETUP, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
 
@@ -521,7 +522,7 @@ PROTOCOL_Status PROTOCOL_GetCalendar(PROTOCOL_ConfigurationTypedef* conf) {
 
 #if DEBUG_PROTOCOL != 2
 	/* Send a "CAL" command */
-	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_CALENDAR, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData(conf->gw_address, XBEE_DEST_ADDRESS, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_CALENDAR, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
 
@@ -637,7 +638,7 @@ PROTOCOL_Status PROTOCOL_GetCalendarUpdateStatus(PROTOCOL_ConfigurationTypedef* 
 	char *ptr;
 
 	/* Send a "UPDATE" command */
-	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_UPDATE, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData(conf->gw_address, XBEE_DEST_ADDRESS, 1, XBEE_NO_PANID_BROADCAST, PROTOCOL_CMD_GET_UPDATE, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
 
@@ -714,7 +715,7 @@ PROTOCOL_Status PROTOCOL_SendReport(PROTOCOL_ConfigurationTypedef* conf) {
 	conf->rssi.no_ack=0;
 
 	/* Send a "REPORT" command */
-	if (XBEE_SendData(conf->gw_address, 1, XBEE_NO_PANID_BROADCAST, report_string, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData(conf->gw_address, XBEE_DEST_ADDRESS, 1, XBEE_NO_PANID_BROADCAST, report_string, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
 

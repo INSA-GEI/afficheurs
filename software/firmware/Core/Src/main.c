@@ -18,15 +18,13 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-//#include "main.h"
-#include "stm32l4xx_hal.h"
+#include "main.h"
 #include "cmsis_os.h"
-#include "config.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app.h"
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +42,15 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
+LPTIM_HandleTypeDef hlptim1;
 LPTIM_HandleTypeDef hlptim2;
+
+//RTC_HandleTypeDef hrtc;
+
+SPI_HandleTypeDef hspi1;
+DMA_HandleTypeDef hdma_spi1_tx;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -52,19 +58,29 @@ DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
-
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
-static void MX_USART2_UART_Init(void);
-
+static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-//static void MX_USART1_UART_Init(void);
-//static void MX_LPTIM2_Init(void);
+static void MX_ADC1_Init(void);
+//static void MX_RTC_Init(void);
+static void MX_SPI1_Init(void);
+static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_LPTIM1_Init(void);
+static void MX_LPTIM2_Init(void);
+void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -102,12 +118,15 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  //MX_GPIO_Init();
-  MX_USART2_UART_Init();
-  //MX_SPI1_Init();
+  MX_GPIO_Init();
   MX_DMA_Init();
-  //MX_USART1_UART_Init();
-  //MX_LPTIM2_Init();
+  MX_ADC1_Init();
+  //MX_RTC_Init();
+  MX_SPI1_Init();
+  MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
+  MX_LPTIM1_Init();
+  MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
   DEBUG_Init();
   /* USER CODE END 2 */
@@ -133,12 +152,15 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   //APP_Init();
 
   TASKS_Create();
+
+  printf("Value : %d ", DEBUG_PROTOCOL);
+
   TASKS_Run();
   /* USER CODE END RTOS_THREADS */
 
@@ -213,75 +235,286 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief LPTIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPTIM1_Init(void)
+{
+
+  /* USER CODE BEGIN LPTIM1_Init 0 */
+
+  /* USER CODE END LPTIM1_Init 0 */
+
+  /* USER CODE BEGIN LPTIM1_Init 1 */
+
+  /* USER CODE END LPTIM1_Init 1 */
+  hlptim1.Instance = LPTIM1;
+  hlptim1.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+  hlptim1.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV128;
+  hlptim1.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim1.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+  hlptim1.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+  hlptim1.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+  hlptim1.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+  hlptim1.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+  if (HAL_LPTIM_Init(&hlptim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPTIM1_Init 2 */
+
+  /* USER CODE END LPTIM1_Init 2 */
+
+}
+
+/**
+  * @brief LPTIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPTIM2_Init(void)
+{
+
+  /* USER CODE BEGIN LPTIM2_Init 0 */
 //
-///**
-//  * @brief LPTIM2 Initialization Function
-//  * @param None
-//  * @retval None
-//  */
-//static void MX_LPTIM2_Init(void)
+  /* USER CODE END LPTIM2_Init 0 */
+
+  /* USER CODE BEGIN LPTIM2_Init 1 */
+//
+  /* USER CODE END LPTIM2_Init 1 */
+  hlptim2.Instance = LPTIM2;
+  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+  hlptim2.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV128;
+  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPTIM2_Init 2 */
+//
+  /* USER CODE END LPTIM2_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+//static void MX_RTC_Init(void)
 //{
 //
-//  /* USER CODE BEGIN LPTIM2_Init 0 */
+//  /* USER CODE BEGIN RTC_Init 0 */
 //
-//  /* USER CODE END LPTIM2_Init 0 */
+//  /* USER CODE END RTC_Init 0 */
 //
-//  /* USER CODE BEGIN LPTIM2_Init 1 */
+//  RTC_TimeTypeDef sTime = {0};
+//  RTC_DateTypeDef sDate = {0};
+//  RTC_AlarmTypeDef sAlarm = {0};
 //
-//  /* USER CODE END LPTIM2_Init 1 */
-//  hlptim2.Instance = LPTIM2;
-//  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-//  hlptim2.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV128;
-//  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
-//  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
-//  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
-//  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
-//  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
-//  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
-//  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
+//  /* USER CODE BEGIN RTC_Init 1 */
+//
+//  /* USER CODE END RTC_Init 1 */
+//  /** Initialize RTC Only
+//  */
+//  hrtc.Instance = RTC;
+//  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+//  hrtc.Init.AsynchPrediv = 127;
+//  hrtc.Init.SynchPrediv = 255;
+//  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+//  hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+//  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+//  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+//  if (HAL_RTC_Init(&hrtc) != HAL_OK)
 //  {
 //    Error_Handler();
 //  }
-//  /* USER CODE BEGIN LPTIM2_Init 2 */
 //
-//  /* USER CODE END LPTIM2_Init 2 */
+//  /* USER CODE BEGIN Check_RTC_BKUP */
 //
-//}
+//  /* USER CODE END Check_RTC_BKUP */
 //
-///**
-//  * @brief USART1 Initialization Function
-//  * @param None
-//  * @retval None
+//  /** Initialize RTC and set the Time and Date
 //  */
-//static void MX_USART1_UART_Init(void)
-//{
-//
-//  /* USER CODE BEGIN USART1_Init 0 */
-//
-//  /* USER CODE END USART1_Init 0 */
-//
-//  /* USER CODE BEGIN USART1_Init 1 */
-//
-//  /* USER CODE END USART1_Init 1 */
-//  huart1.Instance = USART1;
-//  huart1.Init.BaudRate = 9600;
-//  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-//  huart1.Init.StopBits = UART_STOPBITS_1;
-//  huart1.Init.Parity = UART_PARITY_NONE;
-//  huart1.Init.Mode = UART_MODE_TX_RX;
-//  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-//  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-//  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-//  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-//  if (HAL_UART_Init(&huart1) != HAL_OK)
+//  sTime.Hours = 0x0;
+//  sTime.Minutes = 0x0;
+//  sTime.Seconds = 0x0;
+//  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+//  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+//  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
 //  {
 //    Error_Handler();
 //  }
-//  /* USER CODE BEGIN USART1_Init 2 */
+//  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+//  sDate.Month = RTC_MONTH_JANUARY;
+//  sDate.Date = 0x1;
+//  sDate.Year = 0x0;
 //
-//  /* USER CODE END USART1_Init 2 */
+//  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+//  /** Enable the Alarm A
+//  */
+//  sAlarm.AlarmTime.Hours = 0x0;
+//  sAlarm.AlarmTime.Minutes = 0x0;
+//  sAlarm.AlarmTime.Seconds = 0x0;
+//  sAlarm.AlarmTime.SubSeconds = 0x0;
+//  sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+//  sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+//  sAlarm.AlarmMask = RTC_ALARMMASK_NONE;
+//  sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+//  sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+//  sAlarm.AlarmDateWeekDay = 0x1;
+//  sAlarm.Alarm = RTC_ALARM_A;
+//  if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BCD) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+//  /* USER CODE BEGIN RTC_Init 2 */
+//
+//  /* USER CODE END RTC_Init 2 */
 //
 //}
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+//
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+//
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+//
+  /* USER CODE END USART1_Init 2 */
+
+}
 
 /**
   * @brief USART2 Initialization Function
@@ -360,52 +593,52 @@ static void MX_DMA_Init(void)
 
 }
 
-///**
-//  * @brief GPIO Initialization Function
-//  * @param None
-//  * @retval None
-//  */
-//static void MX_GPIO_Init(void)
-//{
-//  GPIO_InitTypeDef GPIO_InitStruct = {0};
-//
-//  /* GPIO Ports Clock Enable */
-//  __HAL_RCC_GPIOC_CLK_ENABLE();
-//  __HAL_RCC_GPIOA_CLK_ENABLE();
-//  __HAL_RCC_GPIOB_CLK_ENABLE();
-//
-//  /*Configure GPIO pin Output Level */
-//  HAL_GPIO_WritePin(GPIOA, RST_Pin|DC_Pin|XBEE_RESET_Pin|XBEE_SLEEP_RQ_Pin, GPIO_PIN_RESET);
-//
-//  /*Configure GPIO pin Output Level */
-//  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
-//
-//  /*Configure GPIO pins : RST_Pin DC_Pin SPI_CS_Pin XBEE_RESET_Pin
-//                           XBEE_SLEEP_RQ_Pin */
-//  GPIO_InitStruct.Pin = RST_Pin|DC_Pin|SPI_CS_Pin|XBEE_RESET_Pin
-//                          |XBEE_SLEEP_RQ_Pin;
-//  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-//  GPIO_InitStruct.Pull = GPIO_NOPULL;
-//  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//
-//  /*Configure GPIO pins : BUTTON_Pin BUSY_Pin XBEE_SLEEP_Pin */
-//  GPIO_InitStruct.Pin = BUTTON_Pin|BUSY_Pin|XBEE_SLEEP_Pin;
-//  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-//  GPIO_InitStruct.Pull = GPIO_NOPULL;
-//  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-//
-//  /* EXTI interrupt init*/
-//  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
-//  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-//
-//  HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
-//  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-//
-//  HAL_NVIC_SetPriority(EXTI3_IRQn, 5, 0);
-//  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-//
-//}
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, RST_Pin|DC_Pin|XBEE_RESET_Pin|XBEE_SLEEP_RQ_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pins : RST_Pin DC_Pin SPI_CS_Pin XBEE_RESET_Pin
+                           XBEE_SLEEP_RQ_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|DC_Pin|SPI_CS_Pin|XBEE_RESET_Pin
+                          |XBEE_SLEEP_RQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : BUTTON_Pin BUSY_Pin XBEE_SLEEP_Pin */
+  GPIO_InitStruct.Pin = BUTTON_Pin|BUSY_Pin|XBEE_SLEEP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+}
 
 /* USER CODE BEGIN 4 */
 int __io_putchar(int ch)
@@ -416,6 +649,24 @@ int __io_putchar(int ch)
 }
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

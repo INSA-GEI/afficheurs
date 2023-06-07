@@ -138,7 +138,7 @@ void vTaskInit(void* params) {
 
 	while (1) {
 		/* Init screen */
-		if (peripheralsToInit & INIT_DISPLAY) {
+		/*if (peripheralsToInit & INIT_DISPLAY) {
 			if (DISPLAY_Init() != DISPLAY_OK) {
 				DISPLAY_EnterPowerOff();
 
@@ -146,6 +146,7 @@ void vTaskInit(void* params) {
 			}
 		}
 		Paint_Clear(0);
+		*/
 
 		if (peripheralsToInit & INIT_RTC) {
 			if (RTC_Init() != RTC_OK)

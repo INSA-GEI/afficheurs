@@ -126,7 +126,7 @@ int XBEE_GetATValue(char* atcmd, char* value) {
 	return XBEE_OK;
 }
 
-void XBEE_EncodeTransmissionFrame(char* frame, char* data, uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast) {
+void XBEE_EncodeTransmissionFrame(char* frame, char* data, uint64_t destination, uint16_t address_dest, uint8_t frame_id, uint8_t pan_broadcast) {
 	int i;
 	int data_length = strlen(data);
 	uint8_t checksum;
@@ -142,10 +142,15 @@ void XBEE_EncodeTransmissionFrame(char* frame, char* data, uint64_t destination,
 		destination = destination <<8;
 	}
 
-	frame[13] = 0xFF;
-	frame[14] = 0xFE;
-	frame[15] = 0;
-	frame[16] = pan_broadcast ? 0x2 : 0x0;
+	for (i=13; i<13+2; i++) {
+		frame[i] = (char)(address_dest >>(16-8));
+		address_dest = address_dest <<8;
+	}
+
+	frame[15] = 0xFF;
+	frame[16] = 0xFE;
+	frame[17] = 0;
+	frame[18] = pan_broadcast ? 0x2 : 0x0;
 
 	for (i=0; i<data_length; i++) {
 		frame[17+i]= data[i];
@@ -328,25 +333,25 @@ int XBEE_Init (void) {
 
 	/* Then, setup usart at 9600 bauds and configure the device */
 	XBEE_LL_ConfigureUart(XBEE_USART, 9600);
-	if (XBEE_ConfigureDevice() != XBEE_OK)
-		return XBEE_CONFIG_ERROR;
-
-	/* If it is OK, reconf USART to 115200 bauds */
-	XBEE_LL_ConfigureUart(XBEE_USART, 115200);
-
-	/* Wait 100 ms for xbee module to reconf */
-	//HAL_Delay(100);
-	vTaskDelay(msToTicks(100));
+//	if (XBEE_ConfigureDevice() != XBEE_OK)
+//		return XBEE_CONFIG_ERROR;
+//
+//	/* If it is OK, reconf USART to 115200 bauds */
+//	XBEE_LL_ConfigureUart(XBEE_USART, 115200);
+//
+//	/* Wait 100 ms for xbee module to reconf */
+//	//HAL_Delay(100);
+//	vTaskDelay(msToTicks(100));
 
 	/* Xbee module is ready to be used */
 	return XBEE_OK;
 }
 
-int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status) {
+int XBEE_SendData(uint64_t destination, uint16_t address_dest, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status) {
 	XBEE_GENERIC_FRAME* tx_status;
 
 	// Format frame for sending data
-	XBEE_EncodeTransmissionFrame(tx_frame_buffer, data, destination, frame_id, pan_broadcast);
+	XBEE_EncodeTransmissionFrame(tx_frame_buffer, data, destination, address_dest, frame_id, pan_broadcast);
 	// Send Frame
 	if (XBEE_SendFrame(tx_frame_buffer) != XBEE_OK)
 		return XBEE_TX_ERROR;

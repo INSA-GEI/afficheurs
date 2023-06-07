@@ -19,11 +19,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-//#include "main.h"
-#include "stm32l4xx_hal.h"
-#include "cmsis_os.h"
-#include "config.h"
-
+#include "main.h"
 #include "stm32l4xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -64,6 +60,7 @@ extern UART_HandleTypeDef XBEE_LL_Uart;
 /* External variables --------------------------------------------------------*/
 extern ADC_HandleTypeDef hadc1;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
+extern LPTIM_HandleTypeDef hlptim1;
 extern LPTIM_HandleTypeDef hlptim2;
 extern RTC_HandleTypeDef hrtc;
 extern DMA_HandleTypeDef hdma_spi1_tx;
@@ -194,6 +191,47 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32l4xx.s).                    */
 /******************************************************************************/
 
+/**
+  * @brief This function handles EXTI line0 interrupt.
+  */
+//void EXTI0_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN EXTI0_IRQn 0 */
+//
+//  /* USER CODE END EXTI0_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+//  /* USER CODE BEGIN EXTI0_IRQn 1 */
+//
+//  /* USER CODE END EXTI0_IRQn 1 */
+//}
+//
+///**
+//  * @brief This function handles EXTI line1 interrupt.
+//  */
+//void EXTI1_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN EXTI1_IRQn 0 */
+//
+//  /* USER CODE END EXTI1_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+//  /* USER CODE BEGIN EXTI1_IRQn 1 */
+//
+//  /* USER CODE END EXTI1_IRQn 1 */
+//}
+
+/**
+  * @brief This function handles EXTI line3 interrupt.
+  */
+void EXTI3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
+
+  /* USER CODE END EXTI3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+  /* USER CODE BEGIN EXTI3_IRQn 1 */
+
+  /* USER CODE END EXTI3_IRQn 1 */
+}
 
 /**
   * @brief This function handles DMA1 channel1 global interrupt.
@@ -208,6 +246,20 @@ void DMA1_Channel1_IRQHandler(void)
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
+
+/**
+  * @brief This function handles DMA1 channel3 global interrupt.
+  */
+//void DMA1_Channel3_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+//
+//  /* USER CODE END DMA1_Channel3_IRQn 0 */
+//  HAL_DMA_IRQHandler(&hdma_spi1_tx);
+//  /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
+//
+//  /* USER CODE END DMA1_Channel3_IRQn 1 */
+//}
 
 /**
   * @brief This function handles DMA1 channel4 global interrupt.
@@ -238,6 +290,20 @@ void DMA1_Channel5_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles ADC1 global interrupt.
+  */
+//void ADC1_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN ADC1_IRQn 0 */
+//
+//  /* USER CODE END ADC1_IRQn 0 */
+//  HAL_ADC_IRQHandler(&hadc1);
+//  /* USER CODE BEGIN ADC1_IRQn 1 */
+//
+//  /* USER CODE END ADC1_IRQn 1 */
+//}
+
+/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -245,10 +311,38 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
 
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&XBEE_LL_Uart);
+  HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles RTC alarm interrupt through EXTI line 18.
+  */
+//void RTC_Alarm_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN RTC_Alarm_IRQn 0 */
+//
+//  /* USER CODE END RTC_Alarm_IRQn 0 */
+//  HAL_RTC_AlarmIRQHandler(&hrtc);
+//  /* USER CODE BEGIN RTC_Alarm_IRQn 1 */
+//
+//  /* USER CODE END RTC_Alarm_IRQn 1 */
+//}
+
+/**
+  * @brief This function handles LPTIM1 global interrupt.
+  */
+void LPTIM1_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPTIM1_IRQn 0 */
+
+  /* USER CODE END LPTIM1_IRQn 0 */
+  HAL_LPTIM_IRQHandler(&hlptim1);
+  /* USER CODE BEGIN LPTIM1_IRQn 1 */
+
+  /* USER CODE END LPTIM1_IRQn 1 */
 }
 
 /**

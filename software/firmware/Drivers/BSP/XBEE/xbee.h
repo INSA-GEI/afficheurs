@@ -48,7 +48,8 @@
 #define XBEE_CHANNEL_FIRST					0x0B
 #define XBEE_CHANNEL_LAST					0x1A
 
-#define XBEE_BROADCAST_ADDRESS				0x000000000000FFFF
+#define XBEE_BROADCAST_ADDRESS				0xFFFFFFFFFFFFFFFF
+#define XBEE_DEST_ADDRESS                   0x0000
 
 #define XBEE_PANID_BROADCAST				SET
 #define XBEE_NO_PANID_BROADCAST				RESET
@@ -91,8 +92,7 @@ int XBEE_Init (void);
 
 int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame);
 int XBEE_GetData (XBEE_GENERIC_FRAME** frame, int timeout); // timeout in ms
-int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status);
-
+int XBEE_SendData(uint64_t destination, uint16_t address_dest, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status);
 int XBEE_SetChannel(uint8_t channel);
 int XBEE_SetPanID(uint16_t panid);
 int XBEE_GetRSSI(uint8_t *rssi);
