@@ -58,9 +58,11 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 	XBEE_GENERIC_FRAME *rx_frame;
 	char* data;
 
+	/* PAS DE CHANNEL A SET
 	if (XBEE_SetChannel(DEBUG_CHANNEL) != XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 	}
+	*/
 
 	if (XBEE_SetPanID(DEBUG_PANID) != XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;

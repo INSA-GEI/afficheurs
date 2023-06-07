@@ -200,7 +200,6 @@ int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame) {
 
 	frame_length = (((uint16_t)frame[1])<<8) + (uint16_t)frame[2];
 
-	/* virification du checksum */
 	checksum =0;
 	for (i=3; i<3+frame_length+1; i++) {
 		checksum += (uint8_t)frame[i];

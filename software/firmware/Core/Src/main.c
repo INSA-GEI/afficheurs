@@ -159,8 +159,6 @@ int main(void)
 
   TASKS_Create();
 
-  printf("Value : %d ", DEBUG_PROTOCOL);
-
   TASKS_Run();
   /* USER CODE END RTOS_THREADS */
 
