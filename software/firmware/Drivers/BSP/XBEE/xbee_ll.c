@@ -123,11 +123,11 @@ void XBEE_LL_ConfigureGPIO(void) {
 	 */
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_RESET);
 	//HAL_Delay(50);
-	vTaskDelay(msToTicks(100));
+	vTaskDelay(msToTicks(300));
 
 	HAL_GPIO_WritePin(XBEE_RST_PORT, XBEE_RST_PIN, GPIO_PIN_SET);
 	//HAL_Delay(400);
-	vTaskDelay(msToTicks(400));
+	vTaskDelay(msToTicks(1000));
 }
 
 //void XBEE_LL_ConfigureTimer(void) {
@@ -306,6 +306,14 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int frame_length;
+
+	/* debug d'un probleme sur la detection du SOF '~' d'une frame */
+	if (XBEE_LL_Mode == XBEE_LL_MODE_API) {
+		if (XBEE_LL_RxBuffer[XBEE_LL_RxBufferIndex] == (uint8_t)'~') {
+			XBEE_LL_RxBuffer[0] = (uint8_t)'~';
+			XBEE_LL_RxBufferIndex = 0;
+		}
+	}
 
 	XBEE_LL_RxBufferIndex++;
 	if (XBEE_LL_RxBufferIndex<XBEE_LL_RxBufferLength)

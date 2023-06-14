@@ -324,6 +324,9 @@ int XBEE_GetFrame (char* frame, int timeout) {
 	return XBEE_OK;
 }
 
+// NOTE: Revoir le debit. Ca passe jusqu'a 57600, mais pas à 115200. Probabalement que la routien HAL pour la reception des données est trop lente
+// Revoir donc la routine IT xbee_ll HAL_UART_RxCpltCallback
+
 int XBEE_ConfigureDevice(void) {
 #define RXBUFFERSIZE 30
 	if (XBEE_EnterCommandMode()!=XBEE_OK)
@@ -340,15 +343,15 @@ int XBEE_ConfigureDevice(void) {
 	if (XBEE_SetATCommand("ATAP=1\r")!=XBEE_OK)
 		return XBEE_CONFIG_ERROR;
 
-	// disable legacy mode for API mode
-	if (XBEE_SetATCommand("ATAO=0\r")!=XBEE_OK)
-		return XBEE_CONFIG_ERROR;
-
-	// Set PanID name
-#ifdef PANID_COMMAND_STRING
-	if (XBEE_SetATCommand(PANID_COMMAND_STRING)!=XBEE_OK)
-		return XBEE_CONFIG_ERROR;
-#endif /*PANID_COMMAND_STRING*/
+//	// disable legacy mode for API mode
+//	if (XBEE_SetATCommand("ATAO=0\r")!=XBEE_OK)
+//		return XBEE_CONFIG_ERROR;
+//
+//	// Set PanID name
+//#ifdef PANID_COMMAND_STRING
+//	if (XBEE_SetATCommand(PANID_COMMAND_STRING)!=XBEE_OK)
+//		return XBEE_CONFIG_ERROR;
+//#endif /*PANID_COMMAND_STRING*/
 
 	// Set baudrate to 115200
 	//if (XBEE_SetATCommand("ATBD=7\r")!=XBEE_OK)
@@ -377,8 +380,7 @@ int XBEE_Init (void) {
 	//XBEE_LL_ConfigureUart(XBEE_USART, 115200);
 
 	/* Wait 100 ms for xbee module to reconf */
-	//HAL_Delay(100);
-	vTaskDelay(msToTicks(100));
+	vTaskDelay(msToTicks(500));
 
 	/* Xbee module is ready to be used */
 	return XBEE_OK;
@@ -425,11 +427,11 @@ int XBEE_SendData_Zigbee(uint16_t destination, uint8_t frame_id, char* data, uin
 	if (XBEE_SendFrame(tx_frame_buffer) != XBEE_OK)
 		return XBEE_TX_ERROR;
 
-	if (XBEE_LL_ReceiveData(rx_frame_buffer, 5, 2000) != XBEE_LL_OK)
-		return XBEE_RX_ERROR;
+	/*if (XBEE_LL_ReceiveData(rx_frame_buffer, 5, 0) != XBEE_LL_OK)
+		return XBEE_RX_ERROR;*/
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME) != XBEE_OK) //500ms
+	if (XBEE_GetFrame(rx_frame_buffer, 0) != XBEE_OK) //500ms
 		return XBEE_RX_ERROR;
 
 	// Decode frame
