@@ -36,8 +36,8 @@ PROTOCOL_Status PROTOCOL_Init(PROTOCOL_ConfigurationTypedef* conf) {
 	if (XBEE_Init() != XBEE_OK)
 		return PROTOCOL_XBEE_INIT_ERROR;
 
-	if (XBEE_GetUID(&(conf->device_uid))!=XBEE_OK)
-		return PROTOCOL_XBEE_INIT_ERROR;
+	/*if (XBEE_GetUID(&(conf->device_uid))!=XBEE_OK)
+		return PROTOCOL_XBEE_INIT_ERROR;*/
 
 	return PROTOCOL_OK;
 }
@@ -58,24 +58,31 @@ PROTOCOL_Status PROTOCOL_Connect(PROTOCOL_ConfigurationTypedef* conf) {
 	XBEE_GENERIC_FRAME *rx_frame;
 	char* data;
 
-	if (XBEE_SetChannel(DEBUG_CHANNEL) != XBEE_OK) {
+	/*if (XBEE_SetChannel(DEBUG_CHANNEL) != XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
-	}
+	}*/
 
-	if (XBEE_SetPanID(DEBUG_PANID) != XBEE_OK) {
+	/*if (XBEE_SetPanID(DEBUG_PANID) != XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
-	}
+	}*/
 
 	//HAL_Delay(50);
 	vTaskDelay(msToTicks(100));
 
-	conf->rf_channel = 0x12;
-	conf->rf_panid = 0x1337;
-	conf->gw_address = 0x13A20041C16E2B;
+	// plus necessaire en mode zigbee
+	//conf->rf_channel = 0x12;
+	//conf->rf_panid = 0x1337;
+	//conf->gw_address = 0x13A20041C16E2B;
 
 #if DEBUG_PROTOCOL ==1
+//	/* Send a broadcast "JOIN" command */
+//	if (XBEE_SendData(XBEE_BROADCAST_ADDRESS, 1, XBEE_PANID_BROADCAST, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
+//		status= PROTOCOL_RX_HW_ERROR;
+//		return status;
+//	}
+
 	/* Send a broadcast "JOIN" command */
-	if (XBEE_SendData(XBEE_BROADCAST_ADDRESS, 1, XBEE_PANID_BROADCAST, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
+	if (XBEE_SendData_Zigbee(ZIGBEE_SERVER_ADDR, 1, PROTOCOL_CMD_JOIN, &transmit_status)!= XBEE_OK) {
 		status= PROTOCOL_RX_HW_ERROR;
 		return status;
 	}

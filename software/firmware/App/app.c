@@ -134,7 +134,8 @@ void vTaskInit(void* params) {
 	//uint8_t update_status;
 	// First init, after power up
 	// Init every peripheral, in order to check if there are hardware issues
-	peripheralsToInit = INIT_DISPLAY | INIT_XBEE | INIT_RTC | INIT_BUTTON | INIT_BATTERY;
+	//peripheralsToInit = INIT_DISPLAY | INIT_XBEE | INIT_RTC | INIT_BUTTON | INIT_BATTERY;
+	peripheralsToInit = INIT_XBEE | INIT_RTC | INIT_BUTTON | INIT_BATTERY;
 
 	while (1) {
 		/* Init screen */

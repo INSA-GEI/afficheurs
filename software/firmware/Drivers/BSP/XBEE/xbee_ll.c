@@ -14,6 +14,9 @@
 UART_HandleTypeDef XBEE_LL_Uart;
 //LPTIM_HandleTypeDef XBEE_LL_Timer;
 char* XBEE_LL_RxBuffer;
+uint16_t XBEE_LL_RxBufferIndex;
+uint16_t XBEE_LL_RxBufferLength;
+
 static TaskHandle_t xbee_ll_rx_thread_handler;
 static TaskHandle_t xbee_ll_tx_thread_handler;
 
@@ -228,11 +231,12 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 	xbee_ll_rx_thread_handler = xTaskGetCurrentTaskHandle();
 	while (XBEE_LL_RxReady != SET); // wait for last RX to end
 
+	XBEE_LL_RxBuffer = data;
+
 	if (length == -1) {
 		// set API mode
 		XBEE_LL_Mode = XBEE_LL_MODE_API;
 		data_length = 3; // 3 bytes for api header (start char and length)
-		XBEE_LL_RxBuffer = data;
 		XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_HEADER;
 	} else {
 		// set TRANSPARENT mode
@@ -245,9 +249,20 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 
 	XBEE_LL_RxReady = RESET;
 
-	if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)data, data_length)!= HAL_OK) {
+	//	if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)data, data_length)!= HAL_OK) {
+	//		//XBEE_LL_StopTimeout();
+	//		HAL_UART_DMAStop(&XBEE_LL_Uart);
+	//		XBEE_LL_RXState = XBEE_LL_RX_STATE_ERROR;
+	//		XBEE_LL_RxReady = SET;
+	//
+	//		return XBEE_LL_ERROR_RX;
+	//	}
+
+	XBEE_LL_RxBufferIndex=0;
+	XBEE_LL_RxBufferLength=data_length;
+
+	if(HAL_UART_Receive_IT(&XBEE_LL_Uart, (uint8_t*)XBEE_LL_RxBuffer, 1)!= HAL_OK) {
 		//XBEE_LL_StopTimeout();
-		HAL_UART_DMAStop(&XBEE_LL_Uart);
 		XBEE_LL_RXState = XBEE_LL_RX_STATE_ERROR;
 		XBEE_LL_RxReady = SET;
 
@@ -256,7 +271,7 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 
 	//while (XBEE_LL_RxReady != SET); // wait for RX to end
 	if (timeout == 0)
-		ulNotificationValue = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(portMAX_DELAY)); // wait max 100 ms
+		ulNotificationValue = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(portMAX_DELAY)); // wait forever
 	else
 		ulNotificationValue = ulTaskNotifyTake( pdTRUE, pdMS_TO_TICKS(timeout)); // wait max 100 ms
 
@@ -264,7 +279,7 @@ int XBEE_LL_ReceiveData(char* data, int length, int timeout) {
 
 	if (ulNotificationValue != 1) {
 		/* The reception timed out. */
-		HAL_UART_DMAStop(&XBEE_LL_Uart);
+		//HAL_UART_DMAStop(&XBEE_LL_Uart);
 		XBEE_LL_RXState = XBEE_LL_RX_STATE_TIMEOUT;
 		XBEE_LL_RxReady = SET;
 	}
@@ -292,26 +307,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	int frame_length;
 
-	if (XBEE_LL_Mode == XBEE_LL_MODE_TRANSPARENT){
-		/* Set reception flag: transfer complete*/
-		XBEE_LL_RXState = XBEE_LL_RX_STATE_OK;
-		XBEE_LL_RxReady = SET;
-
-		if (xbee_ll_rx_thread_handler != NULL) {
-			/* Notify the task that an event has been emitted. */
-			vTaskNotifyGiveFromISR(xbee_ll_rx_thread_handler, &xHigherPriorityTaskWoken );
-
-			/* There are no more eventin progress, so no tasks to notify. */
-			xbee_ll_rx_thread_handler = NULL;
-
-			/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-					    should be performed to ensure the interrupt returns directly to the highest
-					    priority task.  The macro used for this purpose is dependent on the port in
-					    use and may be called portEND_SWITCHING_ISR(). */
-			portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-		}
-	} else {
-		if (XBEE_LL_RXState == XBEE_LL_RX_STATE_WAIT_EOF) {
+	XBEE_LL_RxBufferIndex++;
+	if (XBEE_LL_RxBufferIndex<XBEE_LL_RxBufferLength)
+		HAL_UART_Receive_IT(&XBEE_LL_Uart, (uint8_t*)&XBEE_LL_RxBuffer[XBEE_LL_RxBufferIndex], 1); 	// recupere les octets suivants
+	else {
+		if (XBEE_LL_Mode == XBEE_LL_MODE_TRANSPARENT) {
 			/* Set reception flag: transfer complete*/
 			XBEE_LL_RXState = XBEE_LL_RX_STATE_OK;
 			XBEE_LL_RxReady = SET;
@@ -324,20 +324,36 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle) {
 				xbee_ll_rx_thread_handler = NULL;
 
 				/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-								    should be performed to ensure the interrupt returns directly to the highest
-								    priority task.  The macro used for this purpose is dependent on the port in
-								    use and may be called portEND_SWITCHING_ISR(). */
+					    should be performed to ensure the interrupt returns directly to the highest
+					    priority task.  The macro used for this purpose is dependent on the port in
+					    use and may be called portEND_SWITCHING_ISR(). */
 				portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 			}
 		} else {
-			frame_length = 1+(((int)XBEE_LL_RxBuffer[1]<<8))+(int)XBEE_LL_RxBuffer[2];
-			XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_EOF;
-
-			if(HAL_UART_Receive_DMA(&XBEE_LL_Uart, (uint8_t*)(XBEE_LL_RxBuffer+3), frame_length)!= HAL_OK) {
-				// Something went wrong
-				//XBEE_LL_StopTimeout();
-				XBEE_LL_RXState = XBEE_LL_RX_STATE_ERROR;
+			if (XBEE_LL_RXState == XBEE_LL_RX_STATE_WAIT_EOF) {
+				/* Set reception flag: transfer complete*/
+				XBEE_LL_RXState = XBEE_LL_RX_STATE_OK;
 				XBEE_LL_RxReady = SET;
+
+				if (xbee_ll_rx_thread_handler != NULL) {
+					/* Notify the task that an event has been emitted. */
+					vTaskNotifyGiveFromISR(xbee_ll_rx_thread_handler, &xHigherPriorityTaskWoken );
+
+					/* There are no more eventin progress, so no tasks to notify. */
+					xbee_ll_rx_thread_handler = NULL;
+
+					/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+								    should be performed to ensure the interrupt returns directly to the highest
+								    priority task.  The macro used for this purpose is dependent on the port in
+								    use and may be called portEND_SWITCHING_ISR(). */
+					portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+				}
+			} else {
+				frame_length = 1+(((int)XBEE_LL_RxBuffer[1]<<8))+(int)XBEE_LL_RxBuffer[2];
+				XBEE_LL_RXState = XBEE_LL_RX_STATE_WAIT_EOF;
+				XBEE_LL_RxBufferLength+=frame_length; /* recalcul de la longueur reelle de la trame */
+
+				HAL_UART_Receive_IT(&XBEE_LL_Uart, (uint8_t*)&XBEE_LL_RxBuffer[XBEE_LL_RxBufferIndex], 1); // recupere les octets suivants
 			}
 		}
 	}

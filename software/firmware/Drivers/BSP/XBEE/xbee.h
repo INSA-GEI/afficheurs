@@ -92,6 +92,7 @@ int XBEE_Init (void);
 int XBEE_DecodeFrame(char* frame, XBEE_GENERIC_FRAME** decoded_frame);
 int XBEE_GetData (XBEE_GENERIC_FRAME** frame, int timeout); // timeout in ms
 int XBEE_SendData(uint64_t destination, uint8_t frame_id, uint8_t pan_broadcast, char* data, uint8_t *status);
+int XBEE_SendData_Zigbee(uint16_t destination, uint8_t frame_id, char* data, uint8_t *status);
 
 int XBEE_SetChannel(uint8_t channel);
 int XBEE_SetPanID(uint16_t panid);
