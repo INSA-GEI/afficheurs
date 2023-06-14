@@ -23,7 +23,7 @@ uint64_t XBEE_uid;
 char tx_frame_buffer[18+20]; /* space for a tx frame with 20 bytes of data */
 char rx_frame_buffer[18+0x80]; /* space for a rx frame with 0x80 bytes of data (max possible rx frame length) */
 
-#define XBEE_TIMEOUT_FOR_STATUS_FRAME		2000 // 500 ms for receiving a TX or AT status frame
+#define XBEE_TIMEOUT_FOR_STATUS_FRAME		4000 // 4s for receiving a TX or AT status frame in the worst case (no coordinator)
 
 int XBEE_EnterCommandMode_PARANOIA() {
 	char buffer[5];
@@ -354,8 +354,8 @@ int XBEE_ConfigureDevice(void) {
 //#endif /*PANID_COMMAND_STRING*/
 
 	// Set baudrate to 115200
-	//if (XBEE_SetATCommand("ATBD=7\r")!=XBEE_OK)
-	//	return XBEE_CONFIG_ERROR;
+	if (XBEE_SetATCommand("ATBD=7\r")!=XBEE_OK)
+		return XBEE_CONFIG_ERROR;
 
 	// Finally, exit configuration mode
 	if (XBEE_SetATCommand("ATCN\r")!=XBEE_OK)
@@ -377,7 +377,7 @@ int XBEE_Init (void) {
 		return XBEE_CONFIG_ERROR;
 
 	/* If it is OK, reconf USART to 115200 bauds */
-	//XBEE_LL_ConfigureUart(XBEE_USART, 115200);
+	XBEE_LL_ConfigureUart(XBEE_USART, 115200);
 
 	/* Wait 100 ms for xbee module to reconf */
 	vTaskDelay(msToTicks(500));
@@ -431,7 +431,7 @@ int XBEE_SendData_Zigbee(uint16_t destination, uint8_t frame_id, char* data, uin
 		return XBEE_RX_ERROR;*/
 
 	// Wait for transmit status
-	if (XBEE_GetFrame(rx_frame_buffer, 0) != XBEE_OK) //500ms
+	if (XBEE_GetFrame(rx_frame_buffer, XBEE_TIMEOUT_FOR_STATUS_FRAME) != XBEE_OK) //500ms
 		return XBEE_RX_ERROR;
 
 	// Decode frame

@@ -3589,7 +3589,7 @@ HAL_StatusTypeDef UART_Start_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pDat
   huart->RxState = HAL_UART_STATE_BUSY_RX;
 
   /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-  //SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
+  SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
 
 #if defined(USART_CR1_FIFOEN)
   /* Configure Rx interrupt processing */
