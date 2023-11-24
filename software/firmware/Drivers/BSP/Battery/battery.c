@@ -13,16 +13,15 @@ static uint8_t conversion_complete;
 static uint16_t adc_raw_value;
 static TaskHandle_t battery_thread_handler;
 
-/**
- * @brief ADC1 Initialization Function
- * @param None
- * @retval None
+/*
+ * ***********************************************************************************************************
+ * ***********************************************************************************************************
  */
-BATTERY_Status BATTERY_Init(void) {
+
+BATTERY_Status BATTERY_Init(void)
+{
 	ADC_ChannelConfTypeDef sConfig = {0};
 
-	/** Common config
-	 */
 	hadc1.Instance = ADC1;
 	hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
 	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -38,30 +37,37 @@ BATTERY_Status BATTERY_Init(void) {
 	hadc1.Init.DMAContinuousRequests = DISABLE;
 	hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
 	hadc1.Init.OversamplingMode = DISABLE;
+
 	if (HAL_ADC_Init(&hadc1) != HAL_OK)
 		return BATTERY_HW_ERROR;
 
-	/** Configure Regular Channel
-	 */
-	sConfig.Channel = ADC_CHANNEL_5;
+
+	sConfig.Channel = ADC_CHANNEL_11;
 	sConfig.Rank = ADC_REGULAR_RANK_1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_24CYCLES_5;
 	sConfig.SingleDiff = ADC_SINGLE_ENDED;
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;
 	sConfig.Offset = 0;
+
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 		return BATTERY_HW_ERROR;
 
-	/* Run the ADC calibration in single-ended mode */
-	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK) {
-		/* Calibration Error */
+
+	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
+	{
 		return BATTERY_HW_ERROR;
 	}
 
 	return BATTERY_OK;
 }
 
-BATTERY_Status BATTERY_GetVoltage(uint16_t *val) {
+/*
+ * ***********************************************************************************************************
+ * ***********************************************************************************************************
+ */
+
+BATTERY_Status BATTERY_GetVoltage(uint16_t *val)
+{
 	uint32_t ulNotificationValue;
 	conversion_complete = 0;
 	adc_raw_value = 0;
@@ -82,6 +88,40 @@ BATTERY_Status BATTERY_GetVoltage(uint16_t *val) {
 	}
 
 	battery_thread_handler = NULL;
+
+	return BATTERY_OK;
+}
+
+/*
+ * ***********************************************************************************************************
+ * ***********************************************************************************************************
+ */
+
+
+BATTERY_Status BATTERY_ModeVoltage(uint8_t *modeBattery)
+{
+	conversion_complete = 0;
+	adc_raw_value = 0;
+
+
+	if (HAL_ADC_Start_IT(&hadc1) != HAL_OK)
+		return BATTERY_HW_ERROR;
+
+	battery_thread_handler = NULL;
+
+	if (adc_raw_value > 1874)
+	{
+		*modeBattery = 0;
+	}
+	else if(adc_raw_value<= 1874 && adc_raw_value> 1274)
+	{
+		*modeBattery = 1;
+	}
+	else if (adc_raw_value<= 1274)
+	{
+		*modeBattery = 2;
+
+	}
 
 	return BATTERY_OK;
 }

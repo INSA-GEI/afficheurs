@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<Locations>
+  <Project>
+    <vfs_file />
+    <file_marker column=" 1" line=" 30" >
+      <vfs_project />
+      <vfs_file>/home/dimercur/.gnatstudio/plug-ins/hw_workaround.py</vfs_file>
+    </file_marker>
+    <file_marker current="true" column=" 41" line=" 13" >
+      <vfs_project />
+      <vfs_file>/home/dimercur/.gnatstudio/plug-ins/add_template_dir.py</vfs_file>
+    </file_marker>
+  </Project>
+</Locations>

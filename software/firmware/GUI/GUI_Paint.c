@@ -279,32 +279,7 @@ parameter:
 void Paint_Clear(uint16_t Color)
 {
 	volatile uint32_t val;
-	//uint32_t *ptr;
-	// start measure
 	DEBUG_StartTimeMeasure();
-
-	/*
-	if(Paint.Scale == 2 || Paint.Scale == 4){
-		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
-			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {//8 pixel =  1 byte
-				uint32_t Addr = X + Y*Paint.WidthByte;
-				Paint.Image[Addr] = Color;
-			}
-		}		
-	} else if(Paint.Scale == 7){
-		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
-			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {
-				uint32_t Addr = X + Y*Paint.WidthByte;
-				Paint.Image[Addr] = (Color<<4)|Color;
-			}
-		}		
-	}*/
-
-	/*memset(Paint.Image,0,(Paint.Height*Paint.Width)/8);*/
-
-
-	/*for (ptr = (uint32_t*)Paint.Image; ptr< (uint32_t*)Paint.Image + ((Paint.Height*Paint.Width)/8)/4; )
-	 *ptr++ = 0;*/
 
 	asm("push {R0,R1}\n\t"
 			"eor R0,R0\n\t"
@@ -318,9 +293,8 @@ void Paint_Clear(uint16_t Color)
 			"fin:\n\t"
 			"pop {R0,R1}"
 
-			: : [address]"r"   (Paint.Image), /* pointer to framebuffer. */
-			  [length]"r"    ((800*480)/8) /* length */
-			  : /* No clobbers */
+			: : [address]"r"   (Paint.Image),
+			  [length]"r"    ((800*480)/8)
 	);
 
 	val=DEBUG_EndTimeMeasure();
@@ -332,7 +306,6 @@ function: Clear the color of a window
 parameter:
     Xstart : x starting point
     Ystart : Y starting point
-    Xend   : x end point
     Yend   : y end point
     Color  : Painted colors
  ******************************************************************************/
@@ -653,58 +626,6 @@ parameter:
     Color_Background : Select the background color
  ******************************************************************************/
 
-//uint16_t Paint_DrawChar (uint16_t Xpoint, uint16_t Ypoint, const uint16_t Unicode_char,
-//		const lv_font_t* Font, uint16_t Color_Foreground, uint16_t Color_Background) {
-//	uint16_t Page, Column;
-//	uint16_t charOffset;
-//	uint16_t glyphWidth =0;
-//	uint32_t glyphOffset =0;
-//
-//	if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-//		Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
-//		return glyphWidth;
-//	}
-//
-//	if ((Unicode_char<Font->unicode_first) || (Unicode_char>Font->unicode_last)) {
-//		charOffset = 0; /* If Unicode_char is invalid (outside range), use by default first char in font (offset 0) */
-//	}
-//	else {
-//		charOffset = (Unicode_char - Font->unicode_first);
-//	}
-//
-//	glyphOffset = Font->glyph_dsc[charOffset].glyph_index;
-//	glyphWidth = Font->glyph_dsc[charOffset].w_px;
-//
-//	const uint8_t *ptr = &Font->glyph_bitmap[glyphOffset];
-//
-//	for (Page = 0; Page < Font->h_px; Page ++ ) {
-//		for (Column = 0; Column < glyphWidth; Column ++ ) {
-//
-//			//To determine whether the font background color and screen background color is consistent
-//			if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
-//				if (*ptr & (0x80 >> (Column % 8)))
-//					Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground);
-//				// Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
-//			} else {
-//				if (*ptr & (0x80 >> (Column % 8))) {
-//					Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground);
-//					// Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
-//				} else {
-//					Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Background);
-//					// Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
-//				}
-//			}
-//			//One pixel is 8 bits
-//			if (Column % 8 == 7)
-//				ptr++;
-//		}// Write a line
-//		if (glyphWidth % 8 != 0)
-//			ptr++;
-//	}// Write all
-//
-//	return glyphWidth;
-//}
-
 uint32_t Paint_GetGlyphOffsetAndWidth(const uint16_t Unicode_char, const lv_font_t* Font, uint16_t *width) {
 	uint16_t charOffset=0;
 
@@ -805,34 +726,36 @@ void Paint_DrawString (uint16_t Xstart, uint16_t Ystart, const char *pString,
 	}
 }
 
-lv_font_box_t Paint_GetStringBox(const char *pString, const lv_font_t* Font) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+lv_font_box_t Paint_GetStringBox(const char *pString, const lv_font_t* Font)
+{
 	uint16_t lineWidth=0;
 	uint16_t charWidth=0;
 	uint16_t fontHeight = Font->h_px;
 	lv_font_box_t box = {
-			.width = 0,
-			.height = Font->h_px};
+						.width = 0,
+						.height = Font->h_px};
 
-	while (* pString != '\0') {
-		if (* pString == '\n') {
+	while (* pString != '\0')
+	{
+		if (* pString == '\n')
+		{
 			box.height += fontHeight;
-
 			if (lineWidth>box.width) box.width = lineWidth;
-
 			lineWidth=0;
 		}
-		else {
+		else
+		{
 			Paint_GetGlyphOffsetAndWidth((uint16_t)*pString, Font, &charWidth);
-			//charOffset = ((uint16_t)*pString - Font->unicode_first);
 			lineWidth += charWidth+FONT_INTERCHAR_SPACE;
 		}
-
-		//The next character of the address
 		pString ++;
 	}
-
 	if (lineWidth>box.width) box.width = lineWidth;
-
 	return box;
 }
 
@@ -988,6 +911,9 @@ void Paint_SendToDisplay()
 	if (Paint.sendToDisplayFct != NULL) {
 		Paint.sendToDisplayFct(Paint.Image, Paint.HeightByte*Paint.WidthByte);
 	}
+
+	Paint.sendToDisplayFct(Paint.Image, Paint.HeightByte*Paint.WidthByte);
+
 }
 
 void Paint_SetDrawingWindow(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend)

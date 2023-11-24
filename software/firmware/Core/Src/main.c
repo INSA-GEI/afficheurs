@@ -45,29 +45,27 @@
 
 /* Private variables ---------------------------------------------------------*/
 LPTIM_HandleTypeDef hlptim2;
-
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
-
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 
 /* USER CODE BEGIN PV */
-
+RTC_HandleTypeDef hrtc;
+uint8_t firstWakeUp;
+uint8_t WakeUpButton;
+uint8_t WakeUpRTC;
+uint8_t WakeUpDebug;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 static void MX_USART2_UART_Init(void);
-
 static void MX_DMA_Init(void);
-//static void MX_USART1_UART_Init(void);
-//static void MX_LPTIM2_Init(void);
 
 /* USER CODE BEGIN PFP */
-
+void who_wakeup_STM();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -82,6 +80,7 @@ static void MX_DMA_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  who_wakeup_STM();
   HAL_DeInit();
   /* USER CODE END 1 */
 
@@ -102,12 +101,8 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  //MX_GPIO_Init();
   MX_USART2_UART_Init();
-  //MX_SPI1_Init();
   MX_DMA_Init();
-  //MX_USART1_UART_Init();
-  //MX_LPTIM2_Init();
   /* USER CODE BEGIN 2 */
   DEBUG_Init();
   /* USER CODE END 2 */
@@ -299,7 +294,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -413,6 +408,31 @@ int __io_putchar(int ch)
 	HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, 500);
 
 	return 1;
+}
+
+void who_wakeup_STM()
+{
+	    //Check Wakeup Flag
+		firstWakeUp = !(__HAL_PWR_GET_FLAG(PWR_FLAG_SB));
+
+
+		if(firstWakeUp == 1)
+		{
+			WakeUpButton = 0;
+			WakeUpRTC = 0;
+		}
+		else if(__HAL_PWR_GET_FLAG(PWR_FLAG_WUF1) == 1)
+		{
+			WakeUpButton = 1;
+		}
+		else if(WakeUpButton == 0 && (__HAL_PWR_GET_FLAG(PWR_FLAG_WUFI)))
+		{
+			WakeUpRTC = 1;
+		}
+		else
+		{
+			WakeUpDebug = 1;
+		}
 }
 
 /* USER CODE END 4 */

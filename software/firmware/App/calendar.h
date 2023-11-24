@@ -43,8 +43,15 @@ void CAL_SetTimeAndDate(CAL_Reservation* cal, uint16_t start_time, uint16_t end_
 void CAL_SetTitle(CAL_Reservation* cal, const char* title);
 void CAL_SetTrainee(CAL_Reservation* cal, const char* trainee);
 void CAL_SetTrainer(CAL_Reservation* cal, const char* trainer);
-CAL_Reservation* CAL_GetFirst(void);
 CAL_Reservation* CAL_GetNext(void);
 char* CAL_HourToStr(uint16_t hour);
 uint16_t CAL_HourToInt(int hour, int min);
+CAL_Reservation* CAL_GetFirst(void);
+CAL_Reservation* CAL_GetCurrent();
+CAL_Reservation* CAL_GetNextReservation();
+char* CAL_GetTitleNextReservation(uint32_t min);
+char* CAL_GetTitle2NextReservation(uint32_t min);
+
+uint32_t CAL_Diff();
+
 #endif /* CALENDAR_H_ */
