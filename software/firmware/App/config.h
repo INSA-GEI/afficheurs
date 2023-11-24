@@ -70,19 +70,27 @@ TickType_t msToTicks(TickType_t ms);
 
 #define STACK_SIZE 					200
 
-#define PriorityInit    			(configMAX_PRIORITIES -1)
-#define PriorityEvents        		(configMAX_PRIORITIES -2)
-#define PriorityPeriodicWakeup		(configMAX_PRIORITIES -3)
-#define PriorityDrawDisplay			(configMAX_PRIORITIES -4)
+#define PriorityInit    			        (configMAX_PRIORITIES -1)
+#define PriorityWakeUpRTC        	        (configMAX_PRIORITIES -4)
+#define PriorityWakeUpButton	            (configMAX_PRIORITIES -5)
+#define PriorityFirstWakeUp	                (configMAX_PRIORITIES -2)
+#define PriorityFirstWakeUpOfTheDay	        (configMAX_PRIORITIES -3)
 
 #define EPD_CONFIG_LUT				1
 
 #define DEBUG_PROTOCOL				1
 #define DEBUG_CHANNEL				0x12
-#define DEBUG_PANID					0x1337
+#define DEBUG_PANID					0x0000
 #define DEBUG_PROTOCOL_TIMEOUT	    2000 // Timeout of around 2s
 
 #define DEBUG_PROTOCOL_FAKE_CONFIG  0
+#define PANID_COMMAND_STRING		"ATID=DEAD\r"
+#define PANID                       0xDEAD
+#define DEVICE_UID_TEST             0x1B00
+#define DEFAULT_TIME                1000 //MARCHE PAS
+#define DEFAULT_DAY                 01 //01 MONDAY
+
+#define ZIGBEE_SERVER_ADDR			0
 
 void DEBUG_Init(void);
 void DEBUG_StartTimeMeasure(void);

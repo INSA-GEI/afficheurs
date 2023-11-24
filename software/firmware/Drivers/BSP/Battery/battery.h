@@ -18,6 +18,9 @@ typedef enum {
 } BATTERY_Status;
 
 BATTERY_Status BATTERY_Init(void);
-BATTERY_Status BATTERY_GetVoltage(uint16_t *val);
+//BATTERY_Status BATTERY_GetVoltage(uint16_t *val);
+BATTERY_Status BATTERY_GetVoltage2(uint32_t *val);
+BATTERY_Status BATTERY_ModeVoltage(uint8_t *modeBattery);
+
 
 #endif /* BSP_BATTERY_BATTERY_H_ */

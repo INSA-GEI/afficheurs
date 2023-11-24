@@ -1,46 +1,59 @@
-/*
- * display.c
- *
- *  Created on: 26 avr. 2022
- *      Author: dimercur
- */
 #include "stm32l4xx_hal.h"
 #include "display.h"
-
 #include "EPD_7in5_V2.h"
-
 #include "DEV_Config.h"
 #include "GUI_Paint.h"
-
 #include "string.h"
 #include "stdlib.h"
 #include "inttypes.h"
 
-DISPLAY_StatusTypedef DISPLAY_Init(void) {
-	//printf("EPD_7IN5_V2_test Demo\r\n");
-	if(EPD_HWInit()!=EPD_OK){
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+DISPLAY_StatusTypedef DISPLAY_Init(void)
+{
+	if(EPD_HWInit()!=EPD_OK)
+	{
 		return DISPLAY_HW_ERR;
 	}
 
-	//printf("e-Paper Init and Clear...\r\n");
 	EPD_SWInit();
 
-	//printf("Paint_Init\r\n");
 	Paint_Init(EPD_GetFramebuffer(),EPD_7IN5_V2_WIDTH, EPD_7IN5_V2_HEIGHT, ROTATE_0);
 	Paint_SetSendToDisplayFunction(EPD_WritePicture);
 
 	return DISPLAY_OK;
 }
 
-void DISPLAY_Update(void) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_Update(void)
+{
 	Paint_SendToDisplay();
 }
 
-void DISPLAY_EnterPowerOff(void) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_EnterPowerOff(void)
+{
 	EPD_ShutDown();
 }
 
-void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservation* reservation, const char* prompt, DISPLAY_PromptIcon icon) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservation* reservation, const char* prompt, DISPLAY_PromptIcon icon, uint8_t mode)
+{
 	char *text;
 	char people[((CAL_TRAINER_MAX_LENGTH+2)*4)+1]; // 1 for 0 ending, 2 for ',' and space between name
 	char local_prompt[51];
@@ -64,9 +77,9 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 			text, &play_r_60, BLACK, WHITE);
 
 	// Draw current reservation with two lines
-	Paint_DrawLine(420, 150+80, EPD_7IN5_V2_WIDTH-20, 150+80, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(420, 150+80, EPD_7IN5_V2_WIDTH-20, 150+80, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	//Paint_DrawLine(320, 150+81, EPD_7IN5_V2_WIDTH-20, 150+81, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(220, 150+82, EPD_7IN5_V2_WIDTH-20, 150+82, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(220, 150+82, EPD_7IN5_V2_WIDTH-20, 150+82, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	//Paint_DrawLine(120, 150+83, EPD_7IN5_V2_WIDTH-20, 150+83, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	Paint_DrawLine(20, 150+84, EPD_7IN5_V2_WIDTH-20, 150+84, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
@@ -77,9 +90,9 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 
 	Paint_DrawLine(20, 150+155, EPD_7IN5_V2_WIDTH-20, 150+155, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	//Paint_DrawLine(20, 150+156, EPD_7IN5_V2_WIDTH-120, 150+156, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(20, 150+157, EPD_7IN5_V2_WIDTH-220, 150+157, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(20, 150+157, EPD_7IN5_V2_WIDTH-220, 150+157, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	//Paint_DrawLine(20, 150+158, EPD_7IN5_V2_WIDTH-320, 150+158, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-	Paint_DrawLine(20, 150+159, EPD_7IN5_V2_WIDTH-420, 150+159, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
+	//Paint_DrawLine(20, 150+159, EPD_7IN5_V2_WIDTH-420, 150+159, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
 	// Draw INSA Logo
 	Paint_DrawImage(20,(150+80-logoINSA_110.header.h)/2,(lv_img_dsc_t *) &logoINSA_110, DRAW_IMAGE_NORMAL);
@@ -105,9 +118,11 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 	//text = "4AE-SE";
 	int i=0;
 
-	while ((i<4) && (reservation->trainees[i]!=0)) {
+	while ((i<4) && (reservation->trainees[i]!=0))
+	{
 		strcat (people, reservation->trainees[i]);
-		if ((i!=3) && (reservation->trainees[i+1]!=0)) {
+		if ((i!=3) && (reservation->trainees[i+1]!=0))
+		{
 			strcat (people, ", ");
 		}
 		i++;
@@ -123,9 +138,11 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 	memset (people, 0,((CAL_TRAINER_MAX_LENGTH+2)*4)+1); //  flush buffer
 	i=0;
 
-	while ((i<4) && (reservation->trainers[i]!=0)) {
+	while ((i<4) && (reservation->trainers[i]!=0))
+	{
 		strcat (people, reservation->trainers[i]);
-		if ((i!=3) && (reservation->trainers[i+1]!=0)) {
+		if ((i!=3) && (reservation->trainers[i+1]!=0))
+		{
 			strcat (people, ", ");
 		}
 		i++;
@@ -157,15 +174,45 @@ void DISPLAY_ShowReservation(PROTOCOL_ConfigurationTypedef* conf, CAL_Reservatio
 	Paint_DrawImage(10+connection_mid_24.header.w+4,(EPD_7IN5_V2_HEIGHT-30 + (30-on_line_24.header.h)/2),
 			(lv_img_dsc_t *) &on_line_24, DRAW_IMAGE_INVERTED);
 
-	Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_high_24.header.h)/2),
-			(lv_img_dsc_t *) &battery_high_24, DRAW_IMAGE_INVERTED);
+	if (mode == 0)
+	{
+		Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_high_24.header.h)/2),
+				(lv_img_dsc_t *) &battery_high_24, DRAW_IMAGE_INVERTED);
+	}
+	else if(mode == 1)
+	{
+		Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_mid_24.header.h)/2),
+				(lv_img_dsc_t *) &battery_mid_24, DRAW_IMAGE_INVERTED);
+	}
+	else if(mode == 2)
+	{
+		Paint_DrawImage(EPD_7IN5_V2_WIDTH-10-24,(EPD_7IN5_V2_HEIGHT-30 + (30-battery_low_24.header.h)/2),
+				(lv_img_dsc_t *) &battery_low_24, DRAW_IMAGE_INVERTED);
+	}
+	else
+	{
+		//panic ?
+	}
 }
+/*
+ * *****************************************
+ * *****************************************
+ */
 
-void DISPLAY_DrawDayReservation(CAL_Reservation* res) {
-	uint16_t start_time= res->start_time;
-	uint16_t end_time= res->end_time;
+void DISPLAY_DrawDayReservation(CAL_Reservation* res)
+{
+	uint16_t start_time = res->start_time;
+	uint16_t end_time = res->end_time;
+	uint16_t duration_time = (res->end_time) - (res->start_time);
 	uint16_t time_8_00 = CAL_HourToInt(8, 00);
 	uint16_t time_14_00 = CAL_HourToInt(14, 00);
+
+	uint16_t time_chevauchement_1 = CAL_HourToInt(13, 55);
+	uint16_t time_chevauchement_2 = CAL_HourToInt(14, 05); //Permet de
+
+	uint16_t time_matin_chevauchement = time_14_00 - (res->start_time);
+	uint16_t time_am_chevauchement = (res->end_time) - time_14_00;
+
 	char hourstr[15];
 	char starttime_str[6];
 
@@ -173,59 +220,173 @@ void DISPLAY_DrawDayReservation(CAL_Reservation* res) {
 
 	memset (hourstr, 0, 15);
 
-	if ((start_time<time_14_00)&&(end_time>=time_14_00)) { // reservation is split between morning and afternoon
+	if(duration_time <= 15)
+	{
+		//No space enough
+	}
+	else
+		if ((start_time<time_14_00)&&(end_time>=time_14_00))
+		{
+				Paint_DrawFillRectangleOptim(80, 93+((start_time-time_8_00)*65)/60,
+						EPD_7IN5_V2_WIDTH/2-10, 93+((time_chevauchement_1-time_8_00)*65)/60, BLACK);
 
-	} else {
-		if (start_time<CAL_HourToInt(14, 00)) {
+				Paint_DrawFillRectangleOptim(EPD_7IN5_V2_WIDTH/2+10, 93+((time_chevauchement_2-time_14_00)*65)/60,
+						EPD_7IN5_V2_WIDTH-80, 93+((end_time-time_14_00)*65)/60, BLACK);
+
+				if(duration_time>=60)
+				{
+					if(time_matin_chevauchement >= 15 && time_am_chevauchement >= 15)
+					{
+						/*PARTIE MATIN TITRE*/
+						stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
+						Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
+								93+(((start_time+time_14_00)/2-time_8_00)*65)/60 - stringBox.height-10,
+								res->title, &montserrat_m_16, WHITE, BLACK);
+
+						/*PARTIE APRES MIDI START TIME - END TIME*/
+						memcpy (starttime_str, CAL_HourToStr(start_time),6);
+						snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+						stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+						Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+								93+(((time_14_00+end_time)/2-time_14_00)*65)/60 + stringBox.height-5,
+								hourstr, &montserrat_m_16, WHITE, BLACK);
+				}
+				else if (time_matin_chevauchement >= 15)
+				{
+						/*PARTIE MATIN START TIME - END TIME*/
+						memcpy (starttime_str, CAL_HourToStr(start_time),6);
+						snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+						stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+						Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+							93+(((start_time+time_14_00)/2-time_14_00)*65)/60 + stringBox.height-5,
+							hourstr, &montserrat_m_16, WHITE, BLACK);
+				}
+				else if (time_am_chevauchement >= 15 && time_matin_chevauchement < 15)
+				{
+						/*PARTIE APRES MIDI START TIME - END TIME*/
+						memcpy (starttime_str, CAL_HourToStr(start_time),6);
+						snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+						stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+						Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+								93+(((time_14_00+end_time)/2-time_14_00)*65)/60 + stringBox.height-5,
+								hourstr, &montserrat_m_16, WHITE, BLACK);
+				}
+			else
+			{
+				//No space enough
+			}
+		}
+		else
+		{
+				if(time_am_chevauchement>=time_matin_chevauchement)
+				{
+					/*PARTIE MATIN START TIME - END TIME*/
+					memcpy (starttime_str, CAL_HourToStr(start_time),6);
+					snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+					stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+					Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+							93+(((start_time+time_14_00)/2-time_14_00)*65)/60 + stringBox.height-5,
+							hourstr, &montserrat_m_16, WHITE, BLACK);
+
+				}
+				else if (time_am_chevauchement<time_matin_chevauchement)
+				{
+					/*PARTIE APRES MIDI START TIME - END TIME*/
+					memcpy (starttime_str, CAL_HourToStr(start_time),6);
+					snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+					stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+					Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+							93+(((time_14_00+end_time)/2-time_14_00)*65)/60 + stringBox.height-5,
+							hourstr, &montserrat_m_16, WHITE, BLACK);
+				}
+		}
+	}
+	else
+	{
+		if (start_time<CAL_HourToInt(14, 00))
+		{
 			Paint_DrawFillRectangleOptim(80, 93+((start_time-time_8_00)*65)/60,
 					EPD_7IN5_V2_WIDTH/2-10, 93+((end_time-time_8_00)*65)/60, BLACK);
 
-			stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
-			Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
-					93+(((start_time+end_time)/2-time_8_00)*65)/60 - stringBox.height-20,
-					res->title, &montserrat_m_16, WHITE, BLACK);
+			if(duration_time>=60)
+			{
+				stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
+				Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
+						93+(((start_time+end_time)/2-time_8_00)*65)/60 - stringBox.height-10,
+						res->title, &montserrat_m_16, WHITE, BLACK);
 
-			memcpy (starttime_str, CAL_HourToStr(start_time),6);
-			snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
-			stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
-			Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
-					93+(((start_time+end_time)/2-time_8_00)*65)/60 + stringBox.height+5,
-					hourstr, &montserrat_m_16, WHITE, BLACK);
-		} else {
+				memcpy (starttime_str, CAL_HourToStr(start_time),6);
+				snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+				stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+				Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
+						93+(((start_time+end_time)/2-time_8_00)*65)/60 + stringBox.height-5,
+						hourstr, &montserrat_m_16, WHITE, BLACK);
+			}
+			else
+			{
+				memcpy (starttime_str, CAL_HourToStr(start_time),6);
+
+				snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+				stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+				Paint_DrawString((80+EPD_7IN5_V2_WIDTH/2-10)/2 - stringBox.width/2,
+						93+(((start_time+end_time)/2-time_8_00)*65)/60 + stringBox.height-22.5,
+						hourstr, &montserrat_m_16, WHITE, BLACK);
+			}
+		}
+		else
+		{
 			Paint_DrawFillRectangleOptim(EPD_7IN5_V2_WIDTH/2+10, 93+((start_time-time_14_00)*65)/60,
 					EPD_7IN5_V2_WIDTH-80, 93+((end_time-time_14_00)*65)/60, BLACK);
 			stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
 
-			Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
-					93+(((start_time+end_time)/2-time_14_00)*65)/60 - stringBox.height-20,
-					res->title, &montserrat_m_16, WHITE, BLACK);
+			if(duration_time>=60)
+			{
+					Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+							93+(((start_time+end_time)/2-time_14_00)*65)/60 - stringBox.height-10,
+							res->title, &montserrat_m_16, WHITE, BLACK);
 
-			memcpy (starttime_str, CAL_HourToStr(start_time),6);
-			snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
-			stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
-			Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
-					93+(((start_time+end_time)/2-time_14_00)*65)/60 + stringBox.height+5,
-					hourstr, &montserrat_m_16, WHITE, BLACK);
+					memcpy (starttime_str, CAL_HourToStr(start_time),6);
+					snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+					stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+
+					Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+							93+(((start_time+end_time)/2-time_14_00)*65)/60 + stringBox.height-5,
+							hourstr, &montserrat_m_16, WHITE, BLACK);
+			}
+			else
+			{
+					memcpy (starttime_str, CAL_HourToStr(start_time),6);
+					snprintf(hourstr, 14, "%s - %s", starttime_str, CAL_HourToStr(end_time));
+					stringBox = Paint_GetStringBox(hourstr, &montserrat_m_16);
+
+					Paint_DrawString((EPD_7IN5_V2_WIDTH/2+16+EPD_7IN5_V2_WIDTH-80)/2 - stringBox.width/2,
+						93+(((start_time+end_time)/2-time_14_00)*65)/60 + stringBox.height-22.5,
+						hourstr, &montserrat_m_16, WHITE, BLACK);
+			}
 		}
 	}
 }
 
-void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day)
+{
 	char *text;
 	char title[37];
-	char people[((CAL_TRAINER_MAX_LENGTH+2)*4)+1]; // 1 for 0 ending, 2 for ',' and space between name
+	char people[((CAL_TRAINER_MAX_LENGTH+2)*4)+1];
 	lv_font_box_t stringBox;
-	uint8_t hour =8;
+	uint8_t hour = 8;
 	CAL_Reservation* res;
 
 	memset (people, 0,((CAL_TRAINER_MAX_LENGTH+2)*4)+1);
 
 	//1.Select Image
-	//printf("Clear framebuffer\r\n");
 	Paint_Clear(WHITE);
 
 	// 2.Drawing on the image
-	// Draw header with prompt, connection status and battery state
 	Paint_DrawFillRectangleOptim(0, 0, EPD_7IN5_V2_WIDTH, 36, BLACK);
 
 	memset (title, 0, 30);
@@ -233,7 +394,8 @@ void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day
 	stringBox = Paint_GetStringBox(title, &montserrat_m_26);
 	Paint_DrawString((EPD_7IN5_V2_WIDTH-stringBox.width)/2,5,title, &montserrat_m_26, WHITE, BLACK);
 
-	for (hour=8; hour<20; hour++) {
+	for (hour=8; hour<20; hour++)
+	{
 		text = CAL_HourToStr(hour*60);
 		stringBox = Paint_GetStringBox(text, &montserrat_m_26);
 		if (hour<14)
@@ -261,14 +423,21 @@ void DISPLAY_ShowDayReservation(PROTOCOL_ConfigurationTypedef* conf, uint8_t day
 	if ((res!=NULL) && (res->day_nbr == day))
 		DISPLAY_DrawDayReservation(res);
 
-	while (res!=NULL) {
+	while (res!=NULL)
+	{
 		res=CAL_GetNext();
 		if ((res!=NULL) && (res->day_nbr == day))
 			DISPLAY_DrawDayReservation(res);
 	}
 }
 
-void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf)
+{
 	char *text;
 	char title[45];
 	lv_font_box_t stringBox;
@@ -280,19 +449,19 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 	char* line_2;
 
 	//1.Select Image
-	//printf("Clear framebuffer\r\n");
 	Paint_Clear(WHITE);
 
 	// 2.Drawing on the image
-	// Draw header with prompt, connection status and battery state
 	Paint_DrawFillRectangleOptim(0, 0, EPD_7IN5_V2_WIDTH, 36, BLACK);
 
 	memset (title, 0, 30);
-	snprintf(title, 44, "%s - Semaine du %s au %s", conf->room_name, CAL_GetDayArray()[0], CAL_GetDayArray()[4]);
+	snprintf(title, 46, "%s - Semaine du %s au %s", conf->room_name, CAL_GetDayArray()[0], CAL_GetDayArray()[4]);
 	stringBox = Paint_GetStringBox(title, &montserrat_m_26);
 	Paint_DrawString((EPD_7IN5_V2_WIDTH-stringBox.width)/2,5,title, &montserrat_m_26, WHITE, BLACK);
 
-	for (hour=8; hour<19; hour+=2) {
+
+	for (hour=8; hour<19; hour+=2)
+	{
 		text = CAL_HourToStr(hour*60);
 		stringBox = Paint_GetStringBox(text, &montserrat_m_26);
 
@@ -305,7 +474,8 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 	Paint_DrawLine(520, 60, 520, EPD_7IN5_V2_HEIGHT-20, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 	Paint_DrawLine(660, 60, 660, EPD_7IN5_V2_HEIGHT-20, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
 
-	for (int day=0; day<5; day++) {
+	for (int day=0; day<5; day++)
+	{
 		stringBox = Paint_GetStringBox(CAL_DayName[day], &montserrat_r_26);
 		Paint_DrawString(170+(140*day)-(stringBox.width)/2,40,CAL_DayName[day], &montserrat_r_26, BLACK, WHITE);
 	}
@@ -314,28 +484,37 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 	res= CAL_GetFirst();
 
 	while (res!=NULL) {
-		if (res->day_nbr<6) {
+		if (res->day_nbr<6)
+		{
 			column = res->day_nbr-1;
 
 			// draw a filled rectangle
 			Paint_DrawFillRectangleOptim(110+(column*140), 65+((res->start_time-time_8_00)*70)/120,
 					                230+(column*140), 65+((res->end_time-time_8_00)*70)/120, BLACK);
 
-			stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
+			//stringBox = Paint_GetStringBox(res->title, &montserrat_m_16);
+			stringBox = Paint_GetStringBox(res->trainees[0], &montserrat_m_16);
 
-			if (stringBox.width>120) { //140-20
+
+			if (stringBox.width>120)
+			{ //140-20
 				// split in two lines
-				memcpy (title, res->title, strlen(res->title)+1);
+				//memcpy (title, res->title, strlen(res->title)+1);
+				memcpy (title, res->trainees[0], strlen(res->trainees[0])+1);
+
 				line_1 = strtok(title," ");
 
 				stringBox = Paint_GetStringBox(line_1, &montserrat_m_16);
 
-				if (stringBox.height*2+4> ((res->end_time-res->start_time)*70)/120) { // unable to put two lines in the box
+				if (stringBox.height*2+4> ((res->end_time-res->start_time)*70)/120)
+				{ // unable to put two lines in the box
 					if (stringBox.width<120)
 						Paint_DrawString(170+(column*140)-(stringBox.width)/2,
 										65+(((res->end_time +res->start_time)/2-time_8_00)*70)/120 - (stringBox.height)/2,
 										line_1, &montserrat_m_16, WHITE, BLACK);
-				} else {
+				}
+				else
+				{
 					if (stringBox.width<120)
 						Paint_DrawString(170+(column*140)-(stringBox.width)/2,
 										65+(((res->end_time +res->start_time)/2-time_8_00)*70)/120 - (stringBox.height)-2,
@@ -348,7 +527,8 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 						Paint_DrawString(170+(column*140)-(stringBox.width)/2,
 										65+(((res->end_time +res->start_time)/2-time_8_00)*70)/120 + 2,
 										line_2, &montserrat_m_16, WHITE, BLACK);
-					else {
+					else
+					{
 						line_2 = strtok(NULL," "); // reduce size of remaining string
 						stringBox = Paint_GetStringBox(line_2, &montserrat_m_16);
 
@@ -358,19 +538,26 @@ void DISPLAY_ShowWeekReservation(PROTOCOL_ConfigurationTypedef* conf) {
 											line_2, &montserrat_m_16, WHITE, BLACK);
 					}
 				}
-			} else {
+			}
+			else
+			{
 				Paint_DrawString(170+(column*140)-(stringBox.width)/2,
 						65+(((res->end_time +res->start_time)/2-time_8_00)*70)/120 - (stringBox.height)/2,
-						res->title, &montserrat_m_16, WHITE, BLACK);
+						res->trainees[0] , &montserrat_m_16, WHITE, BLACK);
 			}
 
 		}
-
 		res=CAL_GetNext();
 	}
 }
 
-void DISPLAY_ShowWaitToConnect(uint64_t uid) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowWaitToConnect(uint64_t uid)
+{
 	char *text;
 	char uidtostr[20];
 
@@ -383,7 +570,7 @@ void DISPLAY_ShowWaitToConnect(uint64_t uid) {
 	//2. draw image
 	Paint_DrawImage(120, 70, (lv_img_dsc_t *) &cloud_sync_100, DRAW_IMAGE_NORMAL);
 
-	text="Wait to connect";
+	text="Wait to Connect";
 	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
 	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+100,
 			70,text, &montserrat_m_40, BLACK, WHITE);
@@ -408,7 +595,13 @@ void DISPLAY_ShowWaitToConnect(uint64_t uid) {
 			360,uidtostr, &play_r_60, BLACK, WHITE);
 }
 
-void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf)
+{
 	char *text;
 	char uidtostr[20];
 	const uint8_t line_space=30;
@@ -439,17 +632,6 @@ void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
 	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
 
-	/* channel id */
-	line_nbr++;
-	text="Channel ID";
-	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
-	Paint_DrawString(300 - stringBox.width,180+(line_nbr*line_space),text, &montserrat_m_26, BLACK, WHITE);
-
-	memset (uidtostr, 0, 20);
-	snprintf(uidtostr, 19, "%02X",(uint8_t)(conf->rf_channel));
-	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
-	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
-
 	/* pan id */
 	line_nbr++;
 	text="Pan ID";
@@ -458,17 +640,6 @@ void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 
 	memset (uidtostr, 0, 20);
 	snprintf(uidtostr, 19, "%04X",(uint16_t)(conf->rf_panid));
-	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
-	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
-
-	/* gateway ID */
-	line_nbr++;
-	text="Gateway UID";
-	stringBox = Paint_GetStringBox(text, &montserrat_m_26);
-	Paint_DrawString(300 - stringBox.width,180+(line_nbr*line_space),text, &montserrat_m_26, BLACK, WHITE);
-
-	memset (uidtostr, 0, 20);
-	snprintf(uidtostr, 19, "%08lX%08lX",(uint32_t)(conf->gw_address>>32), (uint32_t)conf->gw_address);
 	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
 	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
 
@@ -488,7 +659,7 @@ void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 	Paint_DrawString(300 - stringBox.width,180+(line_nbr*line_space),text, &montserrat_m_26, BLACK, WHITE);
 
 	memset (uidtostr, 0, 20);
-	snprintf(uidtostr, 19, "%s (%u)",CAL_DayName[conf->init_day-1], conf->init_day);
+	snprintf(uidtostr, 19, "%s (%u)",CAL_DayName[conf->init_week_day-1], conf->init_week_day);
 	stringBox = Paint_GetStringBox(uidtostr, &montserrat_li_26);
 	Paint_DrawString(340, 180+(line_nbr*line_space), uidtostr, &montserrat_li_26, BLACK, WHITE);
 
@@ -526,7 +697,13 @@ void DISPLAY_ShowConfiguration(PROTOCOL_ConfigurationTypedef* conf) {
 	Paint_DrawString(340, 180+(line_nbr*line_space) ,uidtostr, &montserrat_li_26, BLACK, WHITE);
 }
 
-void DISPLAY_ShowPanic(uint32_t error_code) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowPanic(uint32_t error_code)
+{
 	char *text;
 	char codetostr[12];
 
@@ -562,5 +739,98 @@ void DISPLAY_ShowPanic(uint32_t error_code) {
 	stringBox = Paint_GetStringBox(codetostr, &play_r_60);
 	Paint_DrawString(EPD_7IN5_V2_WIDTH/2 - stringBox.width/2,
 			360,codetostr, &play_r_60, BLACK, WHITE);
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowNight()
+{
+	char *text;
+
+	lv_font_box_t stringBox;
+
+	Paint_Clear(WHITE);
+
+	Paint_DrawImage(150, 80, (lv_img_dsc_t *) &clock_100, DRAW_IMAGE_NORMAL);
+
+	text="Night";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+120,
+			70,text, &montserrat_m_40, BLACK, WHITE);
+
+	text="Mode";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+120,
+			130,text, &montserrat_m_40, BLACK, WHITE);
+
+	Paint_DrawLine(30, 250, EPD_7IN5_V2_WIDTH-30, 250, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+
+	text="Active from 6:00 am to 9:00 pm";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString(EPD_7IN5_V2_WIDTH/2 - stringBox.width/2,
+			300,text, &montserrat_m_40, BLACK, WHITE);
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowWeekEnd()
+{
+	char *text;
+
+	lv_font_box_t stringBox;
+
+	Paint_Clear(WHITE);
+
+	Paint_DrawImage(150, 80, (lv_img_dsc_t *) &clock_100, DRAW_IMAGE_NORMAL);
+
+	text="Week End";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+120,
+			70,text, &montserrat_m_40, BLACK, WHITE);
+
+	text="Mode";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+120,
+			130,text, &montserrat_m_40, BLACK, WHITE);
+
+	Paint_DrawLine(30, 250, EPD_7IN5_V2_WIDTH-30, 250, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+
+
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void DISPLAY_ShowCritiqueMode()
+{
+	char *text;
+
+	lv_font_box_t stringBox;
+
+	Paint_Clear(WHITE);
+
+	Paint_DrawImage(150, 80, (lv_img_dsc_t *) &logoINSA_110, DRAW_IMAGE_NORMAL);
+
+	Paint_DrawLine(30, 250, EPD_7IN5_V2_WIDTH-30, 250, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+
+	text="Battery Hors Service";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString(EPD_7IN5_V2_WIDTH/2 - stringBox.width/2,
+			300,text, &montserrat_m_40, BLACK, WHITE);
+
+	text="Contactez Pascal ACCO";
+	stringBox = Paint_GetStringBox(text, &montserrat_m_40);
+	Paint_DrawString((EPD_7IN5_V2_WIDTH/2 - stringBox.width/2)+120,
+			360,text, &montserrat_m_40, BLACK, WHITE);
+
+
 }
 

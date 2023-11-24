@@ -7,7 +7,7 @@
 **
 **  Abstract    : Linker script for NUCLEO-L432KC Board embedding STM32L432KCUx Device from stm32l4 series
 **                      256Kbytes FLASH
-**                      48Kbytes RAM
+**                      64Kbytes RAM
 **                      16Kbytes RAM2
 **
 **                Set heap size, stack size and stack location according
@@ -23,13 +23,12 @@
 ******************************************************************************
 ** @attention
 **
-** <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-** All rights reserved.</center></h2>
+** Copyright (c) 2023 STMicroelectronics.
+** All rights reserved.
 **
-** This software component is licensed by ST under BSD 3-Clause license,
-** the "License"; You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at:
-**                        opensource.org/licenses/BSD-3-Clause
+** This software is licensed under terms that can be found in the LICENSE file
+** in the root directory of this software component.
+** If no LICENSE file comes with this software, it is provided AS-IS.
 **
 ******************************************************************************
 */
@@ -38,17 +37,18 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(SRAM2) + LENGTH(SRAM2); /* end of "SRAM2" Ram type memory */
+_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
 
-_Min_Heap_Size = 0x800 ; /* required amount of heap */
-_Min_Stack_Size = 0x400 ; /* required amount of stack */
+_Min_Heap_Size = 0x200; /* required amount of heap */
+_Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
 MEMORY
 {
-  SRAM1    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 48K
-  SRAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
+  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 64K
+  RAM2    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 16K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 256K
+  /*STORAGE  (RW)    : ORIGIN = gghjghj  , LENGTH= 16K*/
 }
 
 /* Sections */
@@ -147,7 +147,7 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
 
-  } >SRAM2 AT> FLASH
+  } >RAM AT> FLASH
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
@@ -163,7 +163,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >SRAM2
+  } >RAM
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
@@ -174,13 +174,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >SRAM2
-  
-  ._framebuffer :
-  {
-    . = ALIGN(8);
-    *(.framebuffer)
-  } >SRAM1
+  } >RAM
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

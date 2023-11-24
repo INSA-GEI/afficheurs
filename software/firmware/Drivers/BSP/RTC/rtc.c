@@ -1,10 +1,3 @@
-/*
- * rtc.c
- *
- *  Created on: 29 avr. 2022
- *      Author: dimercur
- */
-
 #include <panic.h>
 #include <rtc.h>
 #include <stddef.h>
@@ -16,11 +9,34 @@
 #include <stm32l4xx_hal_rtc.h>
 #include <sys/_stdint.h>
 
-RTC_HandleTypeDef hrtc;
+#include <stdio.h>
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+extern RTC_HandleTypeDef hrtc;
+
+uint8_t ChangeCourseOnStandardView = 0;
+
 static TaskHandle_t rtc_thread_handler;
 static RTC_AlarmEvent RTC_CurrentAlarmEvent;
+extern UART_HandleTypeDef huart2;
+char time[30];
+char alarm[30];
 
-static uint8_t dec2bcd(uint8_t num) {
+uint8_t CheckHoursWakeUpRTC;
+uint8_t CheckDateWakeUpRTC;
+uint8_t isFirstWakeUpOfTheDay;
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+static uint8_t dec2bcd(uint8_t num)
+{
 	uint8_t ones = 0;
 	uint8_t tens = 0;
 	uint8_t temp = 0;
@@ -34,7 +50,14 @@ static uint8_t dec2bcd(uint8_t num) {
 	return (tens + ones);
 }
 
-static uint8_t bcd2dec(uint8_t num) {
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+static uint8_t bcd2dec(uint8_t num)
+{
 	uint8_t ones = 0;
 	uint8_t tens = 0;
 
@@ -44,16 +67,15 @@ static uint8_t bcd2dec(uint8_t num) {
 	return (tens + ones);
 }
 
-/**
- * @brief RTC Initialization Function
- * @param None
- * @retval None
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_Init(void) {
+
+RTC_Status RTC_Init(void)
+{
 	RTC_Status status = RTC_OK;
 
-	/** Initialize RTC Only
-	 */
 	hrtc.Instance = RTC;
 	hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
 	hrtc.Init.AsynchPrediv = 127;
@@ -68,25 +90,28 @@ RTC_Status RTC_Init(void) {
 	return status;
 }
 
-/** Set the Time
+
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_SetTime(uint8_t hour, uint8_t min, uint8_t sec) {
-	RTC_TimeTypeDef sTime = {0};
+
+RTC_Status RTC_SetTime(uint8_t hour, uint8_t min, uint8_t sec)
+{
+	RTC_TimeTypeDef sTime;
+
 
 	if (hour<24)
-		//sTime.Hours = dec2bcd(hour);
 		sTime.Hours = hour;
 	else
 		return RTC_Invalid_Parameter;
 
 	if (min<60)
-		//sTime.Minutes = dec2bcd(min);
 		sTime.Minutes = min;
 	else
 		return RTC_Invalid_Parameter;
 
 	if (sec<60)
-		//sTime.Seconds = dec2bcd(sec);
 		sTime.Seconds = sec;
 	else
 		return RTC_Invalid_Parameter;
@@ -94,16 +119,28 @@ RTC_Status RTC_SetTime(uint8_t hour, uint8_t min, uint8_t sec) {
 	sTime.TimeFormat = RTC_HOURFORMAT_24;
 	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
 	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+
 	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
 		return RTC_HW_Error;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+
 
 	return RTC_OK;
 }
 
-/** Get current Time
+
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_GetTime(uint8_t *hour, uint8_t *min, uint8_t *sec) {
-	RTC_TimeTypeDef sTime = {0};
+
+RTC_Status RTC_GetTime(uint8_t *hour, uint8_t *min, uint8_t *sec)
+{
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
 
 	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
 		return RTC_HW_Error;
@@ -112,26 +149,269 @@ RTC_Status RTC_GetTime(uint8_t *hour, uint8_t *min, uint8_t *sec) {
 	*min = sTime.Minutes;
 	*sec = sTime.Seconds;
 
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
 	return RTC_OK;
 }
 
-/** Get current Time
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_GetWeekDay(uint8_t *weekday) {
-	RTC_DateTypeDef sDate = {0};
+
+RTC_Status RTC_GetAlarm(uint8_t *hour, uint8_t *min, uint8_t *sec)
+{
+	RTC_AlarmTypeDef sAlarm;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+
+	*(hour) = sAlarm.AlarmTime.Hours;
+	*(min) = sAlarm.AlarmTime.Minutes;
+	*(sec) = sAlarm.AlarmTime.Seconds;
+
+	return RTC_OK;
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+uint8_t RTC_isWakeUpMode2()
+{
+	RTC_AlarmTypeDef sAlarm;
+
+
+	if (HAL_RTC_GetAlarm(&hrtc, &sAlarm, RTC_ALARM_A, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (sAlarm.AlarmTime.Hours == 6 && sAlarm.AlarmTime.Minutes == 0 && sAlarm.AlarmTime.Seconds == 0)
+	{
+		return isFirstWakeUpOfTheDay = 1;
+	}
+	else
+	{
+		return isFirstWakeUpOfTheDay = 0;
+	}
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+uint8_t RTC_isWakeUpMode3()
+{
+	RTC_AlarmTypeDef sAlarm;
+
+
+	if (HAL_RTC_GetAlarm(&hrtc, &sAlarm, RTC_ALARM_A, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (sAlarm.AlarmTime.Hours == 6 && sAlarm.AlarmTime.Minutes == 0 && sAlarm.AlarmTime.Seconds == 0)
+	{
+		return isFirstWakeUpOfTheDay = 1;
+	}
+	else
+	{
+		return isFirstWakeUpOfTheDay = 0;
+	}
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+uint8_t RTC_CheckWakeUpNight()
+{
+	uint8_t hour;
+
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	hour = sTime.Hours;
 
 	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
 		return RTC_HW_Error;
 
-	*weekday = sDate.WeekDay;
+
+	if (hour >= 21 || hour < 6)
+	{
+		return CheckHoursWakeUpRTC = 1;
+	}
+	else
+	{
+		return CheckHoursWakeUpRTC = 0;
+	}
+}
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+RTC_Status RTC_SetFirstAlarmOfTheDay()
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	sAlarm.AlarmTime.Seconds = 0x0;
+	sAlarm.AlarmTime.SubSeconds = 0x0;
+	sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
+
+	sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+	sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+	sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_WEEKDAY;
+	sAlarm.AlarmDateWeekDay = sDate.WeekDay;
+	sAlarm.Alarm = RTC_ALARM_A;
+
+	sAlarm.AlarmTime.Hours = 6;
+	sAlarm.AlarmTime.Minutes = 0;
+	sAlarm.AlarmTime.Seconds = 0;
+
+	if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN) != HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
 
 	return RTC_OK;
 }
 
-/** Set the Date
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year) {
-	RTC_DateTypeDef sDate = {0};
+
+uint8_t RTC_CheckWakeUpWeekEnd()
+{
+	RTC_DateTypeDef sDate;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (sDate.WeekDay == 6 || sDate.WeekDay == 7)
+	{
+		return CheckDateWakeUpRTC = 1;
+	}
+	else
+	{
+		return CheckDateWakeUpRTC = 0;
+	}
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+uint8_t RTC_isFirstWakeUpOfTheDay()
+{
+	RTC_AlarmTypeDef sAlarm;
+
+
+	if (HAL_RTC_GetAlarm(&hrtc, &sAlarm, RTC_ALARM_A, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (sAlarm.AlarmTime.Hours == 6 && sAlarm.AlarmTime.Minutes == 0 && sAlarm.AlarmTime.Seconds == 0)
+	{
+		return isFirstWakeUpOfTheDay = 1;
+	}
+	else
+	{
+		return isFirstWakeUpOfTheDay = 0;
+	}
+}
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+// Retrieve RTC information on UART or pass known information in the code with a breakpoint before the sleep function.
+
+
+RTC_Status UART_Debug(uint8_t *hourAlarm, uint8_t *minAlarm, uint8_t *secAlarm, uint8_t *hourRTC, uint8_t *minRTC, uint8_t *secRTC)
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	//ALARM
+
+	*hourAlarm = sAlarm.AlarmTime.Hours;
+	*minAlarm = sAlarm.AlarmTime.Minutes;
+	*secAlarm = sAlarm.AlarmTime.Seconds;
+
+	//RTC
+	*hourRTC = sTime.Hours;
+	*minRTC = sTime.Minutes;
+	*secRTC = sTime.Seconds;
+
+	//UART
+	sprintf(time,  "Time: %02d.%02d.%02d\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds);
+	HAL_UART_Transmit(&huart2, (uint8_t *)time, sizeof(time), 1000);
+
+	sprintf(alarm,  "Alarm: %02d.%02d.%02d\r\n", sAlarm.AlarmTime.Hours, sAlarm.AlarmTime.Minutes, sAlarm.AlarmTime.Seconds);
+	HAL_UART_Transmit(&huart2, (uint8_t *)alarm, sizeof(alarm), 1000);
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	return RTC_OK;
+}
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+uint8_t RTC_GetWeekDay()
+{
+	RTC_DateTypeDef sDate;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	return sDate.WeekDay;
+}
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year)
+{
+	RTC_DateTypeDef sDate;
 
 	if ((weekday>=RTC_WEEKDAY_MONDAY) && (weekday<=RTC_WEEKDAY_SUNDAY))
 		sDate.WeekDay = weekday;
@@ -159,23 +439,46 @@ RTC_Status RTC_SetDate(uint8_t weekday, uint8_t day, uint8_t month, uint8_t year
 	return RTC_OK;
 }
 
-RTC_AlarmEvent RTC_WaitForEvent(void) {
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+RTC_AlarmEvent RTC_WaitForEvent(void)
+{
 	rtc_thread_handler= xTaskGetCurrentTaskHandle();
 
-	// wait for event, without timeout
-	ulTaskNotifyTake( pdTRUE, portMAX_DELAY); // unlimited wait
+	ulTaskNotifyTake( pdTRUE, portMAX_DELAY);
 	rtc_thread_handler = NULL;
 
 	return RTC_CurrentAlarmEvent;
 }
 
-/** Program a futur event (in minute)
+
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr) {
-	RTC_AlarmTypeDef sAlarm = {0};
+
+RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr)
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
 	uint8_t hours =0;
 	uint8_t minutes =0;
 	uint8_t sec =0;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
 
 	sAlarm.AlarmTime.SubSeconds = 0x0;
 	sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
@@ -187,18 +490,15 @@ RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr) {
 	sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_WEEKDAY;
 	sAlarm.Alarm = RTC_ALARM_B;
 
-	sec = order_nbr*10; // spread calendar request every 10 seconds
+	sec = order_nbr*10;
 	minutes = sec/60;
-	hours = 1+ minutes/60; // start of calendar update is 1:00, on monday
+	hours = 1+ minutes/60;
 
 	sec %= 60;
 	minutes %=60;
 	hours %=24;
 
 	sAlarm.AlarmDateWeekDay = RTC_WEEKDAY_MONDAY;
-	//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
-	//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
-	//	sAlarm.AlarmTime.Seconds = dec2bcd(sec);
 
 	sAlarm.AlarmTime.Hours = hours;
 	sAlarm.AlarmTime.Minutes = minutes;
@@ -211,19 +511,60 @@ RTC_Status RTC_EnableWeekStartEvent (uint8_t order_nbr) {
 }
 
 
-/** Program a futur event (in minute)
+/*
+ * *****************************************
+ * *****************************************
  */
-RTC_Status RTC_SetNextEvent (uint16_t min) {
-	RTC_DateTypeDef sDate = {0};
-	RTC_TimeTypeDef sTime = {0};
-	RTC_AlarmTypeDef sAlarm = {0};
-	uint8_t hours =0;
-	uint8_t minutes =0;
+
+
+RTC_Status RTC_CurrentTimeToSec (uint32_t *min)
+{
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+
+	uint32_t hours = 0;
+	uint32_t minutes = 0;
 
 	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
 		return RTC_HW_Error;
 
+	hours = sTime.Hours;
+	minutes = sTime.Minutes;
+
+	minutes += hours*60;
+
+	*min = minutes;
+
 	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	return RTC_OK;
+}
+
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+/*
+ * Function for waking up the RTC every 15 minutes.
+ */
+
+RTC_Status RTC_SetPeriodicAlarm15()
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
+	uint8_t hours = 0;
+	uint8_t minutes = 15;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
 		return RTC_HW_Error;
 
 	sAlarm.AlarmTime.Seconds = 0x0;
@@ -234,52 +575,229 @@ RTC_Status RTC_SetNextEvent (uint16_t min) {
 
 	sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
 	sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
-	sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_WEEKDAY;
-	sAlarm.AlarmDateWeekDay = sDate.WeekDay;
 	sAlarm.Alarm = RTC_ALARM_A;
-
-	hours = min/60;
-	minutes = min - ((uint16_t)hours)*60;
-
-	//	hours += bcd2dec(sTime.Hours);
-	//	minutes += bcd2dec(sTime.Minutes);
 
 	hours += sTime.Hours;
 	minutes += sTime.Minutes;
 
-	if (minutes >=60 ) {
+	if (minutes >=60)
+	{
 		hours++;
 		minutes-=60;
 	}
 
-	if (hours >=24 )
-		hours-=24;
-
-	//	sAlarm.AlarmTime.Hours = dec2bcd(hours);
-	//	sAlarm.AlarmTime.Minutes = dec2bcd(minutes);
+	if (hours >=24)
+	{
+	    hours-=24;
+	}
 
 	sAlarm.AlarmTime.Hours = hours;
 	sAlarm.AlarmTime.Minutes = minutes;
 
+
 	if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN) != HAL_OK)
+		return RTC_HW_Error;;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
 		return RTC_HW_Error;
 
 	return RTC_OK;
 }
 
-RTC_Status RTC_StopEvent (void) {
+/*
+ * *****************************************
+ * *****************************************
+ */
 
+RTC_Status RTC_SetPeriodicAlarm1()
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
+	uint8_t hours = 0;
+	uint8_t minutes = 0;
+	uint8_t seconds = 60;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	sAlarm.AlarmTime.Seconds = 0x0;
+	sAlarm.AlarmTime.SubSeconds = 0x0;
+	sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
+
+	sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+	sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+	sAlarm.Alarm = RTC_ALARM_A;
+
+	hours += sTime.Hours;
+	minutes += sTime.Minutes;
+	seconds += sTime.Seconds;
+
+	if (seconds >=60)
+	{
+		minutes++;
+		seconds -=60;
+	}
+
+
+	if (minutes >=60)
+	{
+		hours++;
+		minutes-=60;
+	}
+
+	if (hours >=24)
+	{
+	    hours-=24;
+	}
+
+	sAlarm.AlarmTime.Hours = hours;
+	sAlarm.AlarmTime.Minutes = minutes;
+	sAlarm.AlarmTime.Seconds = seconds;
+
+
+	if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN) != HAL_OK)
+		return RTC_HW_Error;;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	return RTC_OK;
+}
+
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+RTC_Status RTC_SetPeriodicAlarm10(uint32_t diff)
+{
+	RTC_TimeTypeDef sTime;
+	RTC_AlarmTypeDef sAlarm;
+	RTC_DateTypeDef sDate;
+
+	uint8_t hours = 0;
+	uint8_t minutes = 0;
+
+	if (HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	if (HAL_RTC_GetAlarm(&hrtc,&sAlarm,RTC_ALARM_A,RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+	sAlarm.AlarmTime.Seconds = 0x0;
+	sAlarm.AlarmTime.SubSeconds = 0x0;
+	sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
+
+	sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
+	sAlarm.AlarmSubSecondMask = RTC_ALARMSUBSECONDMASK_ALL;
+	sAlarm.Alarm = RTC_ALARM_A;
+
+
+	diff = diff - 10;
+
+	if(diff > 0)
+	{
+		while(diff >= 60)
+		{
+			hours++;
+			diff = diff - 60;
+		}
+
+		minutes = diff;
+
+		hours += sTime.Hours;
+		minutes += sTime.Minutes;
+
+		if (minutes >=60)
+		{
+			hours++;
+			minutes-=60;
+		}
+
+		if (hours >=24)
+		{
+		    hours-=24;
+		}
+
+		sAlarm.AlarmTime.Hours = hours;
+		sAlarm.AlarmTime.Minutes = minutes;
+
+	}
+	else if (diff <= 0)
+	{
+		diff = 15;
+
+		while(diff >= 60)
+		{
+			hours++;
+			diff = diff - 60;
+		}
+
+		minutes = diff;
+
+		hours += sTime.Hours;
+		minutes += sTime.Minutes;
+
+		if (minutes >=60)
+		{
+			hours++;
+			minutes-=60;
+		}
+
+		if (hours >=24)
+		{
+		    hours-=24;
+		}
+
+		sAlarm.AlarmTime.Hours = hours;
+		sAlarm.AlarmTime.Minutes = minutes;
+	}
+
+	if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN) != HAL_OK)
+		return RTC_HW_Error;;
+
+	if (HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN)!= HAL_OK)
+		return RTC_HW_Error;
+
+
+	HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 1);
+
+	return RTC_OK;
+}
+
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+RTC_Status RTC_StopEvent (void)
+{
 	if (HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_A)!= HAL_OK)
 		return RTC_HW_Error;
 
 	return RTC_OK;
 }
 
-uint32_t RTC_UnitTests(void) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+uint32_t RTC_UnitTests(void)
+{
 	uint32_t status=0;
 	RTC_AlarmTypeDef sAlarm = {0};
 
-	// test dec2bcd
 	if (dec2bcd(1) != 1)
 		status |= 0x1;
 
@@ -292,7 +810,6 @@ uint32_t RTC_UnitTests(void) {
 	if (dec2bcd(100) != 0x99)
 		status |= 0x8;
 
-	// test dec2bcd
 	if (bcd2dec(0x01) != 1)
 		status |= 0x10;
 
@@ -302,7 +819,6 @@ uint32_t RTC_UnitTests(void) {
 	if (bcd2dec(0x99) != 99)
 		status |= 0x40;
 
-	/* Test setSetNextEvent */
 	RTC_SetTime(0, 0, 0);
 	RTC_SetNextEvent (1);
 	HAL_RTC_GetAlarm(&hrtc, &sAlarm, RTC_ALARM_A, RTC_FORMAT_BIN);
@@ -398,13 +914,13 @@ uint32_t RTC_UnitTests(void) {
 	return status;
 }
 
-/**
- * @brief RTC MSP Initialization
- * This function configures the hardware resources used in this example
- * @param hrtc: RTC handle pointer
- * @retval None
+/*
+ * *****************************************
+ * *****************************************
  */
-void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc) {
+
+void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
+{
 	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
 	if(hrtc->Instance==RTC) {
@@ -423,13 +939,14 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc) {
 	}
 }
 
-/**
- * @brief RTC MSP De-Initialization
- * This function freeze the hardware resources used in this example
- * @param hrtc: RTC handle pointer
- * @retval None
+
+/*
+ * *****************************************
+ * *****************************************
  */
-void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc) {
+
+void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc)
+{
 	if(hrtc->Instance==RTC) {
 		/* Peripheral clock disable */
 		__HAL_RCC_RTC_DISABLE();
@@ -439,49 +956,57 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* hrtc) {
 	}
 }
 
-/**
- * @brief This function handles RTC alarm interrupt through EXTI line 18.
+/*
+ * *****************************************
+ * *****************************************
  */
-void RTC_Alarm_IRQHandler(void) {
+
+void RTC_Alarm_IRQHandler(void)
+{
 	HAL_RTC_AlarmIRQHandler(&hrtc);
 }
 
-void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
+{
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	RTC_CurrentAlarmEvent = RTC_AlarmEvent_OtherEvent;
 
-	if (rtc_thread_handler != NULL) {
-		/* Notify the task that an event has been emitted. */
+	if (rtc_thread_handler != NULL)
+	{
 		vTaskNotifyGiveFromISR(rtc_thread_handler, &xHigherPriorityTaskWoken );
 
-		/* There are no more eventin progress, so no tasks to notify. */
 		rtc_thread_handler = NULL;
 
-		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-			    should be performed to ensure the interrupt returns directly to the highest
-			    priority task.  The macro used for this purpose is dependent on the port in
-			    use and may be called portEND_SWITCHING_ISR(). */
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 }
 
-void HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc) {
+/*
+ * *****************************************
+ * *****************************************
+ */
+
+void HAL_RTCEx_AlarmBEventCallback(RTC_HandleTypeDef *hrtc)
+{
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	RTC_CurrentAlarmEvent = RTC_AlarmEvent_WeekStart;
 
-	if (rtc_thread_handler != NULL) {
-		/* Notify the task that an event has been emitted. */
+	if (rtc_thread_handler != NULL)
+	{
 		vTaskNotifyGiveFromISR(rtc_thread_handler, &xHigherPriorityTaskWoken );
 
-		/* There are no more eventin progress, so no tasks to notify. */
 		rtc_thread_handler = NULL;
 
-		/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
-			    should be performed to ensure the interrupt returns directly to the highest
-			    priority task.  The macro used for this purpose is dependent on the port in
-			    use and may be called portEND_SWITCHING_ISR(). */
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 	}
 }
+
+
+
