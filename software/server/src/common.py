@@ -2,46 +2,58 @@
 #
 #
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 from functools import total_ordering
+
+# Variables de test
+class __TESTS__:
+    testsDate=0
+    testCalendar=1
+
+if __TESTS__.testsDate:
+    currentDay = date(2023,11,29)
 
 # Class used for date and time manipulation           
 class Datetool:
     @staticmethod
-    def getCurrentDay():
+    def getCurrentDay()->date:
         #date_obj = date(datetime.now().year, datetime.now().month, datetime.now().day)
-        date_obj = date(2021, 11, 15)
+        if __TESTS__.testsDate:
+            date_obj = currentDay
+        else:
+           date_obj = date(datetime.now().year, datetime.now().month, datetime.now().day)
+
         return date_obj
     
     @staticmethod
-    def dateToStr(date_obj: date):
+    def dateToStr(date_obj: date)->str:
         return str(date_obj.day) + '/' + str(date_obj.month) + '/' + str(date_obj.year)
     
     @staticmethod
-    def dateToInt(date_obj: date):
-        return str(date_obj.day) + '/' + str(date_obj.month) + '/' + str(date_obj.year)
-    
-    @staticmethod
-    def getCurrentWeek():
+    def getCurrentWeek()->int:
         date_obj = Datetool.getCurrentDay()
         currentWeek = date_obj.isocalendar()[1]
         return currentWeek
     
     @staticmethod
-    def getFirstDayofWeek():
+    def getFirstDayofWeek()->datetime:
         date_obj = Datetool.getCurrentDay()
 
         start_of_week = date_obj - timedelta(days=date_obj.weekday())  # Monday
         return start_of_week
 
     @staticmethod
-    def getLastDayofWeek():
+    def getLastDayofWeek()->datetime:
         end_of_week = Datetool.getFirstDayofWeek() + timedelta(days=6)  # Sunday
         
         return end_of_week
     
     @staticmethod
-    def getDaysofWeek():
+    def getDateStrForURL(day:datetime)->str:
+        return day.strftime("%Y-%m-%d")
+
+    @staticmethod
+    def getDaysofWeek()->str:
         s=""
         s+=datetime.strptime(str(Datetool.getFirstDayofWeek()), '%Y-%m-%d').strftime('%d/%m/%Y')  # Monday
         s+=";"+datetime.strptime(str(Datetool.getFirstDayofWeek() + timedelta(days=1)), '%Y-%m-%d').strftime('%d/%m/%Y')  
@@ -54,25 +66,32 @@ class Datetool:
         return s
 
     @staticmethod
-    def getDayNumber(date_obj: date):
+    def getDayNumber(date_obj: date)->int:
         return date_obj.isocalendar()[2] # 1 = Lundi, 7 = Dimanche
     
     @staticmethod
-    def toDate(ade_date: str):
-        date_obj = datetime.strptime(ade_date, '%d/%m/%Y').date()
+    def toDate(ade_date: str)->datetime:
+        date_obj = datetime.strptime(ade_date, '%Y%m%d').date()
         return date_obj
     
     @staticmethod
-    def toTime(ade_time: str):
-        time_obj = datetime.strptime(ade_time, '%H:%M').time()
+    def toTime(ade_time: str)->datetime:
+        time_obj = datetime.strptime(ade_time, '%H%M%S').time()
         return time_obj
     
     @staticmethod
-    def minutsFromMidnight(ade_time: str):
-        date_obj = datetime.strptime(ade_time, '%H:%M').time()
+    def minutsFromMidnight(ade_time: str)->int:
+        date_obj = datetime.strptime(ade_time, '%H%M%S').time()
         minuts_since_midnight = date_obj.hour*60 + date_obj.minute
 
         return int(minuts_since_midnight)
+    
+    @staticmethod
+    def minutsFromMidnighttoStr(minuts: int)->str:
+        time_obj = time(int(minuts/60),\
+                        int(minuts - int(minuts/60)*60))
+
+        return time_obj.strftime("%H:%M")
 
 # Class used for storing room reservation
 #@total_ordering
@@ -99,7 +118,9 @@ class Calendar():
         self.instructors.append(instructor)
     
     def __str__(self):
-        s = self.day + " : " + self.title + " (" + self.firstHour + "-" + self.lastHour + ") \n\tTrainees: [" 
+        s = str(self.day) + " : " + self.title + \
+            " (" + Datetool.minutsFromMidnighttoStr(self.firstHour) + \
+            "-" + Datetool.minutsFromMidnighttoStr(self.lastHour) + ") \n\tTrainees: [" 
         
         for t in self.trainees:
             s = s + t + ", "
@@ -278,7 +299,7 @@ class Room():
         s = self.name + "[" + self.type +"] [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
         
         for r in self.ressourcesId:
-            s = s + r + ", "
+            s = s + str(r) + ", "
         
         s = s + "]\n\tDisplays: ["
         

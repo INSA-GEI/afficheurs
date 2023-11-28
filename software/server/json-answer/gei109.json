@@ -1,0 +1,7 @@
+[ 
+    { "id": "19288", "start": "20231127T093000", "end": "20231127T104500", "title": "Programmation fonctionnelle - TD A 3/8" , "salle" :" GEI 109 B - Réservée info expert GEI 109 A - Réservée info expert","trainee" :" 4IR_I_A","instructor" :" BIT-MONNOT Arthur","color": "#0ffff" }, 
+    { "id": "19289", "start": "20231127T110000", "end": "20231127T121500", "title": "Programmation fonctionnelle - TD A 4/8" , "salle" :" GEI 109 B - Réservée info expert GEI 109 A - Réservée info expert","trainee" :" 4IR_I_A","instructor" :" BIT-MONNOT Arthur","color": "#0ffff" }, 
+    { "id": "2975", "start": "20231129T140000", "end": "20231129T154500", "title": "Protection des systèmes d'exploitation TP 3/6" , "salle" :" GEI 101 Informatique (TB-F) 6 postes (réservée Réseau) GEI 109 A - Réservée info expert","trainee" :" 5GEI_TLS_SEC_2","instructor" :" ALATA Eric","color": "#7d7c0" }, 
+    { "id": "2980", "start": "20231129T161500", "end": "20231129T180000", "title": "Protection des systèmes d'exploitation TP 4/6" , "salle" :" GEI 101 Informatique (TB-F) 6 postes (réservée Réseau) GEI 109 A - Réservée info expert","trainee" :" 5GEI_TLS_SEC_2","instructor" :" ALATA Eric","color": "#7d7c0" }, 
+    { "id": "11330", "start": "20231130T093000", "end": "20231130T121500", "title": "Programmation Orientée Objet TP1 6/8" , "salle" :" GEI 109 A - Réservée info expert","trainee" :" 4_AE_TP SE1","instructor" :" LASGUIGNES Thibaud","color": "#ffcc33" } 
+] 
