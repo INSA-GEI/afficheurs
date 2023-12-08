@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_lLZUYI-KEe6wBvVW-0LnLw" name="SmartScreen-Server">
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_lLpzEI-KEe6wBvVW-0LnLw">
+    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+  </packageImport>
+  <packagedElement xmi:type="uml:Activity" xmi:id="_q8GHsI-KEe6wBvVW-0LnLw" name="Activity2"/>
+  <packagedElement xmi:type="uml:Interaction" xmi:id="_syuSII-KEe6wBvVW-0LnLw" name="Interaction3"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_7oP78I-KEe6wBvVW-0LnLw" name="Application"/>
+  <packagedElement xmi:type="uml:Package" xmi:id="_92ecII-MEe6wBvVW-0LnLw" name="ade2">
+    <packagedElement xmi:type="uml:Class" xmi:id="__j6gQI-KEe6wBvVW-0LnLw" name="Ade2"/>
+    <packagedElement xmi:type="uml:Class" xmi:id="_CwopAI-NEe6wBvVW-0LnLw" name="ADEServerError"/>
+    <packagedElement xmi:type="uml:Class" xmi:id="_DcJ1wI-OEe6wBvVW-0LnLw" name="Exception"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_CfdSEI-QEe6wBvVW-0LnLw" name="Class6"/>
+</uml:Model>

@@ -5,7 +5,9 @@
 from datetime import datetime, date, timedelta, time
 from functools import total_ordering
 
-# Variables de test
+import json
+
+# Classe de test
 class __TESTS__:
     testsDate=0
     testCalendar=1
@@ -15,9 +17,11 @@ if __TESTS__.testsDate:
 
 # Class used for date and time manipulation           
 class Datetool:
+    """Static class for date and time manipulation specific with this project """
+
     @staticmethod
     def getCurrentDay()->date:
-        #date_obj = date(datetime.now().year, datetime.now().month, datetime.now().day)
+        """Return a date object corresponding to current date and time. """
         if __TESTS__.testsDate:
             date_obj = currentDay
         else:
@@ -27,16 +31,19 @@ class Datetool:
     
     @staticmethod
     def dateToStr(date_obj: date)->str:
+        """Convert date object to string with format dd/mm/yy used by door screens."""
         return str(date_obj.day) + '/' + str(date_obj.month) + '/' + str(date_obj.year)
     
     @staticmethod
     def getCurrentWeek()->int:
+        """Return current week number (from 1 to 52)."""
         date_obj = Datetool.getCurrentDay()
         currentWeek = date_obj.isocalendar()[1]
         return currentWeek
     
     @staticmethod
     def getFirstDayofWeek()->datetime:
+        """Return first day (monday) of current week."""
         date_obj = Datetool.getCurrentDay()
 
         start_of_week = date_obj - timedelta(days=date_obj.weekday())  # Monday
@@ -44,12 +51,14 @@ class Datetool:
 
     @staticmethod
     def getLastDayofWeek()->datetime:
+        """Return last day (sunday) of current week."""
         end_of_week = Datetool.getFirstDayofWeek() + timedelta(days=6)  # Sunday
         
         return end_of_week
     
     @staticmethod
     def getDateStrForURL(day:datetime)->str:
+        """Convert datetime object in string with format YY-MM-DD to be used in URL for calendar requests"""
         return day.strftime("%Y-%m-%d")
 
     @staticmethod
@@ -96,13 +105,13 @@ class Datetool:
 # Class used for storing room reservation
 #@total_ordering
 class Calendar():
-    firstHour=0
-    lastHour=0
-    day=""
-    title=""
+    firstHour:int
+    lastHour:int
+    day:str
+    title:str
     trainees = []
     instructors = []
-    
+
     def __init__(self, day, title, firstHour, lastHour):
         self.day = day
         self.title = title
@@ -111,6 +120,9 @@ class Calendar():
         self.trainees = []
         self.instructors = []
         
+    def __repr__(self):
+        return repr((self.day, self.firstHour, self.lastHour, self.title, self.trainees, self.instructors))
+    
     def addTrainee(self, trainee):
         self.trainees.append(trainee)
         
@@ -120,12 +132,12 @@ class Calendar():
     def __str__(self):
         s = str(self.day) + " : " + self.title + \
             " (" + Datetool.minutsFromMidnighttoStr(self.firstHour) + \
-            "-" + Datetool.minutsFromMidnighttoStr(self.lastHour) + ") \n\tTrainees: [" 
+            "-" + Datetool.minutsFromMidnighttoStr(self.lastHour) + ") \n\t\tTrainees: [" 
         
         for t in self.trainees:
             s = s + t + ", "
             
-        s = s + "]\n\tInstructors: [" 
+        s = s + "]\n\t\tInstructors: [" 
         
         for i in self.instructors:
             s =s + i + ", "
@@ -135,217 +147,197 @@ class Calendar():
         
     def __eq__(self, other):
         if not isinstance(other, Calendar):
-            return NotImplemented
-        
-        try :
-            val=True
-            
-            if ((self.firstHour != other.firstHour) or 
-                (self.lastHour != other.lastHour) or 
-                (self.day != other.day) or 
-                (self.title != other.title)):
-                val =False
-            else:
-                self.trainees.sort()
-                other.trainees.sort()
+            return False
+        else:
+            try :
+                val=True
                 
-                if (self.trainees != other.trainees):
+                if ((self.firstHour != other.firstHour) or 
+                    (self.lastHour != other.lastHour) or 
+                    (self.day != other.day) or 
+                    (self.title != other.title)):
                     val =False
                 else:
-                    self.instructors.sort()
-                    other.instructors.sort()
+                    self.trainees.sort()
+                    other.trainees.sort()
                     
-                    if (self.instructors != other.instructors):
+                    if (self.trainees != other.trainees):
                         val =False
-                
-            return val
-        except:
-            return False
+                    else:
+                        self.instructors.sort()
+                        other.instructors.sort()
+                        
+                        if (self.instructors != other.instructors):
+                            val =False
+                    
+                return val
+            except:
+                return False
         
+    def __ne__(self,other):
+        return not self == other
+    
     def __lt__(self, other):
         if not isinstance(other, Calendar):
-            return NotImplemented
-        
-        try :
-            val=False
-            
-            if Datetool.toDate(self.day) < Datetool.toDate(other.day):
-                val=True
-            elif (self.day == other.day) and (self.firstHour < other.firstHour):
-                val=True
-            elif ((self.day == other.day) and (self.firstHour == other.firstHour) and (self.lastHour < other.lastHour)):
-                val=True
-                
-            return val
-        except:
             return False
+        else:
+            try :
+                val=False
+                
+                if Datetool.toDate(self.day) < Datetool.toDate(other.day):
+                    val=True
+                elif (self.day == other.day) and (self.firstHour < other.firstHour):
+                    val=True
+                elif ((self.day == other.day) and (self.firstHour == other.firstHour) and (self.lastHour < other.lastHour)):
+                    val=True
+                    
+                return val
+            except:
+                return False
         
     def dif(a, b):
         return [i for i in range(len(a)) if a[i] != b[i]]
-
-    @staticmethod 
-    def cleanup(calendars, dictionnary):
-        simplified_calendar = list()
-        
-        if len(calendars)>1:
-            #remove duplicate entries
-            unique_calendars = list()
-            for c in calendars:
-                if c not in unique_calendars:
-                    unique_calendars.append(c)
-                        
-            #organise calendar entries from earliest to latest
-            unique_calendars.sort()
-            
-            #now, factorize similar entries into a single one
-            simplified_calendar.append(unique_calendars[0])
-            
-            for uc in unique_calendars[1:]:
-                sc = simplified_calendar[-1]
-                
-                if ((uc.day == sc.day) and
-                    (uc.firstHour == sc.firstHour) and
-                    (uc.lastHour == sc.lastHour)):
-                    #Calendar events are at the same moment: look likes we may factorize them
-                    if (uc.title != sc.title):
-                        #if title are not rigorously identical, get the common part
-                        if len(uc.title) < len(sc.title):
-                            length = len(sc.title)
-                        else:
-                            length = len(uc.title)
-
-                        for l in range(length):
-                            if uc.title[l] != sc.title[l]:
-                                break
-                        sc.title=sc.title[:l-1]
-                          
-                    # Get trainees and instructors from factorized event                  
-                    for t in uc.trainees:
-                        sc.trainees.append(t)
-                        
-                    for instructor in uc.instructors:
-                        sc.instructors.append(instructor)
-                        
-                    sc.trainees.sort()
-                    sc.instructors.sort()
-                else:
-                    uc.trainees.sort()
-                    uc.instructors.sort()
-                    simplified_calendar.append(uc)
-        else:
-            calendars[-1].trainees.sort()
-            calendars[-1].instructors.sort()
-            simplified_calendar = calendars      
-            
-        if dictionnary != None and dictionnary != [{}]:
-            # search for ?? in title and instructors and look into dictionnary for correct word
-            for sc in simplified_calendar:
-                if '??' in sc.title:
-                    for key in dictionnary:
-                        sc.title=sc.title.replace(key, dictionnary[key])
-                
-                # if there is still ?? in title, replace with ' '
-                if '??' in sc.title:
-                    sc.title=sc.title.replace('??', ' ')
-                    
-                # do the same for instructors
-                for i in range(len(sc.instructors)):
-                    if '??' in sc.instructors[i]:
-                        for key in dictionnary:
-                            sc.instructors[i]=sc.instructors[i].replace(key, dictionnary[key])
-                    # if there is still ?? in instructor name, replace with ' '
-                    if '??' in sc.instructors[i]:
-                        sc.instructors[i]=sc.instructors[i].replace('??', ' ')
-        else: # no dictionanry -> replace all ?? with ' '
-            for sc in simplified_calendar:
-                # if there is ?? in title, replace with ' '
-                if '??' in sc.title:
-                    sc.title=sc.title.replace('??', ' ')
-                    
-                # do the same for instructors
-                for i in range(len(sc.instructors)):
-                    # if there is ?? in instructor name, replace with ' '
-                    if '??' in sc.instructors[i]:
-                        sc.instructors[i]=sc.instructors[i].replace('??', ' ')
-        return simplified_calendar
     
-# Class used for storing ressources information        
-class Ressource():
-    def __init__(self, id, name, screenId):
-        self.id = id
-        self.name = name
-        self.screenId = screenId
+# Class used for quick access to display information
+class Display():
+    id:int
+    lastSeen:int
+    displayMinRSSI:int
+    displayMaxRSSI:int 
+    displayMoyRSSI:int 
+    batterylevel:int 
+    network16bitAddr:int
+
+    def __init__(self, id:int):
+        self.id=id
+        self.lastSeen=-1
+        self.displayMinRSSI=-1
+        self.displayMaxRSSI=-1
+        self.displayMoyRSSI=-1
+        self.batterylevel=-1
+        self.network16bitAddr=0xFFFF
         
-    def __str__(self):
-        return str(self.id)+ ":" + str(self.name)
+    def __str__(self)->str:
+        s = hex(self.id) +\
+            "\n\tRSSI [Min/Max/Moy]: " + str(self.displayMinRSSI) +"/" + str(self.displayMaxRSSI) + "/" + str(self.displayMoyRSSI) +\
+            "\n\tBattery: " + str(self.batterylevel) + "\n\t16Bit address: " + hex(self.network16bitAddr) + "\n\tlast seen: " + str(self.lastSeen) 
         
+        return s
+
+class Ressource:
+    id:int
+    calendars:list
+
+    def __init__(self, id:int):
+        self.id=id
+        self.calendars=[]
+
+    def __str__(self)->str:
+        s = "\tRessource ID: " + str(self.id) +\
+            "\n\tCalendars:"
+        
+        for c in self.calendars:
+            s = s + "\n\t" + str(c) 
+        
+        return s
+
+    def isCalendarsEqual(self, cal:list)->bool:
+        # on ne peut pas comparer directement les deux listes, 
+        # les objets les composants sont à des adresses differentes.
+        # Ce sont donc les contenus qui doivent etre comparés
+
+        if len(self.calendars) != len(cal):
+            return False
+        else:
+            for index,c in enumerate(self.calendars):
+                if c != cal[index]:
+                    return False
+
+        return True
+
 # Class used for storing room information  
 class Room():
-    name = ""
-    adePattern = ""
-    type = ""
-    ressourcesId = []
-    displayId = []
-    calendars = []
-    
-    def __init__(self, name, type, adePattern, ressourcesId, displayId):
+    name:str
+    adePattern:str
+    type:str
+    ressources = []
+    displays = []
+    mergedCalendars = []
+    calendarUpdate:bool
+
+    def __init__(self, name, type, adePattern, ressources, displays):
         self.name = name
         self.type = type
         self.adePattern = adePattern.upper() # est-ce necessaire ?
-        self.ressourcesId = ressourcesId
-        self.displayId = displayId
+        self.ressources = ressources
+        self.displays = displays
+        self.calendarUpdate=False
+        self.mergedCalendars=[]
     
     def __str__ (self):
-        s = self.name + "[" + self.type +"] [adePattern: " + self.adePattern + "]\n\tAde ressources: ["
+        s = self.name + "[" + self.type +"] [adePattern: " + self.adePattern + "]\n\tAde ressources\n"
         
-        for r in self.ressourcesId:
-            s = s + str(r) + ", "
+        for r in self.ressources:
+            s = s + "\t\t"+ str(r.id)+"\n" # show only ressource id
         
-        s = s + "]\n\tDisplays: ["
+        s = s + "\tDisplays: ["
         
-        for d in self.displayId:
-            s =s + hex(d) + ", "
+        for d in self.displays:
+            s =s + hex(d.id) + ", "
             
-        s= s + "]"
+        s= s + "]\n\tMerged calendar:\n"
+        
+        for c in self.mergedCalendars:
+            s = s+ "\t"+str(c.day) + " : " + c.title + \
+                " (" + Datetool.minutsFromMidnighttoStr(c.firstHour) + \
+                "-" + Datetool.minutsFromMidnighttoStr(c.lastHour) + ") \n\t\tTrainees: [" 
+            
+            for t in c.trainees:
+                s = s + t + ", "
+                
+            s = s + "]\n\t\tInstructors: [" 
+            
+            for i in c.instructors:
+                s =s + i + ", "
+            
+            s= s + "]\n"  
+        
+        s=s +"\n\tCalendar update: " + str(self.calendarUpdate)
         return s
     
-    def getCalendar(self, ade):    
-        firstDay = Datetool.getFirstDayofWeek()
-        lastDay = Datetool.getLastDayofWeek()
-        
-        calendar = []
-        
-        # a revoir
-        
-        if len(self.ressourcesId) !=0:
-            for res in self.ressourcesId:
-                rawCalendar = ade.getRessourceCalendar(res)
+    def __repr__(self):
+        return repr((self.name, self.adePattern, self.type, self.ressources, self.displays, self.mergedCalendars, self.calendarUpdate))
     
-                for cal in rawCalendar:
-                    calDay = Datetool.toDate(cal.day)
-                
-                    if calDay>=firstDay and calDay<=lastDay:
-                        calendar.append(cal)
-        
-            return calendar
+    def hasDisplay(self, displayId:int)->bool:
+        for d in self.displays:
+            if d.id==displayId:
+                return True
+            
+        return False
     
-    def updateCalendar(self, ade, week):
-        if len(self.ressourcesId) !=0:
-            pass
+    def mergeRessourcesCalendars(self)->None:
+        from operator import attrgetter
+        oldCal= self.mergedCalendars.copy()  # save a copy of previous calendar, in order to compare it later
 
-# Class used for quick access to display information
-class Display():
-    id: int = 0
-    room: Room = None
-    gw: str = ""
-    calendarUpdate: bool = False
-    displayMinRSSI: int = 0
-    displayMaxRSSI: int =0
-    displayMoyRSSI: int =0
-    gwMinRSSI: int = 0
-    gwMaxRSSI: int =0
-    gwMoyRSSI: int =0
-    batterylevel: int =0
-    joinSignalStrength={}
-    
-    
+        self.mergedCalendars.clear() #flush calendar
+
+        for res in self.ressources:
+            self.mergedCalendars.extend(res.calendars) #append list with ressource list
+
+        self.mergedCalendars.sort(key=attrgetter('day','firstHour', 'lastHour')) # sort list by day, then firsthour and lastly, lasthour
+
+        # TODO: trouver comment retirer les doublons
+        # self.mergedCalendars = list(dict.fromkeys(self.mergedCalendars)) # Remove duplicate elements
+        j=0
+        while j<len(self.mergedCalendars)-1:
+            if self.mergedCalendars[j] == self.mergedCalendars[j+1]:
+                self.mergedCalendars.pop(j+1)
+            else:    
+                j=j+1
+
+        self.calendarUpdate=True
+        if self.mergedCalendars == oldCal:
+            self.calendarUpdate =False  # if mergedcalendar is identical to previous one, no update
+        
+
+

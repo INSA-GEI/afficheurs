@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.3/notation" xmlns:style="http://www.eclipse.org/papyrus/infra/gmfdiag/style" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML">
+  <notation:Diagram xmi:id="_oKtlMI-KEe6wBvVW-0LnLw" type="PapyrusUMLClassDiagram" name="Main Application" measurementUnit="Pixel">
+    <children xmi:type="notation:Shape" xmi:id="_7oRKEI-KEe6wBvVW-0LnLw" type="Class_Shape">
+      <children xmi:type="notation:DecorationNode" xmi:id="_7oTmUI-KEe6wBvVW-0LnLw" type="Class_NameLabel"/>
+      <children xmi:type="notation:DecorationNode" xmi:id="_7oTmUY-KEe6wBvVW-0LnLw" type="Class_FloatingNameLabel">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_7oTmUo-KEe6wBvVW-0LnLw" y="15"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_7oUNYI-KEe6wBvVW-0LnLw" type="Class_AttributeCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_7oUNYY-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_7oUNYo-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_7oUNY4-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7oUNZI-KEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_7oUNZY-KEe6wBvVW-0LnLw" type="Class_OperationCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_7oUNZo-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_7oUNZ4-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_7oUNaI-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7oUNaY-KEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_7oUNao-KEe6wBvVW-0LnLw" type="Class_NestedClassifierCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_7oUNa4-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_7oUNbI-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_7oUNbY-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7oUNbo-KEe6wBvVW-0LnLw"/>
+      </children>
+      <element xmi:type="uml:Class" href="SmartScreen-Server.uml#_7oP78I-KEe6wBvVW-0LnLw"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7oRxII-KEe6wBvVW-0LnLw" x="60" y="60" width="161" height="201"/>
+    </children>
+    <children xmi:type="notation:Shape" xmi:id="_92fqQI-MEe6wBvVW-0LnLw" type="Package_Shape">
+      <children xmi:type="notation:DecorationNode" xmi:id="_92fqQo-MEe6wBvVW-0LnLw" type="Package_NameLabel"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_92fqQ4-MEe6wBvVW-0LnLw" type="Package_PackagedElementCompartment">
+        <children xmi:type="notation:Shape" xmi:id="__kERQI-KEe6wBvVW-0LnLw" type="Class_Shape">
+          <children xmi:type="notation:DecorationNode" xmi:id="__kERQo-KEe6wBvVW-0LnLw" type="Class_NameLabel"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="__kERQ4-KEe6wBvVW-0LnLw" type="Class_FloatingNameLabel">
+            <layoutConstraint xmi:type="notation:Location" xmi:id="__kERRI-KEe6wBvVW-0LnLw" y="15"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="__kERRY-KEe6wBvVW-0LnLw" type="Class_AttributeCompartment">
+            <styles xmi:type="notation:TitleStyle" xmi:id="__kERRo-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="__kERR4-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="__kERSI-KEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="__kERSY-KEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="__kERSo-KEe6wBvVW-0LnLw" type="Class_OperationCompartment">
+            <styles xmi:type="notation:TitleStyle" xmi:id="__kERS4-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="__kERTI-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="__kERTY-KEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="__kERTo-KEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="__kE4UI-KEe6wBvVW-0LnLw" type="Class_NestedClassifierCompartment">
+            <styles xmi:type="notation:TitleStyle" xmi:id="__kE4UY-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="__kE4Uo-KEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="__kE4U4-KEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="__kE4VI-KEe6wBvVW-0LnLw"/>
+          </children>
+          <element xmi:type="uml:Class" href="SmartScreen-Server.uml#__j6gQI-KEe6wBvVW-0LnLw"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="__kERQY-KEe6wBvVW-0LnLw" x="34" y="12"/>
+        </children>
+        <children xmi:type="notation:Shape" xmi:id="_Cws6cI-NEe6wBvVW-0LnLw" type="Class_Shape_CN">
+          <children xmi:type="notation:DecorationNode" xmi:id="_Cws6co-NEe6wBvVW-0LnLw" type="Class_NameLabel_CN"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_Cws6c4-NEe6wBvVW-0LnLw" type="Class_FloatingNameLabel_CN">
+            <layoutConstraint xmi:type="notation:Location" xmi:id="_Cws6dI-NEe6wBvVW-0LnLw" y="15"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_Cws6dY-NEe6wBvVW-0LnLw" type="Class_AttributeCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_Cws6do-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_Cws6d4-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_Cws6eI-NEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Cws6eY-NEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_Cws6eo-NEe6wBvVW-0LnLw" type="Class_OperationCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_Cws6e4-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_Cws6fI-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_Cws6fY-NEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Cws6fo-NEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_Cws6f4-NEe6wBvVW-0LnLw" type="Class_NestedClassifierCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_Cws6gI-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_Cws6gY-NEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_Cws6go-NEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Cws6g4-NEe6wBvVW-0LnLw"/>
+          </children>
+          <element xmi:type="uml:Class" href="SmartScreen-Server.uml#_CwopAI-NEe6wBvVW-0LnLw"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Cws6cY-NEe6wBvVW-0LnLw" x="254" y="192"/>
+        </children>
+        <children xmi:type="notation:Shape" xmi:id="_DcNgII-OEe6wBvVW-0LnLw" type="Class_Shape_CN">
+          <children xmi:type="notation:DecorationNode" xmi:id="_DcOHMI-OEe6wBvVW-0LnLw" type="Class_NameLabel_CN"/>
+          <children xmi:type="notation:DecorationNode" xmi:id="_DcOHMY-OEe6wBvVW-0LnLw" type="Class_FloatingNameLabel_CN">
+            <layoutConstraint xmi:type="notation:Location" xmi:id="_DcOHMo-OEe6wBvVW-0LnLw" y="15"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_DcOHM4-OEe6wBvVW-0LnLw" type="Class_AttributeCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_DcOHNI-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_DcOHNY-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_DcOHNo-OEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DcOHN4-OEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_DcOHOI-OEe6wBvVW-0LnLw" type="Class_OperationCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_DcOHOY-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_DcOHOo-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_DcOHO4-OEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DcOHPI-OEe6wBvVW-0LnLw"/>
+          </children>
+          <children xmi:type="notation:BasicCompartment" xmi:id="_DcOHPY-OEe6wBvVW-0LnLw" type="Class_NestedClassifierCompartment_CN">
+            <styles xmi:type="notation:TitleStyle" xmi:id="_DcOHPo-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:SortingStyle" xmi:id="_DcOHP4-OEe6wBvVW-0LnLw"/>
+            <styles xmi:type="notation:FilteringStyle" xmi:id="_DcOHQI-OEe6wBvVW-0LnLw"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DcOHQY-OEe6wBvVW-0LnLw"/>
+          </children>
+          <element xmi:type="uml:Class" href="SmartScreen-Server.uml#_DcJ1wI-OEe6wBvVW-0LnLw"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DcNgIY-OEe6wBvVW-0LnLw" x="274" y="12"/>
+        </children>
+        <styles xmi:type="notation:TitleStyle" xmi:id="_92fqRI-MEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_92fqRY-MEe6wBvVW-0LnLw"/>
+      </children>
+      <element xmi:type="uml:Package" href="SmartScreen-Server.uml#_92ecII-MEe6wBvVW-0LnLw"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_92fqQY-MEe6wBvVW-0LnLw" x="480" y="60" width="422" height="381"/>
+    </children>
+    <children xmi:type="notation:Shape" xmi:id="_CfegMI-QEe6wBvVW-0LnLw" type="Class_Shape">
+      <children xmi:type="notation:DecorationNode" xmi:id="_CfegMo-QEe6wBvVW-0LnLw" type="Class_NameLabel"/>
+      <children xmi:type="notation:DecorationNode" xmi:id="_CfegM4-QEe6wBvVW-0LnLw" type="Class_FloatingNameLabel">
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_CfegNI-QEe6wBvVW-0LnLw" y="15"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_CfegNY-QEe6wBvVW-0LnLw" type="Class_AttributeCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_CfegNo-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_CfegN4-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_CfegOI-QEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CfegOY-QEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_CfegOo-QEe6wBvVW-0LnLw" type="Class_OperationCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_CfegO4-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_CfegPI-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_CfegPY-QEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CfegPo-QEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_CfegP4-QEe6wBvVW-0LnLw" type="Class_NestedClassifierCompartment">
+        <styles xmi:type="notation:TitleStyle" xmi:id="_CfegQI-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:SortingStyle" xmi:id="_CfegQY-QEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_CfegQo-QEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CfegQ4-QEe6wBvVW-0LnLw"/>
+      </children>
+      <element xmi:type="uml:Class" href="SmartScreen-Server.uml#_CfdSEI-QEe6wBvVW-0LnLw"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CfegMY-QEe6wBvVW-0LnLw" x="276" y="132"/>
+    </children>
+    <styles xmi:type="notation:StringValueStyle" xmi:id="_oKtlMY-KEe6wBvVW-0LnLw" name="diagram_compatibility_version" stringValue="1.4.0"/>
+    <styles xmi:type="notation:DiagramStyle" xmi:id="_oKtlMo-KEe6wBvVW-0LnLw"/>
+    <styles xmi:type="style:PapyrusDiagramStyle" xmi:id="_oKtlM4-KEe6wBvVW-0LnLw" diagramKindId="org.eclipse.papyrus.uml.diagram.class">
+      <owner xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+    </styles>
+    <element xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+  </notation:Diagram>
+  <notation:Diagram xmi:id="_qTMUoI-KEe6wBvVW-0LnLw" type="PapyrusUMLClassDiagram" name="Common" measurementUnit="Pixel">
+    <styles xmi:type="notation:StringValueStyle" xmi:id="_qTMUoY-KEe6wBvVW-0LnLw" name="diagram_compatibility_version" stringValue="1.4.0"/>
+    <styles xmi:type="notation:DiagramStyle" xmi:id="_qTMUoo-KEe6wBvVW-0LnLw"/>
+    <styles xmi:type="style:PapyrusDiagramStyle" xmi:id="_qTMUo4-KEe6wBvVW-0LnLw" diagramKindId="org.eclipse.papyrus.uml.diagram.class">
+      <owner xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+    </styles>
+    <element xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+  </notation:Diagram>
+  <notation:Diagram xmi:id="_ryNQUI-KEe6wBvVW-0LnLw" type="PapyrusUMLActivityDiagram" name="Main Application" measurementUnit="Pixel">
+    <children xmi:type="notation:Shape" xmi:id="_ryNQUY-KEe6wBvVW-0LnLw" type="Activity_Shape">
+      <children xmi:type="notation:DecorationNode" xmi:id="_ryNQUo-KEe6wBvVW-0LnLw" type="Activity_NameLabel"/>
+      <children xmi:type="notation:DecorationNode" xmi:id="_ryNQU4-KEe6wBvVW-0LnLw" type="Activity_KeywordLabel"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_ryNQVI-KEe6wBvVW-0LnLw" type="Activity_ParameterCompartment">
+        <styles xmi:type="notation:SortingStyle" xmi:id="_ryNQVY-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_ryNQVo-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ryNQV4-KEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_ryNQWI-KEe6wBvVW-0LnLw" type="Activity_PreconditionCompartment">
+        <styles xmi:type="notation:SortingStyle" xmi:id="_ryNQWY-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_ryNQWo-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ryNQW4-KEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_ryNQXI-KEe6wBvVW-0LnLw" type="Activity_PostconditionCompartment">
+        <styles xmi:type="notation:SortingStyle" xmi:id="_ryNQXY-KEe6wBvVW-0LnLw"/>
+        <styles xmi:type="notation:FilteringStyle" xmi:id="_ryNQXo-KEe6wBvVW-0LnLw"/>
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ryNQX4-KEe6wBvVW-0LnLw"/>
+      </children>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_ryNQYI-KEe6wBvVW-0LnLw" type="Activity_ActivityNodeCompartment">
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ryNQYY-KEe6wBvVW-0LnLw"/>
+      </children>
+      <element xmi:type="uml:Activity" href="SmartScreen-Server.uml#_q8GHsI-KEe6wBvVW-0LnLw"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ryNQYo-KEe6wBvVW-0LnLw"/>
+    </children>
+    <styles xmi:type="notation:StringValueStyle" xmi:id="_ryNQY4-KEe6wBvVW-0LnLw" name="diagram_compatibility_version" stringValue="1.4.0"/>
+    <styles xmi:type="notation:DiagramStyle" xmi:id="_ryNQZI-KEe6wBvVW-0LnLw"/>
+    <styles xmi:type="style:PapyrusDiagramStyle" xmi:id="_ryNQZY-KEe6wBvVW-0LnLw" diagramKindId="org.eclipse.papyrus.uml.diagram.activity">
+      <owner xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+    </styles>
+    <element xmi:type="uml:Activity" href="SmartScreen-Server.uml#_q8GHsI-KEe6wBvVW-0LnLw"/>
+  </notation:Diagram>
+  <notation:Diagram xmi:id="_u5MPYI-KEe6wBvVW-0LnLw" type="PapyrusUMLSequenceDiagram" name="JOIN Sequence" measurementUnit="Pixel">
+    <children xmi:type="notation:Shape" xmi:id="_u5MPYY-KEe6wBvVW-0LnLw" type="Interaction_Shape">
+      <children xmi:type="notation:DecorationNode" xmi:id="_u5MPYo-KEe6wBvVW-0LnLw" type="Interaction_NameLabel"/>
+      <children xmi:type="notation:BasicCompartment" xmi:id="_u5MPY4-KEe6wBvVW-0LnLw" type="Interaction_SubfragmentCompartment">
+        <layoutConstraint xmi:type="notation:Bounds" xmi:id="_u5MPZI-KEe6wBvVW-0LnLw"/>
+      </children>
+      <element xmi:type="uml:Interaction" href="SmartScreen-Server.uml#_syuSII-KEe6wBvVW-0LnLw"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_u5MPZY-KEe6wBvVW-0LnLw"/>
+    </children>
+    <styles xmi:type="notation:StringValueStyle" xmi:id="_u5MPZo-KEe6wBvVW-0LnLw" name="diagram_compatibility_version" stringValue="1.4.0"/>
+    <styles xmi:type="notation:DiagramStyle" xmi:id="_u5MPZ4-KEe6wBvVW-0LnLw"/>
+    <styles xmi:type="style:PapyrusDiagramStyle" xmi:id="_u5MPaI-KEe6wBvVW-0LnLw" diagramKindId="org.eclipse.papyrus.uml.diagram.sequence">
+      <owner xmi:type="uml:Model" href="SmartScreen-Server.uml#_lLZUYI-KEe6wBvVW-0LnLw"/>
+    </styles>
+    <element xmi:type="uml:Interaction" href="SmartScreen-Server.uml#_syuSII-KEe6wBvVW-0LnLw"/>
+  </notation:Diagram>
+</xmi:XMI>
