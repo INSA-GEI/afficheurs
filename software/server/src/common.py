@@ -20,6 +20,10 @@ class Datetool:
     """Static class for date and time manipulation specific with this project """
 
     @staticmethod
+    def getCurrentTimeFromMidnight()->int:
+        return datetime.now().hour*60 + datetime.now().minute
+
+    @staticmethod
     def getCurrentDay()->date:
         """Return a date object corresponding to current date and time. """
         if __TESTS__.testsDate:
@@ -195,6 +199,28 @@ class Calendar():
             except:
                 return False
         
+    def isMergeable(self, other):
+        if not isinstance(other, Calendar):
+            return False
+        else:
+            try :
+                val=True
+                
+                # Si l'heure de debut, de fin, le jour ou le titre ne sont pas identiques
+                # le calendrier n'est pas fusionnable
+
+                if ((self.firstHour != other.firstHour) or  
+                    (self.lastHour != other.lastHour) or 
+                    (self.day != other.day) or 
+                    (self.title != other.title)):
+                    val =False
+                else:
+                    val =True
+                    
+                return val
+            except:
+                return False
+            
     def dif(a, b):
         return [i for i in range(len(a)) if a[i] != b[i]]
     
@@ -330,8 +356,27 @@ class Room():
         # self.mergedCalendars = list(dict.fromkeys(self.mergedCalendars)) # Remove duplicate elements
         j=0
         while j<len(self.mergedCalendars)-1:
-            if self.mergedCalendars[j] == self.mergedCalendars[j+1]:
+            
+            if self.mergedCalendars[j] == self.mergedCalendars[j+1]: 
+                # les deux entrées sont exactement identiques => suppression de la deuxieme entrée
+
                 self.mergedCalendars.pop(j+1)
+
+            elif self.mergedCalendars[j].isMergeable(self.mergedCalendars[j+1]):
+                # Les deux entrées concernent le même enseignement 
+                # mais ont des etudiants ou enseignants differents => fusion des deux entrées
+
+                self.mergedCalendars[j].trainees.extend(self.mergedCalendars[j+1].trainees)
+                self.mergedCalendars[j].instructors.extend(self.mergedCalendars[j+1].instructors)
+
+                self.mergedCalendars[j].trainees.sort()
+                self.mergedCalendars[j].instructors.sort()
+
+                self.mergedCalendars[j].trainees= list(dict.fromkeys(self.mergedCalendars[j].trainees)) # Remove duplicate elements
+                self.mergedCalendars[j].instructors = list(dict.fromkeys(self.mergedCalendars[j].instructors)) # Remove duplicate elements
+
+                self.mergedCalendars.pop(j+1)
+                
             else:    
                 j=j+1
 

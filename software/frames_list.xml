@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <data>
-  <loop>true</loop>
+  <loop>false</loop>
   <repeat_times>1</repeat_times>
-  <repeat_period>2000</repeat_period>
+  <repeat_period>500</repeat_period>
   <frames_list>
-    <frame name="Transmit">
-      <payload>7E001410010013A20041E3E7BDFFFE0000436F75636F7506</payload>
+    <frame name="Join">
+      <payload>7E001210010000000000000000FFFE00004A4F494EC1</payload>
     </frame>
-    <frame name="Get Local RSSI">
+    <frame name="Setup">
+      <payload>7E001310010000000000000000FFFE0000534554555060</payload>
+    </frame>
+    <frame name="Get Calendar">
+      <payload>7E001110010000000000000000FFFE000043414C21</payload>
+    </frame>
+    <frame name="Update Calendar">
+      <payload>7E001410010000000000000000FFFE00005550444154452E</payload>
+    </frame>
+    <frame name="Report">
+      <payload>7E002210010000000000000000FFFE00005245504F52547C32417C31397C32327C307C4641B1</payload>
+    </frame>
+    <frame name="Get RSSI">
       <payload>7E00040801444270</payload>
-    </frame>
-    <frame name="Get Remote RSSI">
-      <payload>7E000F17010013A20041E3E7BDFFFE024442E5</payload>
     </frame>
   </frames_list>
 </data>

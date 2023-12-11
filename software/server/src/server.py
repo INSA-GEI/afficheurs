@@ -1,48 +1,50 @@
 #!/usr/bin/env python3
 
-from calendar import calendar
+# from calendar import calendar
 from datetime import datetime
-import time
+import time 
 from threading import Thread
-#from queue import Queue
 
 import logging, os
 
 from common import Datetool, Calendar, Display, Room, __TESTS__
-from ade2 import Ade2, ADEInvalidJSON,ADERoomNotInList,ADEServerError
+from ade2 import Ade2
 
+from digi.xbee.devices import ZigBeeDevice, XBeeMessage,XBee64BitAddress,TransmitException
 from messages import *
-from zigbee import Zigbee
 from config import Config
 
 from logs import DisplayReport
+
+from unidecode import unidecode
 
 MAJOR_VER = 0
 MINOR_VER = 2
 
 class Application :
-    
-    authentifiedDisplays = {}    # dictionnary of accepted display, with corresponding room
-
     configuration:Config=None
     log =None
 
     ade:Ade2=None
-    zigbee:Zigbee = None
-    messagesManager: MessageMgr = None
+    zigbee:ZigBeeDevice = None
+    zigbeeDataLengthMax:int
     displayReport: DisplayReport = None
 
     def __init__(self):
-        self.messagesManager: MessageMgr = None
-
         self.log = logging.getLogger("server")
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
-    # def isDisplayAuthentified(self, display:int)->bool:
-    #     if display in self.authentifiedDisplays:
-    #         return True
-    #     else:
-    #         return False
+    def openZigbee(self, port:str, baudrate:int)->None:
+        self.zigbee = ZigBeeDevice(port, baudrate)
+        self.zigbee.open()
+
+    def getZigbeeConfiguration(self)->None:
+        self.device_64bit_addr = self.zigbee.get_64bit_addr()
+        self.device_16bit_addr = self.zigbee.get_16bit_addr()
+        self.device_panid = self.zigbee.get_pan_id()
+
+    def closeZigbee(self)->None:
+        self.zigbee.close()
 
     def getRoomfromDisplayId(self, displayId: int) -> Room:
         for r in self.roomsList:
@@ -52,107 +54,90 @@ class Application :
         return None
 
     def __threadTimer(self)-> None:
+        self.log.info("Thread \"Timer\" started")
+
         while True:
-            time.sleep(5*60.0) # Wait 5 minutes
-            print ("5 minutes elapsed, ready to check for calendar update")
+            time.sleep(60.0) # Wait 1 minute
+            print ("1 minute elapsed")
+
+            self.displayReport.write()
+            
 
     def __threadMessages(self)-> None:
+        self.log.info ("Thread \"Zigbee messages\" started")
+        
         while True:
-            msg_ans=None
-            print ("Received message in action handler from " + gateway)
-            print (str(msg))
-            
-            # if not isGatewayAuthentified(gateway):
-            #     msg_ans=Message.createERR(msg.device_id, Message.ERR_GW_REFUSED)
-            # elif not isDisplayAuthentified(msg.device_id) and \
-            if not self.isDisplayAuthentified(msg.device_id) and \
-                msg.type != Message.CMD_JOIN and \
-                msg.type != Message.CMD_CONFIG:
-                msg_ans=Message.createERR(msg.device_id, Message.ERR_DISPLAY_REFUSED)
-            else:
-                if msg.type == Message.CMD_CONFIG:
-                    msg_ans = Message.createOK(msg.device_id, 
-                                            [hex(self.rf_panId)[2:].upper(), 
-                                                hex(self.rf_chanId)[2:].upper(),
-                                                " "]) # gateway name is set to " "
-                elif msg.type == Message.CMD_JOIN:
-                    #timer to be set
-                    room = self.getRoomfromDisplay(msg.device_id)
-                    if room !=None:
-                        if not self.isDisplayAuthentified(msg.device_id):
-                            display = Display()
-                            display.id = msg.device_id
-                            display.room = room
-                            display.gw = gateway
-                            self.authentifiedDisplays[msg.device_id]=display
-                            
-                        self.authentifiedDisplays[msg.device_id].joinSignalStrength[gateway] = int(msg.data[0],base=16)
-                        msg_ans = Message.createACCEPT(msg.device_id, self.rf_panId)
+            exceptionRaised = False
+            transaction=Transaction()
+            receivedMsg:XBeeMessage=None
+
+            try:
+                receivedMsg = self.zigbee.read_data(60*60*24) # Wait for 1 day
+            except Exception as e:
+                self.log.error("Exception raised in __threadMessages: " + str(e))
+                exceptionRaised=True
+
+            if not exceptionRaised:
+                transaction.senderAddr = receivedMsg.remote_device.get_16bit_addr()
+                transaction.senderId = receivedMsg.remote_device.get_64bit_addr()
+
+                transaction.cmd = receivedMsg.data.decode('utf-8') #conversion des data au format bytearray en string
+                # self.log.info("[RX] Received data from: {}[{}], data: {}".format(
+                #             ''.join('{:02X}'.format(a) for a in transaction.senderAddr),
+                #             ''.join('{:02X}'.format(a) for a in transaction.senderId),
+                #             transaction.cmd))
+
+                # recherche la room correspondant à l'ID de l'ecran et traite ensuite sa commande
+                displayId = int.from_bytes(transaction.senderId.address, byteorder='big', signed=False)
+                # print ("Display Id = {}".format(hex(displayId)))
+                displayRoom=self.getRoomfromDisplayId(displayId)
+
+                if displayRoom != None:
+                    for d in displayRoom.displays:
+                        if d.id == displayId:
+                            d.lastSeen=0 # on remet le compteur à zero pour cet ecran
+
+                transaction.answer = Message.manage(transaction.cmd, displayRoom)
+
+                # print("[TX] Send data to: {}, data: {}".format(
+                #         ''.join('{:02X}'.format(a) for a in transaction.senderAddr),
+                #         transaction.answer))
+                
+                while transaction.retryCnt!=0 and not transaction.txSuccess:
+                    try:
+                        if len(transaction.answer) > self.zigbeeDataLengthMax:
+                            s = transaction.answer[:self.zigbeeDataLengthMax-1]
+                        else: 
+                            s=transaction.answer
+
+                        s=unidecode(s)
+
+                        #print ("len of s: {}".format(len(s)))
+                        #print ("len of answer: {}".format(len(transaction.answer)))
+
+                        self.zigbee.send_data_64_16(XBee64BitAddress.UNKNOWN_ADDRESS,
+                                                    transaction.senderAddr, s)
+                        
+                        if len(transaction.answer) > self.zigbeeDataLengthMax:
+                            transaction.answer = transaction.answer[self.zigbeeDataLengthMax:]
+                        else:
+                            transaction.answer=""
+
+                        if len(transaction.answer) ==0:
+                            transaction.txSuccess=True
+                    except TransmitException :
+                        transaction.retryCnt = transaction.retryCnt-1
+
+                if transaction.retryCnt==0:
+                    if displayRoom!=None:
+                        self.log.error("Unable to send answer to display [{}] of room {}".format(
+                            hex(displayId),
+                            displayRoom.name                        
+                        ))
                     else:
-                        msg_ans = Message.createREJECT(msg.device_id)
-                elif msg.type == Message.CMD_SETUP:
-                    currentHour = datetime.now().strftime("%H:%M:%S")
-                    currentDate = Datetool.getDayNumber(datetime.now())
-                    display = self.authentifiedDisplays[msg.device_id]
-                    
-                    msg_ans = Message.createOK(msg.device_id, 
-                                            [currentHour,
-                                                str(currentDate),
-                                                display.room.name,
-                                                display.room.type,
-                                                datetime.strptime(self.refreshStartTime, '%H:%M').time().strftime("%H:%M:%S"),
-                                                datetime.strptime(self.refreshEndTime, '%H:%M').time().strftime("%H:%M:%S"),
-                                                str(self.refreshTime),
-                                                str(0)]) # update order is set to 0
-                elif msg.type == Message.CMD_GET_CALENDAR:
-                    cal = self.authentifiedDisplays[msg.device_id].room.calendars # get calendar for associated display'room
-                    data = [Datetool.getDaysofWeek()]
-                    
-                    s = ""
-                    for c in cal:
-                        s+=str(Datetool.getDayNumber(Datetool.toDate(c.day)))
-                        s+=';' + str(Datetool.minutsFromMidnight(c.firstHour))
-                        s+=';' + str(Datetool.minutsFromMidnight(c.lastHour))
-                        s+=';' + c.title
-                        s+=';'
-                        
-                        for t in c.trainees:
-                            s+=t+','
-                            
-                        if s[-1] == ',':
-                            s= s[:-1]
-                            
-                        s+=';'
-                        for i in c.instructors:
-                            s+=i+','
-                        
-                        if s[-1] == ',':
-                            s= s[:-1]
-                        
-                        s+='#'
-                        
-                    if s[-1] == '#':
-                        s= s[:-1]
-                    
-                    data.append(s)
-                    msg_ans = Message.createOK(msg.device_id, data)
-                elif msg.type == Message.CMD_GET_UPDATE:
-                    if self.authentifiedDisplays[msg.device_id].calendarUpdate:
-                        msg_ans = Message.createOK(msg.device_id,[str(1)])
-                    else:
-                        msg_ans = Message.createOK(msg.device_id,[str(0)])
-                elif msg.type == Message.CMD_REPORT:
-                    self.authentifiedDisplays[msg.device_id].displayMinRSSI= int(msg.data[0],base=16)
-                    self.authentifiedDisplays[msg.device_id].displayMaxRSSI= int(msg.data[1],base=16)
-                    self.authentifiedDisplays[msg.device_id].displayMoyRSSI= int(msg.data[2],base=16)
-                    self.authentifiedDisplays[msg.device_id].batterylevel= int(msg.data[3])
-                    self.authentifiedDisplays[msg.device_id].gwMinRSSI= int(msg.data[4],base=16)
-                    self.authentifiedDisplays[msg.device_id].gwMaxRSSI= int(msg.data[5],base=16)
-                    self.authentifiedDisplays[msg.device_id].gwMoyRSSI= int(msg.data[6],base=16)
-                    
-                    # pas de msg_ans, fermeture du socket à la place
-                else: # command unknown
-                    msg_ans=Message.createERR(msg.device_id, Message.ERR_NO_ACTION)
+                        self.log.error("Unable to send answer to display [{}] of unknown room".format(
+                            displayId
+                        ))
 
     def run(self):
         print ("SmartDoors server ver " + str(MAJOR_VER)+"." + str(MINOR_VER))
@@ -191,42 +176,37 @@ class Application :
         self.displayReport.write()
         
         try:
-            self.zigbee = Zigbee()
-            self.zigbee.open("/dev/ttyUSB0", 230400)
-            self.zigbee.getCurrentConfiguration()
+            self.openZigbee("/dev/ttyUSB0", 230400)
+            self.getZigbeeConfiguration()
 
             print (str(self.zigbee))
         except Exception as e:
             print ("Unable to start Zigbee\n" + str(e))
             return -1
         
-        # TODO: A revoir tout ça
+        Message.configuration = self.configuration
+        Message.log = self.log
 
-        # try:
-        #     messagesManager = MessageMgr('localhost',serverPort,30)
-        # except Exception as e:
-        #     log.error (str(e))
-        #     return 2
-        
-        # messagesManager.actionHandler = actionHandler
-        # messagesManager.start()
+        self.zigbeeDataLengthMax= int.from_bytes(self.zigbee.get_parameter('NP'))
+        self.zigbeeDataLengthMax=self.zigbeeDataLengthMax-20 # 20 correspond to thers bytes in the payload that are not data
 
-        # TODO Lancement des threads
-        # self.threadTimerHandler = Thread(target=self.__threadTimer,args=())
-        # self.threadMessagesHandler = Thread(target=self.__threadMessages,args=())
+        print ("Zigbee maximum data length: {} bytes".format(self.zigbeeDataLengthMax))
 
-        # self.threadTimerHandler.start()
-        # self.threadMessagesHandler.start()
+        # Lancement des threads
+        self.threadTimerHandler = Thread(target=self.__threadTimer,args=())
+        self.threadMessagesHandler = Thread(target=self.__threadMessages,args=())
 
-        # self.threadTimerHandler.join()
-        # self.threadMessagesHandler.join()
+        self.threadTimerHandler.start()
+        self.threadMessagesHandler.start()
+
+        self.threadTimerHandler.join()
+        self.threadMessagesHandler.join()
 
         self.stop()
     
     def stop(self)->None:
         try:
-            self.zigbee.close()
-            self.messagesManager.stop()
+            self.closeZigbee()
         except:
             pass
 
