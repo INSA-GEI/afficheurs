@@ -15,10 +15,7 @@
       <payload>7E001110010000000000000000FFFE000043414C21</payload>
     </frame>
     <frame name="Update Calendar">
-      <payload>7E001410010000000000000000FFFE00005550444154452E</payload>
-    </frame>
-    <frame name="Report">
-      <payload>7E002210010000000000000000FFFE00005245504F52547C32417C31397C32327C307C4641B1</payload>
+      <payload>7E001910010000000000000000FFFE00005550444154457C38307C339B</payload>
     </frame>
     <frame name="Get RSSI">
       <payload>7E00040801444270</payload>

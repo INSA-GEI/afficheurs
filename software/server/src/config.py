@@ -25,17 +25,21 @@ class Config:
 
     reportLog:str
     errorLog:str
+    loglevel:int
 
-    log:None
+    log:logging
 
     DEFAULT_CONFIG_FILE = ["./software/server/src/server.conf",
                         "./server.conf",
                         "/home/dimercur/Travail/git/afficheurs/software/server-new/src/server.conf",
                         "/etc/smartdisplay/server.conf"]
 
-    def __init__ (self, log:logging):
+    def __init__ (self):
         self.configFiles = self.DEFAULT_CONFIG_FILE
-        self.log = log
+        self.log = logging.getLogger(__name__)
+        
+        self.loglevel =logging.WARNING 
+        self.log.setLevel(logging.WARNING)
 
     def parseCommandLine(self) -> list:
         conf = self.configFiles
@@ -79,6 +83,27 @@ class Config:
             self.log.error(errstr)
             raise Exception(errstr)
         
+        try:
+            log_level=config['server']['loglevel']
+        except:
+            log_level=None
+        
+        if type(log_level) == str:
+            if "DEBUG" in log_level:
+                self.loglevel = logging.DEBUG
+            elif "INFO" in log_level:
+                self.loglevel = logging.INFO
+            elif "WARN" in log_level:
+                self.loglevel = logging.WARNING
+            elif "ERROR" in log_level:
+                self.loglevel = logging.ERROR
+            else:
+                self.loglevel = logging.WARNING
+        else:
+            self.loglevel = logging.WARNING
+                
+        self.log.setLevel(self.loglevel)
+
         try:
             self.adeProjectId = int(config['server']['adeproject'],base=10)
         except Exception as e:

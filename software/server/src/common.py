@@ -3,9 +3,9 @@
 #
 
 from datetime import datetime, date, timedelta, time
-from functools import total_ordering
+#from functools import total_ordering
 
-import json
+#import json
 
 # Classe de test
 class __TESTS__:
@@ -228,24 +228,19 @@ class Calendar():
 class Display():
     id:int
     lastSeen:int
-    displayMinRSSI:int
-    displayMaxRSSI:int 
-    displayMoyRSSI:int 
-    batterylevel:int 
+    rfPower:int
     network16bitAddr:int
 
     def __init__(self, id:int):
         self.id=id
         self.lastSeen=-1
-        self.displayMinRSSI=-1
-        self.displayMaxRSSI=-1
-        self.displayMoyRSSI=-1
+        self.rfPower=-1
         self.batterylevel=-1
         self.network16bitAddr=0xFFFF
         
     def __str__(self)->str:
         s = hex(self.id) +\
-            "\n\tRSSI [Min/Max/Moy]: " + str(self.displayMinRSSI) +"/" + str(self.displayMaxRSSI) + "/" + str(self.displayMoyRSSI) +\
+            "\n\tRF power: " + str(self.rfPower) +\
             "\n\tBattery: " + str(self.batterylevel) + "\n\t16Bit address: " + hex(self.network16bitAddr) + "\n\tlast seen: " + str(self.lastSeen) 
         
         return s
@@ -334,12 +329,12 @@ class Room():
     def __repr__(self):
         return repr((self.name, self.adePattern, self.type, self.ressources, self.displays, self.mergedCalendars, self.calendarUpdate))
     
-    def hasDisplay(self, displayId:int)->bool:
+    def hasDisplay(self, displayId:int)->Display:
         for d in self.displays:
             if d.id==displayId:
-                return True
+                return d
             
-        return False
+        return None
     
     def mergeRessourcesCalendars(self)->None:
         from operator import attrgetter

@@ -29,11 +29,12 @@ class Application :
     zigbee:ZigBeeDevice = None
     zigbeeDataLengthMax:int
     displayReport: DisplayReport = None
+    message: Message
 
     def __init__(self):
         self.log = logging.getLogger("server")
-        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-
+        logging.basicConfig(level=logging.WARNING)
+        
     def openZigbee(self, port:str, baudrate:int)->None:
         self.zigbee = ZigBeeDevice(port, baudrate)
         self.zigbee.open()
@@ -48,20 +49,39 @@ class Application :
 
     def getRoomfromDisplayId(self, displayId: int) -> Room:
         for r in self.roomsList:
-            if r.hasDisplay(displayId):
-                return r
+            display = r.hasDisplay(displayId)
+
+            if display != None:
+                return (r,display)
             
         return None
 
     def __threadTimer(self)-> None:
         self.log.info("Thread \"Timer\" started")
+        # sleepIncrement = 5*60.0  # 5 minutes between each sleep
+        sleepIncrement = 30.0 # for debugging purpose, wait only 30 seconds
 
         while True:
-            time.sleep(60.0) # Wait 1 minute
-            print ("1 minute elapsed")
+            time.sleep(sleepIncrement) # Wait 5 minutes
+            self.log.debug("5 minutes elapsed")
 
             self.displayReport.write()
+
+            # Update calendars
+            self.ade.getCalendars()
             
+            if self.configuration.loglevel == logging.DEBUG:
+                for room in self.roomsList:
+                    self.log.info("Calendar update for room {}: {}".format(
+                        room.name,
+                        room.calendarUpdate
+                    ))
+
+            # Increment all display inactivity counter
+            # They are reset when a message is received
+            for room in self.roomsList:
+                for d in room.displays:
+                    d.lastSeen = d.lastSeen +1
 
     def __threadMessages(self)-> None:
         self.log.info ("Thread \"Zigbee messages\" started")
@@ -90,14 +110,20 @@ class Application :
                 # recherche la room correspondant à l'ID de l'ecran et traite ensuite sa commande
                 displayId = int.from_bytes(transaction.senderId.address, byteorder='big', signed=False)
                 # print ("Display Id = {}".format(hex(displayId)))
-                displayRoom=self.getRoomfromDisplayId(displayId)
+                try:
+                    (room, display)=self.getRoomfromDisplayId(displayId)
+                except TypeError:
+                    # seems that displayID is not present in configuration file
+                    display=None
+                    room=None
 
-                if displayRoom != None:
-                    for d in displayRoom.displays:
-                        if d.id == displayId:
-                            d.lastSeen=0 # on remet le compteur à zero pour cet ecran
+                if display != None:
+                    display.network16bitAddr = int.from_bytes(transaction.senderAddr.address, byteorder='big', signed=False)
 
-                transaction.answer = Message.manage(transaction.cmd, displayRoom)
+                if display != None:
+                    display.lastSeen=0 # on remet le compteur à zero pour cet ecran
+
+                transaction.answer = self.message.manage(transaction.cmd, room, display, displayId)
 
                 # print("[TX] Send data to: {}, data: {}".format(
                 #         ''.join('{:02X}'.format(a) for a in transaction.senderAddr),
@@ -129,10 +155,10 @@ class Application :
                         transaction.retryCnt = transaction.retryCnt-1
 
                 if transaction.retryCnt==0:
-                    if displayRoom!=None:
+                    if room!=None:
                         self.log.error("Unable to send answer to display [{}] of room {}".format(
                             hex(displayId),
-                            displayRoom.name                        
+                            room.name                        
                         ))
                     else:
                         self.log.error("Unable to send answer to display [{}] of unknown room".format(
@@ -142,10 +168,10 @@ class Application :
     def run(self):
         print ("SmartDoors server ver " + str(MAJOR_VER)+"." + str(MINOR_VER))
 
-        self.log.info("Server start {}".format(datetime.now()))
+        print ("Server start {}".format(datetime.now()))
 
         # Get command line information
-        self.configuration = Config(self.log)
+        self.configuration = Config()
         configFiles = self.configuration.parseCommandLine() # Get configuration path and files in a list
         
         # read configuration file
@@ -154,9 +180,11 @@ class Application :
         else:
             raise Exception("Invalid list of path for configuration files")
 
+        # Set correct loglevel from configuration file, default is WARNING
+        self.log.setLevel(self.configuration.loglevel)
+
         # Initialisation of ade
-        # self.ade = Ade2(self.roomsList, self.configuration, __TESTS__.testCalendar)
-        self.ade = Ade2(self.roomsList, self.configuration, False)
+        self.ade = Ade2(self.roomsList, self.configuration)
 
         # Initialize calendar information
         self.ade.getCalendars()
@@ -165,12 +193,17 @@ class Application :
         for room in self.roomsList:
             room.mergeRessourcesCalendars()
 
-        if __TESTS__.testCalendar:               
+        # Debug information
+        if self.configuration.loglevel == logging.DEBUG:
+            s=""          
+            
             for room in self.roomsList:
-                print()
-                print (str(room))
+                s=s+str(room)+'\n'
+
                 for cal in room.calendars:
-                    print(str(cal))
+                    s=s+str(cal)+'\n'
+
+            self.log.debug(s)
 
         self.displayReport = DisplayReport("report.log", self.roomsList)
         self.displayReport.write()
@@ -179,18 +212,17 @@ class Application :
             self.openZigbee("/dev/ttyUSB0", 230400)
             self.getZigbeeConfiguration()
 
-            print (str(self.zigbee))
+            self.log.info(str(self.zigbee))
         except Exception as e:
-            print ("Unable to start Zigbee\n" + str(e))
+            self.log.error("Unable to start Zigbee\n" + str(e))
             return -1
         
-        Message.configuration = self.configuration
-        Message.log = self.log
+        self.message = Message(self.configuration)
 
         self.zigbeeDataLengthMax= int.from_bytes(self.zigbee.get_parameter('NP'))
         self.zigbeeDataLengthMax=self.zigbeeDataLengthMax-20 # 20 correspond to thers bytes in the payload that are not data
 
-        print ("Zigbee maximum data length: {} bytes".format(self.zigbeeDataLengthMax))
+        self.log.debug("Zigbee maximum data length: {} bytes".format(self.zigbeeDataLengthMax))
 
         # Lancement des threads
         self.threadTimerHandler = Thread(target=self.__threadTimer,args=())

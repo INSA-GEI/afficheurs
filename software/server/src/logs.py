@@ -20,7 +20,13 @@ class DisplayReport:
 
         for room in self.roomslist:
             for d in room.displays:
-                f.write("| {} | {} | {}/{}/{} |".format(str("0x{:016X}".format(d.id)), str(d.lastSeen), str(d.displayMinRSSI), str(d.displayMaxRSSI), str(d.displayMoyRSSI)))
+                f.write("| {} | {} | {} | {} | {}".format(
+                    str("0x{:016X}".format(d.id)), 
+                    str(d.lastSeen), 
+                    str(d.rfPower), 
+                    str(d.batterylevel), 
+                    str("0x{:04X}".format(d.network16bitAddr))
+                    ))
                 f.write('\n')
                 f.write('-'*50)
                 f.write('\n')

@@ -35,18 +35,19 @@ class ADERoomNotInList(Exception):
 
 class Ade2:
     roomsList:Room = []
-    debugFlag=False
     configuration:Config=None
     jsonRoomsList=None
 
     # misc
     firstWeekNbr = 31
     
-    def __init__(self, roomslist:list, configuration:Config, debugFlag=False):
-        self.debugFlag = debugFlag
+    def __init__(self, roomslist:list, configuration:Config):
         self.roomsList = roomslist
         self.configuration = configuration
         self.jsonRoomsList = []
+
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(configuration.loglevel) 
 
     def getRoomsList(self)->None:
         cmd=self.configuration.adeServer+"/getRooms.jsp?projectId="+str(self.configuration.adeProjectId)+\
@@ -55,10 +56,12 @@ class Ade2:
 
         r = requests.get(cmd)
             
-        if self.debugFlag == True:
-            print(cmd)
-            print(r)
-            print(r.text)
+        if self.configuration.loglevel == logging.DEBUG:
+            s=str(cmd) + '\n'
+            s=s+str(r) + '\n'
+            s=s+str(r.text)
+
+            self.log.debug(s)
 
         if not "200" in str(r):
             raise ADEServerError(r)
@@ -75,8 +78,7 @@ class Ade2:
 
         for r in self.jsonRoomsList:
             if room.upper() in r['name'].upper():
-                if self.debugFlag == True:
-                    print('ID for room ' + room + ' is ' + str(r['id']))
+                self.log.debug('ID for room ' + room + ' is ' + str(r['id']))
             
                 id.append(r['id'])
         
@@ -101,10 +103,12 @@ class Ade2:
         r = requests.get(cmd)
         r.encoding='utf-8'
 
-        if self.debugFlag == True:
-            print(cmd)
-            print(r)
-            print (r.text)
+        if self.configuration.loglevel == logging.DEBUG:
+            s=str(cmd) + '\n'
+            s=s+str(r) + '\n'
+            s=s+str(r.text)
+
+            self.log.debug(s)
         
         if not "200" in str(r):
             raise ADEServerError(r)
